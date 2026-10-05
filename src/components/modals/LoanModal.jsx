@@ -1,8 +1,8 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, Fragment } from 'react'
 import { useStore } from '@/store'
 import { Modal, Input, Select, Switch, Button } from '@/components/ui'
 import { fmt2, formatDate } from '@/utils'
-import { localISO, loanDueDate, loanCuotaAmount } from '@/loans'
+import { localISO, loanDueDate, loanCuotaAmount, sortedRateChanges, tnaForCuota } from '@/loans'
 import styles from './LoanModal.module.css'
 
 const DEFAULT = {
@@ -63,6 +63,28 @@ export default function LoanModal({ onClose, initial = null }) {
   const totalCost = schedule.reduce((s, c) => s + c.amount, 0)
   const wallet = wallets.find(w => w.id === form.walletId)
   const canCredit = loan.paidBefore === 0
+
+  // ─── Cambios de tasa (modo TNA) ───
+  const rateChanges = sortedRateChanges(form)
+  const [newRate, setNewRate] = useState({ fromCuota: '', tna: '' })
+  // Solo desde la primera cuota sin debitar (y nunca la 1: esa es la TNA inicial)
+  const minChangeCuota = Math.max(2, first?.n ?? loan.cuotas + 1)
+
+  function addRateChange() {
+    const fromCuota = Math.floor(Number(newRate.fromCuota) || minChangeCuota)
+    const tna = Number(newRate.tna)
+    if (!(tna >= 0) || newRate.tna === '') return alert('Ingresá la nueva TNA')
+    if (fromCuota < minChangeCuota || fromCuota > loan.cuotas) {
+      return alert(`La cuota tiene que estar entre ${minChangeCuota} y ${loan.cuotas}`)
+    }
+    set('rateChanges', [...rateChanges.filter(c => c.fromCuota !== fromCuota), { fromCuota, tna }])
+    setNewRate({ fromCuota: '', tna: '' })
+    setShowSchedule(true)
+  }
+
+  function removeRateChange(fromCuota) {
+    set('rateChanges', rateChanges.filter(c => c.fromCuota !== fromCuota))
+  }
 
   async function handleSave() {
     if (!form.name.trim()) return alert('Ingresá un nombre para el préstamo')
@@ -146,13 +168,50 @@ export default function LoanModal({ onClose, initial = null }) {
       ) : (
         <>
           <Input
-            label="TNA (%)"
+            label={rateChanges.length ? 'TNA inicial (%)' : 'TNA (%)'}
             type="number" inputMode="decimal" step="0.1" placeholder="Ej: 75"
             value={form.tna}
             onChange={e => set('tna', e.target.value)}
             hint="Sistema francés: la cuota pura es fija y al principio paga más interés."
           />
           <Switch label="Sumar IVA (21%) sobre los intereses" checked={form.iva} onChange={v => set('iva', v)} />
+
+          {valid && (
+            <div className={styles.formGroup}>
+              <label className={styles.label}>Cambios de tasa</label>
+              {rateChanges.map(c => (
+                <div key={c.fromCuota} className={styles.rateRow}>
+                  <span>Desde la cuota {c.fromCuota}: <strong>TNA {c.tna}%</strong></span>
+                  {c.fromCuota >= minChangeCuota && (
+                    <button type="button" className={styles.rateRemove} onClick={() => removeRateChange(c.fromCuota)} aria-label="Quitar cambio de tasa">✕</button>
+                  )}
+                </div>
+              ))}
+              {minChangeCuota <= loan.cuotas ? (
+                <div className={styles.rateAdd}>
+                  <Input
+                    label="Desde la cuota"
+                    type="number" inputMode="numeric"
+                    placeholder={String(minChangeCuota)}
+                    value={newRate.fromCuota}
+                    onChange={e => setNewRate(r => ({ ...r, fromCuota: e.target.value }))}
+                  />
+                  <Input
+                    label="Nueva TNA (%)"
+                    type="number" inputMode="decimal" step="0.1" placeholder="Ej: 90"
+                    value={newRate.tna}
+                    onChange={e => setNewRate(r => ({ ...r, tna: e.target.value }))}
+                  />
+                  <Button variant="ghost" size="md" type="button" onClick={addRateChange} className={styles.rateAddBtn}>Aplicar</Button>
+                </div>
+              ) : (
+                <span className={styles.summarySub}>No quedan cuotas sin debitar.</span>
+              )}
+              <span className={styles.summarySub}>
+                Las cuotas que faltan se recalculan sobre el capital que debés a ese momento. Las ya debitadas no cambian.
+              </span>
+            </div>
+          )}
         </>
       )}
 
@@ -216,11 +275,16 @@ export default function LoanModal({ onClose, initial = null }) {
           {showSchedule && (
             <div className={styles.schedule}>
               {schedule.map(c => (
-                <div key={c.n} className={`${styles.schedRow} ${c.paid ? styles.schedPaid : ''}`}>
-                  <span>{c.n}/{loan.cuotas}</span>
-                  <span>{formatDate(c.date)} {c.date.slice(0, 4)}</span>
-                  <span>{fmt2(c.amount)}{c.paid ? ' ✓' : ''}</span>
-                </div>
+                <Fragment key={c.n}>
+                  {form.mode === 'tna' && rateChanges.some(r => r.fromCuota === c.n) && (
+                    <div className={styles.schedRate}>Desde acá: TNA {tnaForCuota(loan, c.n)}%</div>
+                  )}
+                  <div className={`${styles.schedRow} ${c.paid ? styles.schedPaid : ''}`}>
+                    <span>{c.n}/{loan.cuotas}</span>
+                    <span>{formatDate(c.date)} {c.date.slice(0, 4)}</span>
+                    <span>{fmt2(c.amount)}{c.paid ? ' ✓' : ''}</span>
+                  </div>
+                </Fragment>
               ))}
             </div>
           )}

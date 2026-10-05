@@ -36,19 +36,47 @@ export function loanDueDate(loan, n) {
   return localISO(d)
 }
 
-// Desglose de la cuota n en modo TNA (sistema francés)
+// TNA vigente para la cuota n: la inicial o el último cambio con fromCuota <= n
+export function tnaForCuota(loan, n) {
+  let tna = Number(loan.tna) || 0
+  for (const c of sortedRateChanges(loan)) if (c.fromCuota <= n) tna = c.tna
+  return tna
+}
+
+export function sortedRateChanges(loan) {
+  return [...(loan.rateChanges || [])].sort((a, b) => a.fromCuota - b.fromCuota)
+}
+
+// Cuota pura del sistema francés para un saldo, tasa mensual y cuotas restantes
+function cuotaPura(saldo, i, restantes) {
+  if (i === 0) return saldo / restantes
+  const f = Math.pow(1 + i, restantes)
+  return saldo * i * f / (f - 1)
+}
+
+// Desglose de la cuota n en modo TNA (sistema francés). Si la tasa cambia
+// (rateChanges: [{ fromCuota, tna }]), desde esa cuota se recalcula la cuota
+// pura sobre el saldo pendiente y las cuotas que quedan, como hacen los bancos.
 export function frenchCuota(loan, n) {
   const P = Number(loan.principal) || 0
   const N = Number(loan.cuotas) || 0
-  const i = (Number(loan.tna) || 0) / 100 / 12
-  if (!P || !N) return { capital: 0, interes: 0, iva: 0, total: 0 }
-  if (i === 0) return { capital: P / N, interes: 0, iva: 0, total: round2(P / N) }
-  const f = Math.pow(1 + i, N)
-  const pura = P * i * f / (f - 1)
-  const saldo = P * (f - Math.pow(1 + i, n - 1)) / (f - 1) // saldo antes de pagar la cuota n
-  const interes = saldo * i
-  const iva = loan.iva ? interes * IVA_RATE : 0
-  return { capital: pura - interes, interes, iva, total: round2(pura + iva) }
+  if (!P || !N || n < 1 || n > N) return { capital: 0, interes: 0, iva: 0, total: 0, tna: 0 }
+  let saldo = P
+  let i = tnaForCuota(loan, 1) / 100 / 12
+  let pura = cuotaPura(saldo, i, N)
+  for (let k = 1; ; k++) {
+    const tna = tnaForCuota(loan, k)
+    if (k > 1 && tna / 100 / 12 !== i) {
+      i = tna / 100 / 12
+      pura = cuotaPura(saldo, i, N - k + 1)
+    }
+    const interes = saldo * i
+    if (k === n) {
+      const iva = loan.iva ? interes * IVA_RATE : 0
+      return { capital: pura - interes, interes, iva, total: round2(pura + iva), tna }
+    }
+    saldo -= pura - interes
+  }
 }
 
 export function loanCuotaAmount(loan, n) {
