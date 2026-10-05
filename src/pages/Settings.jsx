@@ -138,7 +138,11 @@ export default function Settings() {
               La cuenta es opcional: solo sirve para sincronizar.
             </div>
             <div className={styles.aboutVersion}>v1.1.0 — PWA</div>
-            <a className={styles.aboutLink} href="/privacidad.html">Política de privacidad</a>
+            <div>
+              <a className={styles.aboutLink} href="/privacidad.html">Política de privacidad</a>
+              {' · '}
+              <a className={styles.aboutLink} href="/terminos.html">Condiciones del servicio</a>
+            </div>
           </div>
         </Card>
       </Section>
