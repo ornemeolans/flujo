@@ -1,4 +1,5 @@
-# PWA + API en un solo contenedor. Los datos (SQLite) van en /data: montar un volumen ahí.
+# PWA + API en un solo contenedor. Los datos (SQLite) van en /data: montar un volumen ahí
+# (Railway no admite la instrucción VOLUME; se agrega desde el panel, o con -v en docker run).
 FROM node:24-slim AS build
 WORKDIR /app
 COPY package.json package-lock.json ./
@@ -17,7 +18,6 @@ COPY server/package.json server/package-lock.json ./server/
 RUN cd server && npm ci --omit=dev
 COPY server/src ./server/src
 COPY --from=build /app/dist ./dist
-VOLUME /data
 EXPOSE 3001
 WORKDIR /app/server
 CMD ["node", "src/index.js"]
