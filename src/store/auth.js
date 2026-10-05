@@ -90,6 +90,12 @@ export const useAuth = create((set, get) => ({
     await useStore.getState().refresh()
   },
 
+  // Borra la cuenta y sus datos del servidor, y los datos de este dispositivo
+  async deleteAccount() {
+    await api('/auth/delete-account', { body: {}, token: get().token })
+    await get().logout({ force: true })
+  },
+
   syncNow,
 }))
 

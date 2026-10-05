@@ -126,3 +126,4 @@
   margin: 14px auto 0;
   font-size: 13px;
 }
+.deleteLink { color: var(--red); font-size: 12px; font-weight: 400; }

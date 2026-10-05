@@ -15,7 +15,7 @@ export default function AccountSection() {
 
 // ─── Con sesión ──────────────────────────────────────────────
 function SignedIn() {
-  const { user, syncing, syncError, lastSyncAt, syncNow, logout, resendVerification } = useAuth()
+  const { user, syncing, syncError, lastSyncAt, syncNow, logout, deleteAccount, resendVerification } = useAuth()
   const [busy, setBusy] = useState(false)
   const [verifyMsg, setVerifyMsg] = useState(null)
 
@@ -38,6 +38,18 @@ function SignedIn() {
       if (confirm(`${e.message}\n\n¿Cerrar sesión igual? Se perderán los cambios no sincronizados.`)) {
         await logout({ force: true })
       }
+    }
+    setBusy(false)
+  }
+
+  async function handleDeleteAccount() {
+    if (!confirm('¿Eliminar tu cuenta? Se borran tu cuenta y todos tus datos del servidor y de este dispositivo. No se puede deshacer.\n\nSi querés conservar tus datos, primero exportá un backup.')) return
+    if (prompt('Para confirmar, escribí ELIMINAR') !== 'ELIMINAR') return
+    setBusy(true)
+    try {
+      await deleteAccount()
+    } catch (e) {
+      alert(`No se pudo eliminar la cuenta: ${e.message}`)
     }
     setBusy(false)
   }
@@ -70,6 +82,10 @@ function SignedIn() {
         <Button variant="ghost" size="md" onClick={() => syncNow()} disabled={syncing}>Sincronizar ahora</Button>
         <Button variant="danger" size="md" onClick={handleLogout} disabled={busy}>Cerrar sesión</Button>
       </div>
+
+      <button className={`${styles.link} ${styles.linkBlock} ${styles.deleteLink}`} onClick={handleDeleteAccount} disabled={busy}>
+        Eliminar mi cuenta
+      </button>
     </>
   )
 }

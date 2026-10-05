@@ -153,3 +153,21 @@ test('límite de intentos de login', async () => {
   assert.deepEqual([await post(), await post(), await post()], [401, 401, 429])
   srv.close()
 })
+
+test('eliminar cuenta: borra el usuario y sus datos', async () => {
+  const reg = await call('/auth/register', { body: { email: 'chau@mail.com', password: 'secreta123' } })
+  const token = reg.body.token
+  await call('/sync', { token, body: { since: 0, changes: [{ store: 'loans', record: { id: 'l1', updatedAt: 1, deletedAt: null } }] } })
+
+  assert.equal((await call('/auth/delete-account', { body: {} })).status, 401)
+  assert.equal((await call('/auth/delete-account', { token, body: {} })).status, 200)
+
+  assert.equal((await call('/auth/me', { token })).status, 401)
+  assert.equal((await call('/auth/login', { body: { email: 'chau@mail.com', password: 'secreta123' } })).status, 401)
+
+  // El email queda libre y la cuenta nueva arranca vacía
+  const again = await call('/auth/register', { body: { email: 'chau@mail.com', password: 'secreta123' } })
+  assert.equal(again.status, 201)
+  const pulled = await call('/sync', { token: again.body.token, body: { since: 0, changes: [] } })
+  assert.deepEqual(pulled.body.changes, [])
+})

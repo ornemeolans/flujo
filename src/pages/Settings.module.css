@@ -109,3 +109,4 @@
   color: var(--accent);
   text-decoration: underline;
 }
+.aboutLink { display: inline-block; margin-top: 10px; font-size: 12px; color: var(--accent); text-decoration: underline; }

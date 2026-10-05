@@ -53,6 +53,7 @@ export function createApp({ db, jwtSecret, appUrl, sendMail, googleClientId, cor
     dropPassword: db.prepare('UPDATE users SET password_hash = NULL, session_version = session_version + 1 WHERE id = ?'),
     setPassword: db.prepare('UPDATE users SET password_hash = ?, email_verified = 1, session_version = session_version + 1 WHERE id = ?'),
     markVerified: db.prepare('UPDATE users SET email_verified = 1 WHERE id = ?'),
+    deleteUser: db.prepare('DELETE FROM users WHERE id = ?'),
     insertToken: db.prepare('INSERT INTO auth_tokens (token_hash, user_id, kind, expires_at) VALUES (?, ?, ?, ?)'),
     takeToken: db.prepare('DELETE FROM auth_tokens WHERE token_hash = ? AND kind = ? RETURNING user_id, expires_at'),
     clearTokens: db.prepare('DELETE FROM auth_tokens WHERE user_id = ? AND kind = ?'),
@@ -192,6 +193,12 @@ export function createApp({ db, jwtSecret, appUrl, sendMail, googleClientId, cor
 
   app.get('/api/auth/me', auth, (req, res) => {
     res.json({ user: publicUser(req.user) })
+  })
+
+  // Elimina la cuenta: sus registros y tokens se borran en cascada
+  app.post('/api/auth/delete-account', auth, (req, res) => {
+    q.deleteUser.run(req.userId)
+    res.json({ ok: true })
   })
 
   // ─── Verificación de email ────────────────────────────────

@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Política de privacidad · Flujo</title>
+  <meta name="description" content="Qué datos guarda Flujo, para qué los usa y cómo borrarlos." />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #EAEAE6; --surface: #F6F5F1; --text: #1C2A2E; --text2: #5B6B6D;
+      --accent: #127684; --border: rgba(28,42,46,0.10);
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        color-scheme: dark;
+        --bg: #0E1F23; --surface: #152C32; --text: #EAEAE6; --text2: #9FB3B3;
+        --accent: #2BB0C4; --border: rgba(234,234,230,0.10);
+      }
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'DM Sans', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.65;
+      font-size: 16px;
+      -webkit-font-smoothing: antialiased;
+    }
+    main { max-width: 680px; margin: 0 auto; padding: 40px 16px 64px; }
+    .logo { font-family: 'DM Serif Display', serif; font-size: 30px; color: var(--text); text-decoration: none; }
+    .logo span { color: var(--accent); }
+    h1 { font-family: 'DM Serif Display', serif; font-weight: 400; font-size: 34px; line-height: 1.2; margin: 28px 0 6px; }
+    .updated { color: var(--text2); font-size: 14px; margin-bottom: 28px; }
+    section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 20px;
+      margin-bottom: 12px;
+    }
+    h2 { font-size: 17px; font-weight: 600; margin-bottom: 8px; }
+    p + p, p + ul, ul + p { margin-top: 10px; }
+    ul { padding-left: 20px; }
+    li + li { margin-top: 4px; }
+    a { color: var(--accent); }
+    .back { display: inline-block; margin-top: 24px; font-weight: 500; }
+  </style>
+</head>
+<body>
+  <main>
+    <a class="logo" href="/">flu<span>jo</span></a>
+
+    <h1>Política de privacidad</h1>
+    <p class="updated">Última actualización: 5 de octubre de 2026</p>
+
+    <section>
+      <h2>En pocas palabras</h2>
+      <p>
+        Flujo es una app para controlar tus gastos. Tus datos son tuyos: no los vendemos, no los
+        compartimos con nadie para publicidad y solo los usamos para que la app funcione.
+      </p>
+    </section>
+
+    <section>
+      <h2>Si usás la app sin cuenta</h2>
+      <p>
+        Todo lo que cargás (billeteras, tarjetas, movimientos y préstamos) se guarda únicamente en tu
+        dispositivo, en el almacenamiento del navegador. No se envía a ningún servidor.
+      </p>
+    </section>
+
+    <section>
+      <h2>Si creás una cuenta</h2>
+      <p>La cuenta es opcional y sirve para sincronizar tus datos entre dispositivos. En ese caso guardamos:</p>
+      <ul>
+        <li><strong>Datos de la cuenta:</strong> tu email y tu nombre.</li>
+        <li><strong>Contraseña</strong>, si te registrás con email: se guarda cifrada con un algoritmo de hash (scrypt), nunca en texto plano.</li>
+        <li><strong>Si entrás con Google:</strong> recibimos de Google solo tu nombre, tu email y un identificador de tu cuenta. No accedemos a tu Gmail, tus contactos, tu Drive ni a ningún otro dato de Google.</li>
+        <li><strong>Tus datos financieros:</strong> las billeteras, tarjetas, movimientos y préstamos que cargás, para poder sincronizarlos.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>Para qué los usamos</h2>
+      <ul>
+        <li>Para que puedas iniciar sesión y ver tus datos en todos tus dispositivos.</li>
+        <li>Para enviarte emails de la cuenta: confirmar tu email y recuperar tu contraseña. No enviamos publicidad.</li>
+      </ul>
+      <p>No usamos tus datos para publicidad, no los vendemos y no los usamos para entrenar modelos ni para análisis de terceros.</p>
+    </section>
+
+    <section>
+      <h2>Con quién se comparten</h2>
+      <p>Solo con los servicios que hacen funcionar la app, y únicamente lo necesario:</p>
+      <ul>
+        <li><strong>Railway:</strong> aloja el servidor y la base de datos.</li>
+        <li><strong>Resend:</strong> envía los emails de la cuenta (recibe tu email y el contenido del mensaje).</li>
+        <li><strong>Google:</strong> si elegís iniciar sesión con Google. El botón lo provee Google y se rige por su propia política de privacidad.</li>
+      </ul>
+      <p>Estos servicios pueden almacenar los datos en servidores fuera de Argentina.</p>
+    </section>
+
+    <section>
+      <h2>Seguridad</h2>
+      <p>
+        La conexión con el servidor está cifrada (HTTPS), las contraseñas se guardan con hash y cada
+        cuenta solo puede acceder a sus propios datos.
+      </p>
+    </section>
+
+    <section>
+      <h2>Cómo borrar tus datos</h2>
+      <ul>
+        <li><strong>Eliminar tu cuenta:</strong> en la app, andá a Config → Cuenta → <em>Eliminar mi cuenta</em>. Se borran de inmediato tu cuenta y todos tus datos del servidor.</li>
+        <li><strong>Datos del dispositivo:</strong> Config → <em>Borrar todos los datos</em>, o borrando los datos del sitio en tu navegador.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>Tus derechos</h2>
+      <p>
+        De acuerdo con la Ley 25.326 de Protección de Datos Personales, podés pedir acceso, rectificación
+        o supresión de tus datos escribiendo al contacto de abajo. Si no recibís respuesta, podés presentar
+        un reclamo ante la Agencia de Acceso a la Información Pública (AAIP), autoridad de control de la ley.
+      </p>
+    </section>
+
+    <section>
+      <h2>Almacenamiento local y cookies</h2>
+      <p>
+        La app usa el almacenamiento del navegador para guardar tus datos y tu sesión. No usamos cookies
+        de seguimiento ni herramientas de analítica.
+      </p>
+    </section>
+
+    <section>
+      <h2>Cambios y contacto</h2>
+      <p>
+        Si cambiamos esta política, vamos a actualizar la fecha de arriba. Para cualquier consulta sobre
+        tus datos, escribinos a <a href="mailto:ornellameolans@gmail.com">ornellameolans@gmail.com</a>.
+      </p>
+    </section>
+
+    <a class="back" href="/">← Volver a Flujo</a>
+  </main>
+</body>
+</html>
