@@ -1,0 +1,91 @@
+.walletCard {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin-bottom: 8px;
+  cursor: pointer;
+  transition: all 0.18s;
+}
+.walletCard:hover { border-color: var(--border2); background: var(--surface2); }
+
+.icon {
+  width: 42px; height: 42px;
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 19px;
+  flex-shrink: 0;
+}
+.info { flex: 1; min-width: 0; }
+.name { font-size: 15px; font-weight: 500; }
+.sub  { font-size: 11px; color: var(--text3); font-family: var(--font-mono); margin-top: 2px; }
+.tna  { font-size: 10px; color: var(--accent); font-family: var(--font-mono); margin-top: 2px; }
+.right { text-align: right; }
+.bal   { font-family: var(--font-mono); font-size: 15px; font-weight: 500; }
+.neg   { color: var(--red); }
+.yield { font-size: 10px; color: var(--accent); font-family: var(--font-mono); margin-top: 2px; }
+
+.ccCard {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px;
+  margin-bottom: 8px;
+  cursor: pointer;
+  transition: all 0.18s;
+}
+.ccCard:hover { border-color: var(--border2); background: var(--surface2); }
+.ccHead { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+.ccPills { display: flex; gap: 8px; }
+.ccPill {
+  flex: 1;
+  background: var(--surface3);
+  border-radius: 8px;
+  padding: 9px 11px;
+}
+.pillLbl { font-size: 9px; color: var(--text3); font-family: var(--font-mono); text-transform: uppercase; margin-bottom: 3px; }
+.pillVal { font-size: 14px; font-weight: 500; font-family: var(--font-mono); }
+
+/* ─── Transfer button ─── */
+.transferBtn {
+  width: 100%;
+  margin-top: 8px;
+  padding: 11px;
+  border-radius: var(--radius);
+  border: 1px dashed var(--border2);
+  background: none;
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 500;
+  font-family: 'DM Sans', sans-serif;
+  cursor: pointer;
+  transition: all 0.18s;
+  letter-spacing: 0.2px;
+}
+.transferBtn:hover {
+  background: var(--accent-dim);
+  border-color: var(--accent);
+}
+
+/* ─── Pay button ─── */
+.payBtn {
+  width: 100%;
+  margin-top: 10px;
+  padding: 10px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--purple);
+  background: var(--purple-dim);
+  color: var(--purple);
+  font-size: 13px;
+  font-weight: 500;
+  font-family: 'DM Sans', sans-serif;
+  cursor: pointer;
+  transition: all 0.18s;
+}
+.payBtn:hover {
+  background: var(--purple);
+  color: white;
+}

@@ -1,0 +1,128 @@
+.desc {
+  font-size: 13px;
+  color: var(--text2);
+  line-height: 1.6;
+  margin-bottom: 16px;
+}
+
+.google {
+  display: flex;
+  justify-content: center;
+  min-height: 44px;
+  align-items: center;
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 16px 0;
+  font-size: 10px;
+  font-family: var(--font-mono);
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
+.divider::before,
+.divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border2);
+}
+
+.tabs {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  margin-bottom: 16px;
+  background: var(--surface2);
+  border-radius: var(--radius-sm);
+}
+.tabs button {
+  flex: 1;
+  padding: 8px;
+  border: none;
+  border-radius: 6px;
+  background: none;
+  color: var(--text2);
+  font-size: 13px;
+  font-weight: 500;
+}
+.tabs .tabOn {
+  background: var(--surface4);
+  color: var(--text);
+}
+
+.error {
+  font-size: 13px;
+  color: var(--red);
+  background: var(--red-dim);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+  margin-bottom: 12px;
+}
+
+.submit { width: 100%; }
+
+.userRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--accent-dim);
+  color: var(--accent);
+  font-weight: 600;
+  flex-shrink: 0;
+}
+.userInfo { min-width: 0; }
+.userName { font-weight: 500; overflow: hidden; text-overflow: ellipsis; }
+.userEmail { font-size: 12px; color: var(--text2); overflow: hidden; text-overflow: ellipsis; }
+
+.syncStatus {
+  font-size: 12px;
+  font-family: var(--font-mono);
+  color: var(--accent);
+  margin-bottom: 16px;
+}
+.syncError { color: var(--red); }
+
+.actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.actions > * { flex: 1; }
+
+.notice {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--gold);
+  background: var(--gold-dim);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+  margin-bottom: 12px;
+}
+
+.link {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--accent);
+  font-size: inherit;
+  font-weight: 500;
+  text-decoration: underline;
+}
+.linkBlock {
+  display: block;
+  margin: 14px auto 0;
+  font-size: 13px;
+}

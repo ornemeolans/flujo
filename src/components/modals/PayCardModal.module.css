@@ -1,0 +1,61 @@
+    .summary {
+        background: var(--surface2);
+        border-radius: var(--radius);
+        padding: 16px;
+        margin-bottom: 16px;
+        text-align: center;
+    }
+
+    .summaryRow {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 8px;
+    }
+
+    .summaryLabel {
+        font-size: 11px;
+        font-family: var(--font-mono);
+        color: var(--text3);
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+    }
+
+    .summaryPeriod {
+        font-size: 11px;
+        font-family: var(--font-mono);
+        color: var(--text2);
+    }
+
+    .totalAmount {
+        font-family: var(--font-serif);
+        font-size: 38px;
+        color: var(--red);
+        line-height: 1;
+    }
+
+    .zeroBadge {
+        margin-top: 8px;
+        font-size: 12px;
+        color: var(--text3);
+        font-family: var(--font-mono);
+    }
+
+    .warning {
+        background: var(--gold-dim);
+        border: 1px solid var(--gold);
+        color: var(--gold);
+        border-radius: var(--radius-sm);
+        padding: 10px 12px;
+        font-size: 13px;
+        margin-bottom: 12px;
+    }
+
+    .notice {
+        font-size: 12px;
+        color: var(--text3);
+        line-height: 1.6;
+        margin-bottom: 4px;
+        padding: 10px 12px;
+        background: var(--surface2);
+        border-radius: var(--radius-sm);
+    }

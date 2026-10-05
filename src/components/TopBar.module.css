@@ -1,0 +1,33 @@
+.bar {
+  position: sticky;
+  top: 0;
+  z-index: 80;
+  padding: 16px 20px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: linear-gradient(to bottom, var(--bg) 60%, transparent);
+}
+
+.logo {
+  font-family: var(--font-serif);
+  font-size: 26px;
+  letter-spacing: -0.5px;
+  color: var(--text);
+}
+.logo span { color: var(--accent); }
+
+.monthBtn {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text2);
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  padding: 6px 12px;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: border-color 0.2s, color 0.2s;
+}
+.monthBtn:hover { border-color: var(--border3); color: var(--text); }

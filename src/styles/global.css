@@ -1,0 +1,104 @@
+/* ─── Reset ──────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; -webkit-tap-highlight-color: transparent; }
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  min-height: 100dvh;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+#root { min-height: 100vh; min-height: 100dvh; }
+input, select, button, textarea { font-family: inherit; }
+button { cursor: pointer; }
+a { color: inherit; text-decoration: none; }
+
+/* ─── Design Tokens ──────────────────────────────────────── */
+:root {
+  /* ── Paleta Aurora ─────────────────────────────────── */
+  /* Blue Earth   #3B5275  |  Rusty Tap    #709AA8       */
+  /* Lusty Lav.   #8F57B3  |  Hei Se Blk  #17222D       */
+  /* Green Gum    #94DFBD                                 */
+
+  --bg:          #17222D;
+  --surface:     #1e2e3d;
+  --surface2:    #253545;
+  --surface3:    #2e404f;
+  --surface4:    #3B5275;
+  --border:      rgba(112,154,168,0.12);
+  --border2:     rgba(112,154,168,0.22);
+  --border3:     rgba(148,223,189,0.35);
+  --text:        #e8f0f4;
+  --text2:       #709AA8;
+  --text3:       #4a6878;
+
+  --accent:      #94DFBD;
+  --accent2:     #6ecfa5;
+  --accent-dim:  rgba(148,223,189,0.12);
+
+  --purple:      #8F57B3;
+  --purple2:     #7a46a0;
+  --purple-dim:  rgba(143,87,179,0.15);
+
+  --blue:        #709AA8;
+  --blue-dim:    rgba(112,154,168,0.15);
+
+  --earth:       #3B5275;
+  --earth-dim:   rgba(59,82,117,0.25);
+
+  --red:         #e06b8a;
+  --red-dim:     rgba(224,107,138,0.12);
+
+  --gold:        #f0c070;
+  --gold-dim:    rgba(240,192,112,0.12);
+
+  --radius:      14px;
+  --radius-sm:   8px;
+  --radius-lg:   20px;
+  --shadow:      0 8px 32px rgba(0,0,0,0.5);
+  --shadow-sm:   0 2px 12px rgba(0,0,0,0.35);
+  --font-serif:  'DM Serif Display', serif;
+  --font-mono:   'DM Mono', monospace;
+  --nav-height:  80px;
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* ─── Scrollbar ──────────────────────────────────────────── */
+::-webkit-scrollbar { width: 3px; height: 3px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--surface4); border-radius: 2px; }
+
+/* ─── Animations ─────────────────────────────────────────── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(100%); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.4; }
+}
+
+.animate-fadeUp  { animation: fadeUp  0.3s cubic-bezier(0.34,1.56,0.64,1) both; }
+.animate-slideUp { animation: slideUp 0.35s cubic-bezier(0.34,1.2,0.64,1) both; }
+.animate-fadeIn  { animation: fadeIn  0.2s ease both; }
+
+/* ─── Utility ────────────────────────────────────────────── */
+.mono { font-family: var(--font-mono); }
+.serif { font-family: var(--font-serif); }
+.text-accent  { color: var(--accent); }
+.text-red     { color: var(--red); }
+.text-muted   { color: var(--text2); }
+.text-faint   { color: var(--text3); }

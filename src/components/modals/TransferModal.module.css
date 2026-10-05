@@ -1,0 +1,28 @@
+.flow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+  padding: 14px;
+  background: var(--surface2);
+  border-radius: var(--radius);
+}
+
+.flowBox {
+  flex: 1;
+  text-align: center;
+  border: 1px solid var(--border2);
+  border-radius: var(--radius-sm);
+  padding: 10px 8px;
+  transition: border-color 0.2s;
+}
+
+.flowIcon { font-size: 22px; margin-bottom: 4px; }
+.flowName { font-size: 12px; font-weight: 500; }
+.flowBal  { font-size: 11px; color: var(--text2); font-family: var(--font-mono); margin-top: 2px; }
+
+.flowArrow {
+  font-size: 20px;
+  color: var(--accent);
+  flex-shrink: 0;
+}

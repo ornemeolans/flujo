@@ -1,0 +1,12 @@
+.formGroup { margin-bottom: 16px; }
+.label {
+  display: block;
+  font-size: 10px;
+  font-family: var(--font-mono);
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  margin-bottom: 6px;
+}
+.actions { display: flex; gap: 10px; margin-top: 16px; align-items: center; }
+.saveBtn { flex: 1; }
