@@ -16,53 +16,101 @@ button { cursor: pointer; }
 a { color: inherit; text-decoration: none; }
 
 /* ─── Design Tokens ──────────────────────────────────────── */
+/* ── Paleta Ibiza ───────────────────────────────────────── */
+/* Ibiza White          #EAEAE6  |  Esparto Beige     #C2A878 */
+/* Bougainvillea Purple #A3296B  |  Cove Turquoise    #178C9E */
+/* Claro por defecto; oscuro según la preferencia del sistema. */
 :root {
-  /* ── Paleta Aurora ─────────────────────────────────── */
-  /* Blue Earth   #3B5275  |  Rusty Tap    #709AA8       */
-  /* Lusty Lav.   #8F57B3  |  Hei Se Blk  #17222D       */
-  /* Green Gum    #94DFBD                                 */
+  color-scheme: light;
 
-  --bg:          #17222D;
-  --surface:     #1e2e3d;
-  --surface2:    #253545;
-  --surface3:    #2e404f;
-  --surface4:    #3B5275;
-  --border:      rgba(112,154,168,0.12);
-  --border2:     rgba(112,154,168,0.22);
-  --border3:     rgba(148,223,189,0.35);
-  --text:        #e8f0f4;
-  --text2:       #709AA8;
-  --text3:       #4a6878;
+  --bg:          #EAEAE6;
+  --surface:     #F6F5F1;
+  --surface2:    #EFEEE9;
+  --surface3:    #E2E0D8;
+  --surface4:    #D3CEC0;
+  --border:      rgba(28,42,46,0.08);
+  --border2:     rgba(28,42,46,0.15);
+  --border3:     rgba(23,140,158,0.40);
+  --text:        #1C2A2E;
+  --text2:       #5B6B6D;
+  --text3:       #7E8A8B;
 
-  --accent:      #94DFBD;
-  --accent2:     #6ecfa5;
-  --accent-dim:  rgba(148,223,189,0.12);
+  --accent:      #127684;
+  --accent2:     #178C9E;
+  --accent-dim:  rgba(23,140,158,0.12);
 
-  --purple:      #8F57B3;
-  --purple2:     #7a46a0;
-  --purple-dim:  rgba(143,87,179,0.15);
+  --purple:      #A3296B;
+  --purple2:     #8A1F59;
+  --purple-dim:  rgba(163,41,107,0.10);
+  --purple-glow: rgba(163,41,107,0.35);
 
-  --blue:        #709AA8;
-  --blue-dim:    rgba(112,154,168,0.15);
+  --blue:        #3E7A84;
+  --blue-dim:    rgba(23,140,158,0.10);
 
-  --earth:       #3B5275;
-  --earth-dim:   rgba(59,82,117,0.25);
+  --earth:       #C2A878;
+  --earth-dim:   rgba(194,168,120,0.25);
 
-  --red:         #e06b8a;
-  --red-dim:     rgba(224,107,138,0.12);
+  --red:         #A3296B;
+  --red-dim:     rgba(163,41,107,0.10);
 
-  --gold:        #f0c070;
-  --gold-dim:    rgba(240,192,112,0.12);
+  --gold:        #866D3A;
+  --gold-dim:    rgba(194,168,120,0.22);
+
+  --overlay:     rgba(28,42,46,0.45);
 
   --radius:      14px;
   --radius-sm:   8px;
   --radius-lg:   20px;
-  --shadow:      0 8px 32px rgba(0,0,0,0.5);
-  --shadow-sm:   0 2px 12px rgba(0,0,0,0.35);
+  --shadow:      0 8px 32px rgba(28,42,46,0.14);
+  --shadow-sm:   0 2px 12px rgba(28,42,46,0.08);
   --font-serif:  'DM Serif Display', serif;
   --font-mono:   'DM Mono', monospace;
   --nav-height:  80px;
   --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+
+    --bg:          #0E1F23;
+    --surface:     #152C32;
+    --surface2:    #1B363D;
+    --surface3:    #234249;
+    --surface4:    #2D525B;
+    --border:      rgba(234,234,230,0.08);
+    --border2:     rgba(234,234,230,0.15);
+    --border3:     rgba(43,176,196,0.40);
+    --text:        #EAEAE6;
+    --text2:       #9FB3B3;
+    --text3:       #6A8183;
+
+    --accent:      #2BB0C4;
+    --accent2:     #178C9E;
+    --accent-dim:  rgba(43,176,196,0.14);
+
+    --purple:      #A3296B;
+    --purple2:     #8A1F59;
+    --purple-dim:  rgba(222,106,168,0.15);
+    --purple-glow: rgba(163,41,107,0.55);
+
+    --blue:        #7FB0B8;
+    --blue-dim:    rgba(127,176,184,0.15);
+
+    --earth:       #C2A878;
+    --earth-dim:   rgba(194,168,120,0.20);
+
+    --red:         #DE6AA8;
+    --red-dim:     rgba(222,106,168,0.14);
+
+    --gold:        #C2A878;
+    --gold-dim:    rgba(194,168,120,0.15);
+
+    --overlay:     rgba(0,0,0,0.65);
+
+    --shadow:      0 8px 32px rgba(0,0,0,0.5);
+    --shadow-sm:   0 2px 12px rgba(0,0,0,0.35);
+  }
 }
 
 /* ─── Scrollbar ──────────────────────────────────────────── */

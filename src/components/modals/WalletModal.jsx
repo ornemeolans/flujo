@@ -6,7 +6,7 @@ import styles from './WalletModal.module.css'
 
 const DEFAULT = {
   name: '', type: 'cash', initialBalance: '',
-  icon: '💵', color: '#c8f55a',
+  icon: '💵', color: '#178C9E',
   tnaEnabled: false, tna: '',
 }
 

@@ -71,7 +71,7 @@ function WalletCard({ wallet, transactions, onClick }) {
   const yield_ = selectors.walletMonthlyYield(wallet, transactions)
   return (
     <div className={styles.walletCard} onClick={onClick}>
-      <div className={styles.icon} style={{ background: `${wallet.color||'#94DFBD'}18`, color: wallet.color||'#94DFBD' }}>
+      <div className={styles.icon} style={{ background: `${wallet.color||'#178C9E'}18`, color: wallet.color||'#178C9E' }}>
         {wallet.icon || '💵'}
       </div>
       <div className={styles.info}>
@@ -96,7 +96,7 @@ function CCCard({ card, transactions, onClick, onPay }) {
   return (
     <div className={styles.ccCard}>
       <div className={styles.ccHead} onClick={onClick}>
-        <div className={styles.icon} style={{ background: `${card.color||'#709AA8'}18`, color: card.color||'#709AA8' }}>
+        <div className={styles.icon} style={{ background: `${card.color||'#A3296B'}18`, color: card.color||'#A3296B' }}>
           {card.icon || '💳'}
         </div>
         <div className={styles.info}>

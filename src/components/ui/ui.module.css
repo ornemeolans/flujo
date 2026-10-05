@@ -157,7 +157,7 @@ select.input option { background: var(--surface2); }
   position: fixed;
   inset: 0;
   z-index: 998;
-  background: rgba(0,0,0,0.7);
+  background: var(--overlay);
   backdrop-filter: blur(6px);
 }
 
@@ -254,7 +254,7 @@ select.input option { background: var(--surface2); }
   border: 2px solid transparent;
   transition: transform 0.15s, border-color 0.15s;
 }
-.colorDotSelected { border-color: white; transform: scale(1.2); }
+.colorDotSelected { border-color: var(--text); transform: scale(1.2); }
 
 /* ─── Icon Grid ──────────────────────────────────────── */
 .iconGrid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 7px; }

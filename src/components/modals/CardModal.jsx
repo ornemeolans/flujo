@@ -4,7 +4,7 @@ import { Modal, Input, Button, ColorGrid, IconGrid } from '@/components/ui'
 import { CARD_ICONS, PALETTE } from '@/utils'
 import styles from './CardModal.module.css'
 
-const DEFAULT = { name: '', closeDay: '', icon: '💳', color: '#5ab4ff' }
+const DEFAULT = { name: '', closeDay: '', icon: '💳', color: '#A3296B' }
 
 export default function CardModal({ onClose, initial = null }) {
   const { saveCard, deleteCard } = useStore()

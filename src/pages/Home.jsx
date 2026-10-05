@@ -136,7 +136,7 @@ function WalletRow({ wallet, transactions, onClick }) {
   const yield_ = selectors.walletMonthlyYield(wallet, transactions)
   return (
     <div className={styles.walletRow} onClick={onClick}>
-      <div className={styles.walletIcon} style={{ background: `${wallet.color || '#c8f55a'}18`, color: wallet.color || '#c8f55a' }}>
+      <div className={styles.walletIcon} style={{ background: `${wallet.color || '#178C9E'}18`, color: wallet.color || '#178C9E' }}>
         {wallet.icon || '💵'}
       </div>
       <div className={styles.walletInfo}>
@@ -160,7 +160,7 @@ function CCRow({ card, transactions, currentMonth, currentYear, onClick }) {
   return (
     <div className={styles.ccRow} onClick={onClick}>
       <div className={styles.ccHeader}>
-        <div className={styles.walletIcon} style={{ background: `${card.color || '#5ab4ff'}18`, color: card.color || '#5ab4ff' }}>
+        <div className={styles.walletIcon} style={{ background: `${card.color || '#A3296B'}18`, color: card.color || '#A3296B' }}>
           {card.icon || '💳'}
         </div>
         <div>

@@ -27,20 +27,20 @@ export function formatDate(dateStr) {
 
 // ─── Categories ──────────────────────────────────────────────
 export const CATEGORIES = [
-  { id: 'food',          icon: '🍔', label: 'Comida',       color: '#94DFBD' },
-  { id: 'transport',     icon: '🚗', label: 'Transporte',   color: '#709AA8' },
-  { id: 'home',          icon: '🏠', label: 'Hogar',        color: '#8F57B3' },
-  { id: 'health',        icon: '🏥', label: 'Salud',        color: '#94DFBD' },
-  { id: 'entertainment', icon: '🎬', label: 'Ocio',         color: '#8F57B3' },
-  { id: 'clothes',       icon: '👕', label: 'Ropa',         color: '#709AA8' },
-  { id: 'tech',          icon: '💻', label: 'Tecnología',   color: '#94DFBD' },
-  { id: 'education',     icon: '📚', label: 'Educación',    color: '#3B5275' },
-  { id: 'travel',        icon: '✈️', label: 'Viajes',       color: '#8F57B3' },
-  { id: 'services',      icon: '💡', label: 'Servicios',    color: '#709AA8' },
-  { id: 'salary',        icon: '💼', label: 'Sueldo',       color: '#94DFBD' },
-  { id: 'yield',         icon: '📈', label: 'Rendimiento',  color: '#94DFBD' },
-  { id: 'transfer',      icon: '↔️', label: 'Transferencia', color: '#709AA8' },
-  { id: 'other',         icon: '📦', label: 'Otro',         color: '#3B5275' },
+  { id: 'food',          icon: '🍔', label: 'Comida',       color: '#178C9E' },
+  { id: 'transport',     icon: '🚗', label: 'Transporte',   color: '#C2A878' },
+  { id: 'home',          icon: '🏠', label: 'Hogar',        color: '#A3296B' },
+  { id: 'health',        icon: '🏥', label: 'Salud',        color: '#4F9A7A' },
+  { id: 'entertainment', icon: '🎬', label: 'Ocio',         color: '#D2559A' },
+  { id: 'clothes',       icon: '👕', label: 'Ropa',         color: '#C7754F' },
+  { id: 'tech',          icon: '💻', label: 'Tecnología',   color: '#2BB0C4' },
+  { id: 'education',     icon: '📚', label: 'Educación',    color: '#3A6E8F' },
+  { id: 'travel',        icon: '✈️', label: 'Viajes',       color: '#7D5BA6' },
+  { id: 'services',      icon: '💡', label: 'Servicios',    color: '#B08D4F' },
+  { id: 'salary',        icon: '💼', label: 'Sueldo',       color: '#178C9E' },
+  { id: 'yield',         icon: '📈', label: 'Rendimiento',  color: '#2E9E8A' },
+  { id: 'transfer',      icon: '↔️', label: 'Transferencia', color: '#7F9496' },
+  { id: 'other',         icon: '📦', label: 'Otro',         color: '#9A8F7A' },
 ]
 
 export function getCat(id) {
@@ -60,7 +60,7 @@ export const WALLET_ICONS = ['💵','📱','🏦','💳','💰','🪙','💎','�
 export const CARD_ICONS   = ['💳','🔵','⬜','🟡','⚫','🔶','💎','🌟','🔷','🎯','🏧','💹','🟢','🔴','🟣','🟠']
 
 export const PALETTE = [
-  '#94DFBD','#8F57B3','#709AA8','#3B5275','#17222D',
-  '#6ecfa5','#7a46a0','#5a8898','#2a4060','#b87fd4',
-  '#e06b8a','#f0c070','#4a9aba','#c49fe0','#60b090',
+  '#178C9E','#A3296B','#C2A878','#2BB0C4','#D2559A',
+  '#3A6E8F','#7D5BA6','#C7754F','#4F9A7A','#B08D4F',
+  '#2E9E8A','#8A1F59','#127684','#7F9496','#9A8F7A',
 ]

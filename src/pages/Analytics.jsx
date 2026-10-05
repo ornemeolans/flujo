@@ -5,7 +5,7 @@ import { MONTHS_SHORT, getCat, fmt, fmt2 } from '@/utils'
 import { Card, Section } from '@/components/ui'
 import styles from './Analytics.module.css'
 
-const COLORS = ['#94DFBD','#8F57B3','#709AA8','#3B5275','#6ecfa5','#b87fd4','#4a9aba','#c49fe0','#60b090','#7a46a0','#5a8898','#2a4060']
+const COLORS = ['#178C9E','#A3296B','#C2A878','#2BB0C4','#D2559A','#3A6E8F','#7D5BA6','#C7754F','#4F9A7A','#B08D4F','#2E9E8A','#7F9496']
 
 export default function Analytics() {
   const { transactions, wallets, cards, currentMonth, currentYear } = useStore()
