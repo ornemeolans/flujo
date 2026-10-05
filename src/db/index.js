@@ -1,12 +1,13 @@
 import { openDB } from 'idb'
 
 const DB_NAME = 'flujo_db'
-const DB_VERSION = 2
+const DB_VERSION = 3
 
 export const STORES = {
   WALLETS: 'wallets',
   CARDS: 'cards',
   TRANSACTIONS: 'transactions',
+  LOANS: 'loans',
 }
 export const SYNCED_STORES = Object.values(STORES)
 
@@ -34,6 +35,9 @@ export function getDB() {
           ts.createIndex('walletId', 'walletId')
           ts.createIndex('type', 'type')
           ts.createIndex('category', 'category')
+        }
+        if (!db.objectStoreNames.contains(STORES.LOANS)) {
+          db.createObjectStore(STORES.LOANS, { keyPath: 'id' })
         }
 
         // v1 → v2: agregar metadatos de sincronización a los registros existentes
@@ -149,12 +153,13 @@ export async function wipeLocal() {
 
 // ─── Export / Import (backup) ───────────────────────────────
 export async function exportAllData() {
-  const [wallets, cards, transactions] = await Promise.all([
+  const [wallets, cards, transactions, loans] = await Promise.all([
     getAll(STORES.WALLETS),
     getAll(STORES.CARDS),
     getAll(STORES.TRANSACTIONS),
+    getAll(STORES.LOANS),
   ])
-  return { wallets, cards, transactions, exportedAt: new Date().toISOString(), version: DB_VERSION }
+  return { wallets, cards, transactions, loans, exportedAt: new Date().toISOString(), version: DB_VERSION }
 }
 
 // Reemplaza los datos actuales. Usa soft delete para que el reemplazo
@@ -167,6 +172,7 @@ export async function importAllData(data) {
     [STORES.WALLETS]: data.wallets ?? [],
     [STORES.CARDS]: data.cards ?? [],
     [STORES.TRANSACTIONS]: data.transactions ?? [],
+    [STORES.LOANS]: data.loans ?? [],
   }
   for (const store of SYNCED_STORES) {
     const os = tx.objectStore(store)

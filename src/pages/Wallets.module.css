@@ -89,3 +89,16 @@
   background: var(--purple);
   color: white;
 }
+/* ─── Préstamos ─── */
+.loanBar {
+  height: 4px;
+  border-radius: 2px;
+  background: var(--surface3);
+  overflow: hidden;
+  margin: -2px 0 12px;
+}
+.loanBar > div {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 2px;
+}

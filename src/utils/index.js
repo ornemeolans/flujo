@@ -40,6 +40,7 @@ export const CATEGORIES = [
   { id: 'salary',        icon: '💼', label: 'Sueldo',       color: '#178C9E' },
   { id: 'yield',         icon: '📈', label: 'Rendimiento',  color: '#2E9E8A' },
   { id: 'transfer',      icon: '↔️', label: 'Transferencia', color: '#7F9496' },
+  { id: 'loan',          icon: '🏛️', label: 'Préstamo',     color: '#8A1F59' },
   { id: 'other',         icon: '📦', label: 'Otro',         color: '#9A8F7A' },
 ]
 

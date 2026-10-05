@@ -6,16 +6,19 @@ import CardModal      from '@/components/modals/CardModal'
 import CardDetailModal from '@/components/modals/CardDetailModal'
 import TransferModal  from '@/components/modals/TransferModal'
 import PayCardModal   from '@/components/modals/PayCardModal'
+import LoanModal      from '@/components/modals/LoanModal'
 import styles from './Wallets.module.css'
-import { fmt2 } from '@/utils'
+import { fmt2, formatDate } from '@/utils'
+import { loanStatus, localISO } from '@/loans'
 
 export default function Wallets() {
-  const { wallets, cards, transactions } = useStore()
+  const { wallets, cards, transactions, loans } = useStore()
   const [editWallet,   setEditWallet]   = useState(null)  // wallet obj | {}
   const [editCard,     setEditCard]     = useState(null)  // card obj   | {}
   const [detailCard,   setDetailCard]   = useState(null)  // card obj — show detail
   const [transferOpen, setTransferOpen] = useState(false)
   const [payingCard,   setPayingCard]   = useState(null)  // card obj
+  const [editLoan,     setEditLoan]     = useState(null)  // loan obj   | {}
 
   function openCardDetail(card)  { setDetailCard(card) }
   function openCardEdit(card)    { setDetailCard(null); setEditCard(card) }
@@ -50,6 +53,15 @@ export default function Wallets() {
         }
       </Section>
 
+      <Section title="Préstamos" action="+ Nuevo" onAction={() => setEditLoan({})}>
+        {loans.length === 0
+          ? <Empty icon="🏛️" text="Cargá un préstamo y sus cuotas se debitan solas al vencer" action="+ Agregar" onAction={() => setEditLoan({})} />
+          : loans.map(l => (
+              <LoanCard key={l.id} loan={l} wallets={wallets} transactions={transactions} onClick={() => setEditLoan(l)} />
+            ))
+        }
+      </Section>
+
       {editWallet  !== null && <WalletModal  initial={editWallet.id ? editWallet : null} onClose={() => setEditWallet(null)} />}
       {editCard    !== null && <CardModal    initial={editCard.id   ? editCard   : null} onClose={() => setEditCard(null)} />}
       {detailCard           && (
@@ -62,6 +74,7 @@ export default function Wallets() {
       )}
       {transferOpen         && <TransferModal onClose={() => setTransferOpen(false)} />}
       {payingCard           && <PayCardModal card={payingCard} onClose={() => setPayingCard(null)} />}
+      {editLoan    !== null && <LoanModal    initial={editLoan.id   ? editLoan   : null} onClose={() => setEditLoan(null)} />}
     </div>
   )
 }
@@ -118,6 +131,39 @@ function CCCard({ card, transactions, onClick, onPay }) {
         <button className={styles.payBtn} onClick={e => { e.stopPropagation(); onPay() }}>
           Pagar resumen — {fmt2(current)}
         </button>
+      )}
+    </div>
+  )
+}
+
+function LoanCard({ loan, wallets, transactions, onClick }) {
+  const status = loanStatus(loan, transactions)
+  const wallet = wallets.find(w => w.id === loan.walletId)
+  const today  = localISO()
+  const overdue = status.next && status.next.date < today
+  return (
+    <div className={styles.ccCard} onClick={onClick}>
+      <div className={styles.ccHead}>
+        <div className={styles.icon} style={{ background: 'var(--purple-dim)', color: 'var(--purple)' }}>🏛️</div>
+        <div className={styles.info}>
+          <div className={styles.name}>{loan.name}</div>
+          <div className={styles.sub}>
+            {status.done ? 'Pagado ✓' : `Cuota ${status.next.n} de ${status.total} · Débito desde ${wallet?.name ?? 'billetera eliminada'}`}
+          </div>
+        </div>
+      </div>
+      <div className={styles.loanBar}><div style={{ width: `${(status.paid / status.total) * 100}%` }} /></div>
+      {!status.done && (
+        <div className={styles.ccPills}>
+          <div className={styles.ccPill}>
+            <div className={styles.pillLbl}>{overdue ? 'Vencida sin debitar' : `Vence ${formatDate(status.next.date)}`}</div>
+            <div className={styles.pillVal} style={{ color: 'var(--red)' }}>{fmt2(status.next.amount)}</div>
+          </div>
+          <div className={styles.ccPill}>
+            <div className={styles.pillLbl}>Resta pagar</div>
+            <div className={styles.pillVal} style={{ color: 'var(--text2)' }}>{fmt2(status.remaining)}</div>
+          </div>
+        </div>
       )}
     </div>
   )

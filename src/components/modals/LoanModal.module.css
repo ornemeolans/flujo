@@ -1,0 +1,86 @@
+.formGroup { margin-bottom: 16px; }
+.label {
+  display: block;
+  font-size: 10px;
+  font-family: var(--font-mono);
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  margin-bottom: 6px;
+}
+.row { display: flex; gap: 10px; }
+.row > * { flex: 1; min-width: 0; }
+
+.segmented {
+  display: flex;
+  gap: 6px;
+  padding: 4px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+.segmented button {
+  flex: 1;
+  padding: 9px 8px;
+  border: none;
+  border-radius: 7px;
+  background: none;
+  color: var(--text2);
+  font-size: 13px;
+  font-weight: 500;
+}
+.segmented .segOn {
+  background: var(--accent-dim);
+  color: var(--accent);
+}
+
+.summary {
+  margin: 4px 0 8px;
+  padding: 12px 14px;
+  background: var(--surface2);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  line-height: 1.5;
+}
+.summary strong { color: var(--red); font-weight: 600; }
+.summarySub {
+  margin-top: 6px;
+  font-size: 11px;
+  color: var(--text3);
+  font-family: var(--font-mono);
+}
+.linkBtn {
+  margin-top: 8px;
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 12px;
+  color: var(--accent);
+  text-decoration: underline;
+}
+.schedule {
+  margin-top: 10px;
+  max-height: 220px;
+  overflow-y: auto;
+  border-top: 1px solid var(--border);
+}
+.schedRow {
+  display: grid;
+  grid-template-columns: 52px 1fr auto;
+  gap: 8px;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--border);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text2);
+}
+.schedPaid { color: var(--text3); text-decoration: line-through; }
+
+.notice {
+  font-size: 13px;
+  color: var(--text2);
+  line-height: 1.6;
+}
+
+.actions { display: flex; gap: 10px; margin-top: 16px; align-items: center; }
+.saveBtn { flex: 1; }

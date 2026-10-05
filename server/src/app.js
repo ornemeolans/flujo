@@ -7,7 +7,7 @@ import {
 } from './auth.js'
 import { actionEmail } from './mailer.js'
 
-const STORES = new Set(['wallets', 'cards', 'transactions'])
+const STORES = new Set(['wallets', 'cards', 'transactions', 'loans'])
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const MAX_CHANGES = 5000
 const VERIFY_TTL = 3 * 24 * 60 * 60 * 1000 // 3 días

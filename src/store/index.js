@@ -1,6 +1,7 @@
 import { create } from 'zustand'
-import { getAll, put, putMany, remove, STORES } from '@/db'
+import { getAll, getAllRaw, put, putMany, remove, STORES } from '@/db'
 import { nanoid } from '@/utils/nanoid'
+import { pendingLoanPayments, loanCreditId } from '@/loans'
 
 const today = () => new Date().toISOString().slice(0, 10)
 
@@ -106,11 +107,21 @@ async function accrueYields(wallets, transactions) {
   }
 }
 
+// ─── Débito de cuotas de préstamos ───────────────────────────
+// Igual que los rendimientos: al abrir la app se registran las cuotas que
+// vencieron desde la última vez. Ids determinísticos para que la sync unifique.
+async function accrueLoanPayments(loans) {
+  if (!loans.length) return
+  const existingIds = new Set((await getAllRaw(STORES.TRANSACTIONS)).map(t => t.id))
+  await putMany(STORES.TRANSACTIONS, loans.flatMap(l => pendingLoanPayments(l, existingIds)))
+}
+
 export const useStore = create((set, get) => ({
   // ─── Data ───────────────────────────────────
   wallets: [],
   cards: [],
   transactions: [],
+  loans: [],
   loading: true,
 
   // ─── UI State ───────────────────────────────
@@ -119,27 +130,32 @@ export const useStore = create((set, get) => ({
 
   // ─── Bootstrap ──────────────────────────────
   async loadAll() {
-    const [wallets, cards, transactions] = await Promise.all([
+    const [wallets, cards, transactions, loans] = await Promise.all([
       getAll(STORES.WALLETS),
       getAll(STORES.CARDS),
       getAll(STORES.TRANSACTIONS),
+      getAll(STORES.LOANS),
     ])
-    set({ wallets, cards, transactions, loading: false })
+    set({ wallets, cards, transactions, loans, loading: false })
+
+    // Debitar cuotas vencidas antes de calcular rendimientos (afectan el saldo)
+    await accrueLoanPayments(loans.filter(l => wallets.some(w => w.id === l.walletId)))
 
     // Accrue daily yields for wallets with TNA
-    await accrueYields(wallets, transactions)
+    await accrueYields(wallets, await getAll(STORES.TRANSACTIONS))
     const updatedTx = await getAll(STORES.TRANSACTIONS)
     set({ transactions: updatedTx })
   },
 
   // Re-lee IndexedDB (p. ej. después de recibir cambios de otro dispositivo)
   async refresh() {
-    const [wallets, cards, transactions] = await Promise.all([
+    const [wallets, cards, transactions, loans] = await Promise.all([
       getAll(STORES.WALLETS),
       getAll(STORES.CARDS),
       getAll(STORES.TRANSACTIONS),
+      getAll(STORES.LOANS),
     ])
-    set({ wallets, cards, transactions })
+    set({ wallets, cards, transactions, loans })
   },
 
   setMonth(month, year) {
@@ -230,6 +246,38 @@ export const useStore = create((set, get) => ({
       getAll(STORES.TRANSACTIONS),
     ])
     set({ cards, transactions })
+  },
+
+  // ─── Loans ──────────────────────────────────
+  // Guarda el préstamo, acredita (o des-acredita) el monto en la billetera y
+  // debita las cuotas que ya hayan vencido.
+  async saveLoan(data) {
+    const item = data.id ? data : { ...data, id: nanoid(), createdAt: today() }
+    await put(STORES.LOANS, item)
+
+    const creditId = loanCreditId(item.id)
+    if (item.credited && item.principal > 0) {
+      await put(STORES.TRANSACTIONS, {
+        id: creditId, type: 'income', amount: item.principal,
+        walletId: item.walletId, category: 'loan',
+        date: item.creditDate, desc: `${item.name} · acreditación`,
+        cuotas: 1, cuotaActual: 1, createdAt: item.creditDate,
+        loanId: item.id,
+      })
+    } else {
+      await remove(STORES.TRANSACTIONS, creditId)
+    }
+
+    await accrueLoanPayments([item])
+    const [loans, transactions] = await Promise.all([getAll(STORES.LOANS), getAll(STORES.TRANSACTIONS)])
+    set({ loans, transactions })
+    return item
+  },
+
+  // Los movimientos ya registrados (acreditación y cuotas debitadas) quedan en el historial
+  async deleteLoan(id) {
+    await remove(STORES.LOANS, id)
+    set({ loans: await getAll(STORES.LOANS) })
   },
 
   // ─── Transactions ───────────────────────────
