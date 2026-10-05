@@ -4,6 +4,7 @@ import { BrowserRouter } from 'react-router-dom'
 import App from './App'
 import { requestPersistentStorage } from './db'
 import './styles/global.css'
+import './theme'
 
 // Evita que el navegador borre IndexedDB cuando necesita liberar espacio
 requestPersistentStorage()

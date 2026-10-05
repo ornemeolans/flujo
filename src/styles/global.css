@@ -19,7 +19,7 @@ a { color: inherit; text-decoration: none; }
 /* ── Paleta Ibiza ───────────────────────────────────────── */
 /* Ibiza White          #EAEAE6  |  Esparto Beige     #C2A878 */
 /* Bougainvillea Purple #A3296B  |  Cove Turquoise    #178C9E */
-/* Claro por defecto; oscuro según la preferencia del sistema. */
+/* Claro por defecto; oscuro con data-theme="dark" en <html> (ver src/theme.js). */
 :root {
   color-scheme: light;
 
@@ -69,48 +69,46 @@ a { color: inherit; text-decoration: none; }
   --safe-bottom: env(safe-area-inset-bottom, 0px);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    color-scheme: dark;
+:root[data-theme="dark"] {
+  color-scheme: dark;
 
-    --bg:          #0E1F23;
-    --surface:     #152C32;
-    --surface2:    #1B363D;
-    --surface3:    #234249;
-    --surface4:    #2D525B;
-    --border:      rgba(234,234,230,0.08);
-    --border2:     rgba(234,234,230,0.15);
-    --border3:     rgba(43,176,196,0.40);
-    --text:        #EAEAE6;
-    --text2:       #9FB3B3;
-    --text3:       #6A8183;
+  --bg:          #0E1F23;
+  --surface:     #152C32;
+  --surface2:    #1B363D;
+  --surface3:    #234249;
+  --surface4:    #2D525B;
+  --border:      rgba(234,234,230,0.08);
+  --border2:     rgba(234,234,230,0.15);
+  --border3:     rgba(43,176,196,0.40);
+  --text:        #EAEAE6;
+  --text2:       #9FB3B3;
+  --text3:       #6A8183;
 
-    --accent:      #2BB0C4;
-    --accent2:     #178C9E;
-    --accent-dim:  rgba(43,176,196,0.14);
+  --accent:      #2BB0C4;
+  --accent2:     #178C9E;
+  --accent-dim:  rgba(43,176,196,0.14);
 
-    --purple:      #A3296B;
-    --purple2:     #8A1F59;
-    --purple-dim:  rgba(222,106,168,0.15);
-    --purple-glow: rgba(163,41,107,0.55);
+  --purple:      #A3296B;
+  --purple2:     #8A1F59;
+  --purple-dim:  rgba(222,106,168,0.15);
+  --purple-glow: rgba(163,41,107,0.55);
 
-    --blue:        #7FB0B8;
-    --blue-dim:    rgba(127,176,184,0.15);
+  --blue:        #7FB0B8;
+  --blue-dim:    rgba(127,176,184,0.15);
 
-    --earth:       #C2A878;
-    --earth-dim:   rgba(194,168,120,0.20);
+  --earth:       #C2A878;
+  --earth-dim:   rgba(194,168,120,0.20);
 
-    --red:         #DE6AA8;
-    --red-dim:     rgba(222,106,168,0.14);
+  --red:         #DE6AA8;
+  --red-dim:     rgba(222,106,168,0.14);
 
-    --gold:        #C2A878;
-    --gold-dim:    rgba(194,168,120,0.15);
+  --gold:        #C2A878;
+  --gold-dim:    rgba(194,168,120,0.15);
 
-    --overlay:     rgba(0,0,0,0.65);
+  --overlay:     rgba(0,0,0,0.65);
 
-    --shadow:      0 8px 32px rgba(0,0,0,0.5);
-    --shadow-sm:   0 2px 12px rgba(0,0,0,0.35);
-  }
+  --shadow:      0 8px 32px rgba(0,0,0,0.5);
+  --shadow-sm:   0 2px 12px rgba(0,0,0,0.35);
 }
 
 /* ─── Scrollbar ──────────────────────────────────────────── */

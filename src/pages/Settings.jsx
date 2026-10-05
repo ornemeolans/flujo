@@ -1,14 +1,16 @@
 import { useState } from 'react'
 import { useStore } from '@/store'
 import { exportAllData, importAllData } from '@/db'
-import { Section, Card, Button } from '@/components/ui'
+import { Section, Card, Button, Switch } from '@/components/ui'
 import AccountSection from '@/components/AccountSection'
 import { useAuth } from '@/store/auth'
+import { useTheme, setThemePref } from '@/theme'
 import styles from './Settings.module.css'
 
 export default function Settings() {
   const { wallets, cards, transactions, loadAll } = useStore()
   const signedIn = useAuth(s => !!s.user)
+  const { theme, followsSystem } = useTheme()
   const [msg, setMsg] = useState('')
 
   function flash(text) { setMsg(text); setTimeout(() => setMsg(''), 3000) }
@@ -59,6 +61,22 @@ export default function Settings() {
       {msg && <div className={styles.toast}>{msg}</div>}
 
       <AccountSection />
+
+      {/* Apariencia */}
+      <Section title="Apariencia">
+        <Card>
+          <Switch
+            label="Modo oscuro"
+            checked={theme === 'dark'}
+            onChange={dark => setThemePref(dark ? 'dark' : 'light')}
+          />
+          <p className={styles.themeHint}>
+            {followsSystem
+              ? 'Sigue la configuración de tu dispositivo.'
+              : <>Elegido a mano. <button className={styles.linkBtn} onClick={() => setThemePref(null)}>Usar el del dispositivo</button></>}
+          </p>
+        </Card>
+      </Section>
 
       {/* Stats */}
       <Section title="Resumen de datos">
