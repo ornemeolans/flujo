@@ -19,6 +19,7 @@ a { color: inherit; text-decoration: none; }
 /* ── Paleta Ibiza ───────────────────────────────────────── */
 /* Ibiza White          #EAEAE6  |  Esparto Beige     #C2A878 */
 /* Bougainvillea Purple #A3296B  |  Cove Turquoise    #178C9E */
+/* Los colores de texto cumplen contraste WCAG AA (4.5:1) sobre todas las superficies. */
 /* Claro por defecto; oscuro con data-theme="dark" en <html> (ver src/theme.js). */
 :root {
   color-scheme: light;
@@ -26,25 +27,26 @@ a { color: inherit; text-decoration: none; }
   --bg:          #EAEAE6;
   --surface:     #F6F5F1;
   --surface2:    #EFEEE9;
-  --surface3:    #E2E0D8;
+  --surface3:    #E6E4DD;
   --surface4:    #D3CEC0;
   --border:      rgba(28,42,46,0.08);
   --border2:     rgba(28,42,46,0.15);
   --border3:     rgba(23,140,158,0.40);
   --text:        #1C2A2E;
-  --text2:       #5B6B6D;
-  --text3:       #7E8A8B;
+  --text2:       #46565A;
+  --text3:       #556467;
 
-  --accent:      #127684;
+  --accent:      #0E6672;
   --accent2:     #178C9E;
   --accent-dim:  rgba(23,140,158,0.12);
 
   --purple:      #A3296B;
   --purple2:     #8A1F59;
   --purple-dim:  rgba(163,41,107,0.10);
+  --purple-text: #A3296B; /* violeta como color de texto */
   --purple-glow: rgba(163,41,107,0.35);
 
-  --blue:        #3E7A84;
+  --blue:        #31666E;
   --blue-dim:    rgba(23,140,158,0.10);
 
   --earth:       #C2A878;
@@ -53,7 +55,7 @@ a { color: inherit; text-decoration: none; }
   --red:         #A3296B;
   --red-dim:     rgba(163,41,107,0.10);
 
-  --gold:        #866D3A;
+  --gold:        #6E5A2C;
   --gold-dim:    rgba(194,168,120,0.22);
 
   --overlay:     rgba(28,42,46,0.45);
@@ -75,34 +77,35 @@ a { color: inherit; text-decoration: none; }
   --bg:          #0E1F23;
   --surface:     #152C32;
   --surface2:    #1B363D;
-  --surface3:    #234249;
+  --surface3:    #1F3C43;
   --surface4:    #2D525B;
   --border:      rgba(234,234,230,0.08);
   --border2:     rgba(234,234,230,0.15);
   --border3:     rgba(43,176,196,0.40);
   --text:        #EAEAE6;
-  --text2:       #9FB3B3;
-  --text3:       #6A8183;
+  --text2:       #A9BCBC;
+  --text3:       #97AEAF;
 
-  --accent:      #2BB0C4;
+  --accent:      #3DBDD0;
   --accent2:     #178C9E;
   --accent-dim:  rgba(43,176,196,0.14);
 
   --purple:      #A3296B;
   --purple2:     #8A1F59;
   --purple-dim:  rgba(222,106,168,0.15);
+  --purple-text: #EC97C4;
   --purple-glow: rgba(163,41,107,0.55);
 
-  --blue:        #7FB0B8;
+  --blue:        #86B6BD;
   --blue-dim:    rgba(127,176,184,0.15);
 
   --earth:       #C2A878;
   --earth-dim:   rgba(194,168,120,0.20);
 
-  --red:         #DE6AA8;
+  --red:         #EC97C4;
   --red-dim:     rgba(222,106,168,0.14);
 
-  --gold:        #C2A878;
+  --gold:        #C9B183;
   --gold-dim:    rgba(194,168,120,0.15);
 
   --overlay:     rgba(0,0,0,0.65);

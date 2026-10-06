@@ -121,7 +121,7 @@
     font-family: var(--font-mono);
     font-size: 10px;
     background: var(--purple-dim);
-    color: var(--purple);
+    color: var(--purple-text);
     border-radius: 5px;
     padding: 2px 6px;
     flex-shrink: 0;

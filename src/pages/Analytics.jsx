@@ -71,6 +71,8 @@ export default function Analytics() {
         <Section title="Egresos por categoría">
           <Card>
             <div className={styles.donutWrap}>
+              {/* Decorativo: el desglose de abajo tiene los mismos datos como texto */}
+              <div aria-hidden="true">
               <ResponsiveContainer width="100%" height={180}>
                 <PieChart>
                   <Pie
@@ -78,6 +80,7 @@ export default function Analytics() {
                     cx="50%" cy="50%"
                     innerRadius={52} outerRadius={80}
                     paddingAngle={2}
+                    rootTabIndex={-1}
                     dataKey="value"
                   >
                     {pieData.map((_, i) => (
@@ -90,6 +93,7 @@ export default function Analytics() {
                   />
                 </PieChart>
               </ResponsiveContainer>
+              </div>
               <div className={styles.donutCenter}>
                 <div className={styles.donutTotal}>{fmt(expense)}</div>
                 <div className={styles.donutLabel}>total</div>
