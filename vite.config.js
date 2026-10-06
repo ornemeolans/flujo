@@ -10,9 +10,12 @@ export default defineConfig({
       registerType: 'prompt',
       includeAssets: ['favicon.svg', 'apple-touch-icon.png'],
       manifest: {
+        id: '/',
         name: 'Flujo — Control de Gastos',
         short_name: 'Flujo',
-        description: 'Controlá tus gastos, billeteras y tarjetas de crédito',
+        description: 'Controlá billeteras, tarjetas en cuotas y préstamos. Funciona sin conexión.',
+        lang: 'es-AR',
+        categories: ['finance', 'productivity'],
         theme_color: '#EAEAE6',
         background_color: '#EAEAE6',
         display: 'standalone',
@@ -22,12 +25,20 @@ export default defineConfig({
           { src: 'icon-192.png', sizes: '192x192', type: 'image/png' },
           { src: 'icon-512.png', sizes: '512x512', type: 'image/png' },
           { src: 'icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any maskable' }
+        ],
+        // Instalación enriquecida (vista previa en el diálogo de instalar)
+        screenshots: [
+          { src: 'screenshots/inicio-light.webp', sizes: '780x1688', type: 'image/webp', form_factor: 'narrow', label: 'Saldo total, billeteras y tarjetas' },
+          { src: 'screenshots/prestamos-light.webp', sizes: '780x1688', type: 'image/webp', form_factor: 'narrow', label: 'Préstamos con débito automático' },
+          { src: 'screenshots/escritorio.webp', sizes: '2560x1600', type: 'image/webp', form_factor: 'wide', label: 'Flujo en la compu' }
         ]
       },
       workbox: {
         // Manejo de notificaciones push (public/push-sw.js)
         importScripts: ['push-sw.js'],
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
+        // Imágenes solo para compartir/instalar: no hace falta tenerlas offline
+        globIgnores: ['og.png', 'screenshots/**'],
         // La API nunca se sirve desde el cache ni cae en el fallback de la SPA
         navigateFallbackDenylist: [/^\/api\//],
       }

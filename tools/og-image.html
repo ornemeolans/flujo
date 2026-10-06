@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8">
+<style>
+  @font-face { font-family: 'DM Serif Display'; src: url('../node_modules/@fontsource/dm-serif-display/files/dm-serif-display-latin-400-normal.woff2'); }
+  @font-face { font-family: 'DM Sans'; font-weight: 400; src: url('../node_modules/@fontsource/dm-sans/files/dm-sans-latin-400-normal.woff2'); }
+  @font-face { font-family: 'DM Sans'; font-weight: 600; src: url('../node_modules/@fontsource/dm-sans/files/dm-sans-latin-600-normal.woff2'); }
+  * { margin: 0; box-sizing: border-box; }
+  body { width: 1200px; height: 630px; overflow: hidden; background: #EAEAE6; font-family: 'DM Sans'; color: #1C2A2E; position: relative; }
+  .blob1 { position: absolute; width: 520px; height: 520px; border-radius: 50%; background: #178C9E; opacity: .16; filter: blur(80px); right: 60px; top: -120px; }
+  .blob2 { position: absolute; width: 420px; height: 420px; border-radius: 50%; background: #A3296B; opacity: .14; filter: blur(80px); right: 260px; bottom: -200px; }
+  .text { position: absolute; left: 80px; top: 92px; width: 600px; }
+  .logo { font-family: 'DM Serif Display'; font-size: 64px; line-height: 1; } .logo span { color: #0E6672; }
+  h1 { font-family: 'DM Serif Display'; font-weight: 400; font-size: 76px; line-height: 1.02; margin-top: 54px; letter-spacing: -1px; }
+  h1 span { color: #A3296B; }
+  p { font-size: 26px; line-height: 1.45; color: #46565A; margin-top: 26px; }
+  .tags { display: flex; gap: 10px; margin-top: 34px; }
+  .tag { font-size: 18px; font-weight: 600; padding: 9px 16px; border-radius: 999px; background: #F6F5F1; border: 1px solid rgba(28,42,46,.1); }
+  .phone { position: absolute; right: 96px; top: 56px; width: 330px; border-radius: 44px; padding: 12px; background: #1C2A2E; box-shadow: 0 30px 80px rgba(28,42,46,.35); transform: rotate(4deg); }
+  .phone img { display: block; width: 100%; border-radius: 34px; }
+</style></head>
+<body>
+  <div class="blob1"></div><div class="blob2"></div>
+  <div class="text">
+    <div class="logo">flu<span>jo</span></div>
+    <h1>Tus finanzas,<br><span>claras.</span></h1>
+    <p>Billeteras, tarjetas en cuotas y préstamos con débito automático. Funciona sin conexión.</p>
+    <div class="tags"><span class="tag">PWA offline-first</span><span class="tag">Sync</span><span class="tag">React · TS · Node</span></div>
+  </div>
+  <div class="phone"><img src="../docs/screenshots/inicio-light.png" alt=""></div>
+</body></html>
