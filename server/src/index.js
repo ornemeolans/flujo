@@ -3,6 +3,7 @@ import { existsSync } from 'node:fs'
 import { resolve, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import express from 'express'
+import compression from 'compression'
 import { openDatabase } from './db.js'
 import { createApp } from './app.js'
 import { createMailer } from './mailer.js'
@@ -39,7 +40,11 @@ const app = createApp({
 // Si existe el build de la PWA (../dist), servirlo desde el mismo origen
 const dist = resolve(dirname(fileURLToPath(import.meta.url)), '../../dist')
 if (existsSync(dist)) {
-  app.use(express.static(dist))
+  app.use(compression())
+  // Los archivos con hash en el nombre no cambian nunca: cache de un año.
+  // index.html y sw.js siempre se revalidan (si no, la app no se enteraría de versiones nuevas).
+  app.use('/assets', express.static(resolve(dist, 'assets'), { immutable: true, maxAge: '1y' }))
+  app.use(express.static(dist, { setHeaders: res => res.setHeader('Cache-Control', 'no-cache') }))
   app.get('*', (_req, res) => res.sendFile(resolve(dist, 'index.html')))
 }
 

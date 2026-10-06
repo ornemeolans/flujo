@@ -1,14 +1,16 @@
-import { useEffect } from 'react'
+import { lazy, Suspense, useEffect } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { useStore } from '@/store'
 import { startAutoSync, useAuth } from '@/store/auth'
 import Layout from '@/components/Layout'
 import Home from '@/pages/Home'
-import Transactions from '@/pages/Transactions'
-import Wallets from '@/pages/Wallets'
-import Analytics from '@/pages/Analytics'
-import Settings from '@/pages/Settings'
-import AuthAction from '@/pages/AuthAction'
+// Code splitting: Inicio va en el bundle principal; el resto (y recharts, que
+// solo usa Análisis) se descarga al abrir cada pantalla y queda en el cache offline
+const Transactions = lazy(() => import('@/pages/Transactions'))
+const Wallets      = lazy(() => import('@/pages/Wallets'))
+const Analytics    = lazy(() => import('@/pages/Analytics'))
+const Settings     = lazy(() => import('@/pages/Settings'))
+const AuthAction   = lazy(() => import('@/pages/AuthAction'))
 import Spinner from '@/components/ui/Spinner'
 
 export default function App() {
@@ -41,6 +43,7 @@ export default function App() {
 
   return (
     <Layout>
+      <Suspense fallback={<div style={{ display: 'flex', justifyContent: 'center', padding: 40 }}><Spinner /></div>}>
       <Routes>
         <Route path="/"             element={<Home />} />
         <Route path="/transactions" element={<Transactions />} />
@@ -50,6 +53,7 @@ export default function App() {
         <Route path="/auth/:action" element={<AuthAction />} />
         <Route path="*"             element={<Navigate to="/" replace />} />
       </Routes>
+      </Suspense>
     </Layout>
   )
 }
