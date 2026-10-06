@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://flujo-app.netlify.app/sitemap.xml

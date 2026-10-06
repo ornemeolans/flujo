@@ -1,0 +1,33 @@
+# Landing estática de Flujo (sin build). En Netlify: Base directory = landing
+[build]
+  publish = "."
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    X-Frame-Options = "DENY"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=()"
+    Content-Security-Policy = "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; font-src 'self'; script-src 'none'; base-uri 'self'; form-action 'none'; frame-ancestors 'none'"
+
+[[headers]]
+  for = "/fonts/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/img/*"
+  [headers.values]
+    Cache-Control = "public, max-age=604800"
+
+# /app y /demo como atajos fáciles de compartir
+[[redirects]]
+  from = "/app"
+  to = "https://flujo-app.up.railway.app/"
+  status = 302
+
+[[redirects]]
+  from = "/demo"
+  to = "https://flujo-app.up.railway.app/?demo=1"
+  status = 302
