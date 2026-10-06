@@ -1,182 +1,147 @@
-# flujo — Control de Gastos 💸
+<div align="center">
 
-PWA de control de gastos *offline-first*. Los datos viven en **IndexedDB** dentro del dispositivo.  
-Opcionalmente, el usuario puede iniciar sesión (Google o email + contraseña) para sincronizar sus datos entre dispositivos a través de un backend propio (`server/`).
+# flujo
+
+**Tus finanzas, claras.** Una PWA *offline-first* para controlar billeteras, tarjetas en cuotas y préstamos con débito automático, pensada para cómo se usa la plata en Argentina.
+
+[**Probar la demo**](https://flujo-app.up.railway.app/?demo=1) · [App](https://flujo-app.up.railway.app) · [Landing](https://flujo-app.netlify.app)
+
+[![CI](https://github.com/ornemeolans/flujo/actions/workflows/ci.yml/badge.svg)](https://github.com/ornemeolans/flujo/actions/workflows/ci.yml)
+![Lighthouse rendimiento](https://img.shields.io/badge/rendimiento-97%2B-0E6672)
+![Lighthouse accesibilidad](https://img.shields.io/badge/accesibilidad-100-0E6672)
+![Lighthouse buenas prácticas](https://img.shields.io/badge/buenas_prácticas-100-0E6672)
+![Lighthouse SEO](https://img.shields.io/badge/SEO-100-0E6672)
+![WCAG 2.1 AA](https://img.shields.io/badge/WCAG_2.1-AA-A3296B)
+![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6)
+
+<img src="docs/screenshots/inicio-light.png" width="230" alt="Inicio: saldo total, billeteras y tarjetas" />
+<img src="docs/screenshots/prestamos-light.png" width="230" alt="Cuentas: préstamo en la cuota 4 de 12" />
+<img src="docs/screenshots/cronograma-dark.png" width="230" alt="Cronograma de cuotas en modo oscuro" />
+
+</div>
+
+> La demo carga datos de ejemplo con fechas relativas a hoy: no hace falta crear una cuenta.
 
 ---
+
+## Qué hace
+
+- **Préstamos con débito automático.** Sistema francés con IVA (21%) sobre los intereses, o la cuota informada por el banco. Las cuotas se debitan solas de la billetera al vencer, y si el vencimiento cae en fin de semana pasa al lunes. Admite cambios de tasa desde una cuota: el resto se recalcula sobre el saldo pendiente.
+- **Tarjetas de crédito.** Cada consumo cae en el resumen que corresponde según el cierre, que se puede mover un mes puntual. Las cuotas se reparten en los resúmenes siguientes, y al pagar se marcan sin duplicar los egresos del mes.
+- **Billeteras con rendimiento.** Interés diario por TNA, respetando la fecha de cada cambio de tasa.
+- **Recordatorios push.** Avisos el día antes de cada cuota y 2 días antes del cierre de cada tarjeta, aunque no abras la app.
+- **Sin conexión y sincronizada.** Todo funciona offline. Con una cuenta opcional (email o Google), los datos se sincronizan entre dispositivos.
+- **Cuidada.** Modo claro y oscuro, instalable, accesible con teclado y lector de pantalla.
+
+## Arquitectura
+
+```mermaid
+flowchart LR
+  subgraph Dispositivo
+    UI[React + Zustand] <--> IDB[(IndexedDB)]
+    SW[Service Worker<br/>Workbox] -.cache offline.-> UI
+  end
+  IDB <-- "POST /api/sync<br/>last-write-wins" --> API[Express API]
+  API <--> DB[(SQLite)]
+  API -- "Web Push (VAPID)<br/>a las 9 hs" --> SW
+  SHARED[shared/ · TypeScript<br/>préstamos, tarjetas, fechas] --- UI
+  SHARED --- API
+```
+
+### Decisiones técnicas
+
+| Decisión | Por qué |
+|---|---|
+| **IndexedDB como fuente de verdad del dispositivo** | La app abre y funciona sin red. El servidor solo sincroniza, nunca es un requisito. |
+| **Sincronización last-write-wins con tombstones** | Cada registro lleva `updatedAt`/`deletedAt`. Los borrados se propagan como registros marcados, y el servidor entrega cambios incrementales con un cursor (`seq`). Es simple y alcanza para un solo usuario con varios dispositivos. |
+| **IDs determinísticos para lo que genera la app** | Las cuotas debitadas (`loan-<id>-<n>`) y los rendimientos (`yield-<billetera>-<fecha>`) los genera cada dispositivo al abrirse. Con el mismo id, la sincronización los unifica en lugar de duplicarlos. |
+| **Dominio compartido en TypeScript (`shared/`)** | La PWA y el servidor usan el mismo código para calcular vencimientos y montos. Node 24 lo ejecuta sin compilar (type stripping), así que el servidor avisa exactamente lo que el usuario ve. |
+| **Fechas en hora local** | `toISOString()` devuelve UTC: en Argentina, después de las 21 hs, ya es el día siguiente. Todo el dominio usa `localISO()`, y el servidor calcula "hoy" con la zona horaria de Argentina. |
+| **Saldos calculados, no guardados** | `saldo = inicial + ingresos − egresos`. No hay estado derivado que se pueda desincronizar. |
+| **Service worker en modo *prompt*** | La versión nueva se aplica cuando la persona toca "Actualizar", nunca en medio de una carga. |
+| **Seguridad de cuentas** | Contraseñas con scrypt, JWT invalidables (`session_version`), enlaces de email de un solo uso guardados como hash. Al vincular Google a una cuenta con email sin verificar, se descarta la contraseña (evita el *pre-hijacking*). |
+
+## Calidad
+
+| | |
+|---|---|
+| **Tests** | 38 automáticos: **23** de lógica con Vitest (sistema francés, cambios de tasa, resúmenes, fechas, sincronización contra IndexedDB, modo demo), **9** de la API (auth, sync, borrado de cuenta, push) y **6** de punta a punta con Playwright en un celular emulado. |
+| **Accesibilidad** | Auditoría con axe (WCAG 2.1 AA) en cada pantalla y en los dos temas como parte de los tests e2e. Contraste de 4.5:1 verificado en todos los tokens de color, navegación completa con teclado, diálogos con manejo de foco, `prefers-reduced-motion`. |
+| **Rendimiento** | Lighthouse 97+ (de 82 al empezar): fuentes servidas por la app, code splitting por pantalla (los gráficos solo se descargan en Análisis), compresión y caché inmutable para assets con hash. |
+| **CI** | GitHub Actions: tipos, tests, build, e2e + axe y Lighthouse CI con umbrales mínimos sobre la app y la landing. |
+
+## Capturas
+
+| Inicio | Préstamos | Cronograma | Análisis |
+|---|---|---|---|
+| <img src="docs/screenshots/inicio-light.png" width="180" alt="Inicio en modo claro" /> | <img src="docs/screenshots/prestamos-light.png" width="180" alt="Préstamos en modo claro" /> | <img src="docs/screenshots/cronograma-light.png" width="180" alt="Cronograma en modo claro" /> | <img src="docs/screenshots/analisis-light.png" width="180" alt="Análisis en modo claro" /> |
+| <img src="docs/screenshots/inicio-dark.png" width="180" alt="Inicio en modo oscuro" /> | <img src="docs/screenshots/prestamos-dark.png" width="180" alt="Préstamos en modo oscuro" /> | <img src="docs/screenshots/cronograma-dark.png" width="180" alt="Cronograma en modo oscuro" /> | <img src="docs/screenshots/analisis-dark.png" width="180" alt="Análisis en modo oscuro" /> |
 
 ## Stack
 
-| Capa | Tecnología |
-|---|---|
-| UI | React 18 + Vite |
-| Estado global | Zustand |
-| Persistencia | IndexedDB via `idb` |
-| Routing | React Router v6 |
-| Gráficos | Recharts |
-| PWA | `vite-plugin-pwa` + Workbox |
-| Estilos | CSS Modules |
-| Backend (opcional) | Node ≥ 22.13 + Express + SQLite (`node:sqlite`) |
-| Auth | JWT · contraseñas con scrypt · Google Identity Services |
-| Emails | [Resend](https://resend.com) (verificación y recuperación de contraseña) |
+**Frontend:** React 18, Vite, Zustand, React Router, CSS Modules, Recharts, `idb`, `vite-plugin-pwa` (Workbox).<br/>
+**Backend:** Node 24, Express, SQLite (`node:sqlite`), JWT, Google Identity Services, Resend, Web Push.<br/>
+**Calidad:** TypeScript (estricto, migración gradual), Vitest, Playwright, axe-core, Lighthouse CI, GitHub Actions.<br/>
+**Infra:** Docker, Railway (app + API + volumen SQLite), Netlify (landing).
 
-> Sin backend la app funciona completa (requerimientos 1, 2 y 3). El backend solo agrega cuentas y sincronización.
-
----
-
-## Estructura del proyecto
+## Estructura
 
 ```
 flujo/
-├── public/                   # Íconos, favicon
-├── src/
-│   ├── db/
-│   │   └── index.js          # Capa IndexedDB (getAll, put, remove, export/import)
-│   ├── store/
-│   │   └── index.js          # Zustand store + selectors puros
-│   ├── utils/
-│   │   └── index.js          # Formatters, constantes (categorías, colores, etc.)
-│   ├── styles/
-│   │   └── global.css        # Tokens CSS, reset, animaciones
-│   ├── components/
-│   │   ├── Layout.jsx         # Shell: TopBar + nav + FAB
-│   │   ├── TopBar.jsx
-│   │   ├── BottomNav.jsx
-│   │   ├── TxItem.jsx         # Fila de transacción reutilizable
-│   │   ├── ui/
-│   │   │   └── index.jsx      # Design system: Button, Card, Input, Modal, Switch…
-│   │   └── modals/
-│   │       ├── TxModal.jsx    # Alta/edición de transacciones
-│   │       ├── WalletModal.jsx
-│   │       ├── CardModal.jsx
-│   │       └── MonthModal.jsx
-│   ├── pages/
-│   │   ├── Home.jsx           # Resumen + billeteras + tarjetas + últimos movimientos
-│   │   ├── Transactions.jsx   # Lista filtrable del mes
-│   │   ├── Wallets.jsx        # Gestión de billeteras y tarjetas
-│   │   ├── Analytics.jsx      # Gráfico de torta + barras por mes
-│   │   └── Settings.jsx       # Export/Import JSON, borrar datos
-│   ├── App.jsx
-│   └── main.jsx
-├── index.html
-├── vite.config.js
-└── package.json
+├── shared/            # Dominio en TypeScript (PWA + servidor): tipos, préstamos, tarjetas, fechas
+├── src/               # PWA
+│   ├── db/            # IndexedDB tipada (CRUD, tombstones, export/import)
+│   ├── store/         # Zustand: acciones, débitos automáticos, rendimientos, selectores
+│   ├── sync/          # Cliente de la API
+│   ├── pwa/           # Instalación, conexión, aviso de versión nueva, push
+│   ├── components/    # Design system (ui/), modales y layout
+│   ├── pages/         # Inicio, Movimientos, Cuentas, Análisis, Config
+│   └── demo.ts        # Datos de ejemplo
+├── server/            # API Express + SQLite, recordatorios push
+├── tests/             # Vitest
+├── e2e/               # Playwright (+ generador de capturas)
+├── landing/           # Landing estática (Netlify)
+└── tools/             # Generación de la imagen Open Graph y WebP
 ```
 
----
-
-## Cómo correr localmente
+## Correr localmente
 
 ```bash
 npm install
-npm run dev            # PWA en http://localhost:5173
+npm install --prefix server
+cp server/.env.example server/.env   # completar (ver abajo)
 
-# Backend (otra terminal) — Vite redirige /api a localhost:3001
-cd server && npm install && cd ..
-npm run dev:server
+npm run dev          # PWA en http://localhost:5173
+npm run dev:server   # API en http://localhost:3001 (Vite redirige /api)
 ```
 
-### Configurar el backend
+| Script | |
+|---|---|
+| `npm run typecheck` | TypeScript |
+| `npm test` | Tests de lógica (Vitest) |
+| `npm test --prefix server` | Tests de la API |
+| `npm run test:e2e` | Build + tests de punta a punta y accesibilidad (Playwright) |
+| `npm run test:all` | Todo lo anterior |
 
-Copiar `server/.env.example` a `server/.env` y completar:
+Regenerar capturas e imágenes: `SCREENSHOTS=1 npx playwright test e2e/screenshots.spec.ts && node tools/render-images.mjs`.
 
-- `JWT_SECRET`: obligatorio en producción (`openssl rand -hex 32`).
-- `GOOGLE_CLIENT_ID`: en [Google Cloud Console](https://console.cloud.google.com/apis/credentials) → *Crear credenciales* → *ID de cliente OAuth* → *Aplicación web*. En **Orígenes de JavaScript autorizados** agregar `http://localhost:5173` y el dominio de producción. Si queda vacío, el botón de Google no aparece y solo funciona email + contraseña.
-- `RESEND_API_KEY` y `MAIL_FROM`: para enviar los emails de verificación y de recuperación de contraseña. Sin API key, los emails se imprimen en la consola del servidor (útil en desarrollo: el enlace se copia de ahí).
-- `APP_URL`: URL pública de la PWA; los enlaces de los emails apuntan a `APP_URL/auth/verify` y `APP_URL/auth/reset`.
-- `CORS_ORIGINS`: solo si la PWA y la API están en dominios distintos (en ese caso, buildear la PWA con `VITE_API_URL=https://api.tudominio.com/api`).
+### Variables del servidor (`server/.env`)
 
-Tests del backend: `cd server && npm test`.
+| Variable | |
+|---|---|
+| `JWT_SECRET` | Obligatoria en producción (`openssl rand -hex 32`). |
+| `GOOGLE_CLIENT_ID` | ID de cliente OAuth web. En "Orígenes autorizados" van `http://localhost:5173` y el dominio de producción. Vacía: solo email y contraseña. |
+| `RESEND_API_KEY`, `MAIL_FROM` | Emails de verificación y recuperación. Sin clave, los emails se imprimen en la consola. |
+| `APP_URL` | URL pública: los enlaces de los emails apuntan ahí. |
+| `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT` | Notificaciones push (`npx web-push generate-vapid-keys`). Sin claves, quedan desactivadas. |
+| `CORS_ORIGINS` | Solo si la PWA y la API están en dominios distintos (buildear con `VITE_API_URL`). |
 
-## Build para producción
+## Deploy
 
-```bash
-npm run build
-# Los archivos quedan en /dist — listo para Netlify, Vercel, o cualquier hosting estático
-```
-
-Para servir PWA + API desde el mismo origen: `npm run build` y luego `cd server && NODE_ENV=production npm start` (el servidor sirve `../dist` si existe). Requiere un host con Node y disco persistente para el archivo SQLite (Railway, Fly.io, un VPS, etc.).
-
-### Con Docker
+- **App + API (Railway, con Docker):** el `Dockerfile` construye la PWA y la sirve desde Express junto con la API. Necesita un volumen montado en `/data`, donde vive la base SQLite.
+- **Landing (Netlify):** importar el repo con *Base directory* `landing`. No tiene build; los headers y redirecciones están en `landing/netlify.toml`.
 
 ```bash
 docker build -t flujo .
-docker run -p 3001:3001 -v flujo-data:/data   -e JWT_SECRET=... -e GOOGLE_CLIENT_ID=... -e RESEND_API_KEY=...   -e MAIL_FROM="Flujo <hola@tudominio.com>" -e APP_URL=https://tudominio.com   flujo
+docker run -p 3001:3001 -v flujo-data:/data -e JWT_SECRET=... flujo
 ```
-
-El volumen `/data` guarda la base SQLite: sin él, los usuarios se pierden al recrear el contenedor.
-
-## Deploy solo de la PWA en Netlify (gratis, sin cuentas)
-
-1. Hacer `npm run build`
-2. Arrastrar la carpeta `dist/` a [netlify.com/drop](https://app.netlify.com/drop)
-
-O conectar el repo de GitHub a Netlify con:
-- **Build command:** `npm run build`
-- **Publish directory:** `dist`
-
----
-
-## Funcionalidades
-
-### Billeteras
-- Crear/editar/eliminar billeteras ilimitadas
-- Tipos: Efectivo, Virtual, Banco, Inversión, Otro
-- Ícono y color personalizables
-- **TNA configurable**: calcula y muestra rendimiento mensual estimado
-
-### Tarjetas de Crédito
-- Configuración de fecha de cierre por tarjeta
-- **Pago del resumen**: los consumos quedan en el historial marcados como pagados (las cuotas futuras siguen pendientes)
-- **Cierre ajustable por resumen**: desde el detalle de la tarjeta se puede corregir el día de cierre de un mes puntual
-- **Imputación automática**: gastos antes del cierre → resumen actual; después del cierre → resumen siguiente
-- Aviso en tiempo real al cargar un gasto indicando a qué resumen va (mes, día de cierre y rango de cuotas)
-
-### Transacciones
-- Ingresos y egresos
-- Categorías con íconos
-- Filtros por tipo y por billetera/tarjeta
-- **Cuotas**: divide el gasto, registra "cuota X de Y"
-
-### Análisis
-- Gráfico de torta por categoría
-- Barras de los últimos 6 meses
-- Balance del mes (ingresos - egresos)
-
-### Cuenta y sincronización (opcional)
-- Registro con email + contraseña, o "Continuar con Google" (se vincula a la cuenta existente si el email coincide y Google lo verificó)
-- Verificación de email y recuperación de contraseña por email (enlaces de un solo uso; restablecer la contraseña cierra las demás sesiones)
-- Si alguien registró un email ajeno sin verificarlo, al entrar el dueño real con Google se descarta esa contraseña
-- Al iniciar sesión, los datos locales se suben a la cuenta
-- Sincronización automática: tras cada cambio, al recuperar conexión y al volver a la app
-- Al cerrar sesión se suben los cambios pendientes y se borran los datos del dispositivo
-
-### Datos
-- Todo en IndexedDB (sin límite práctico de datos)
-- Se pide almacenamiento persistente (`navigator.storage.persist()`) para que el navegador no lo borre
-- Export/Import en JSON para backup
-- Funciona 100% offline gracias al Service Worker
-
----
-
-## Arquitectura de datos (IndexedDB)
-
-```
-wallets       { id, name, type, initialBalance, icon, color, tnaEnabled, tna, …sync }
-cards         { id, name, closeDay, closeOverrides: { 'YYYY-MM': día }, icon, color, …sync }
-transactions  { id, amount, type, date, category, walletId, desc, cuotas, cuotaActual, …sync }
-
-…sync = { updatedAt, deletedAt }   // ms epoch; deletedAt ≠ null → borrado (tombstone)
-```
-
-- Los ids son UUID, así no chocan entre dispositivos. Los rendimientos diarios usan `yield-<walletId>-<fecha>` para que dos dispositivos no los dupliquen.
-- Los borrados son *soft delete*: el registro queda marcado para poder propagar el borrado.
-
-### Sincronización
-
-`POST /api/sync { since, changes }`: el cliente sube los registros modificados desde la última sync y recibe todo lo que cambió en el servidor después del cursor `since`. Ante conflictos gana el `updatedAt` más reciente (*last-write-wins*).
-
-El balance de cada billetera es siempre **calculado** (no almacenado):  
-`balance = initialBalance + sum(ingresos) - sum(egresos)`
-
-Esto evita inconsistencias y permite recalcular en cualquier momento.
