@@ -150,8 +150,8 @@ function SignedOut() {
       <div className={styles.divider}><span>o con tu email</span></div>
 
       <div className={styles.tabs}>
-        <button type="button" className={mode === 'login' ? styles.tabOn : ''} onClick={() => setMode('login')}>Ingresar</button>
-        <button type="button" className={mode === 'register' ? styles.tabOn : ''} onClick={() => setMode('register')}>Crear cuenta</button>
+        <button type="button" aria-pressed={mode === 'login'} className={mode === 'login' ? styles.tabOn : ''} onClick={() => setMode('login')}>Ingresar</button>
+        <button type="button" aria-pressed={mode === 'register'} className={mode === 'register' ? styles.tabOn : ''} onClick={() => setMode('register')}>Crear cuenta</button>
       </div>
 
       <form onSubmit={handleSubmit}>

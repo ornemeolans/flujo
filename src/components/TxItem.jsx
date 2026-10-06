@@ -1,5 +1,6 @@
 import { getCat, formatDate, fmt } from '@/utils'
 import { selectors } from '@/store'
+import { pressable } from '@/components/ui'
 import styles from './TxItem.module.css'
 
 export default function TxItem({ tx, wallets, cards, onClick }) {
@@ -7,7 +8,7 @@ export default function TxItem({ tx, wallets, cards, onClick }) {
   const paymentName = selectors.paymentLabel(tx.walletId, wallets, cards)
 
   return (
-    <div className={styles.row} onClick={() => onClick?.(tx)}>
+    <div className={styles.row} {...pressable(onClick && (() => onClick(tx)))}>
       <div className={styles.icon} style={{ background: `${cat.color}18` }}>
         {cat.icon}
       </div>

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useStore, selectors } from '@/store'
-import { Section, Empty } from '@/components/ui'
+import { Section, Empty, pressable } from '@/components/ui'
 import WalletModal    from '@/components/modals/WalletModal'
 import CardModal      from '@/components/modals/CardModal'
 import CardDetailModal from '@/components/modals/CardDetailModal'
@@ -83,7 +83,7 @@ function WalletCard({ wallet, transactions, onClick }) {
   const bal    = selectors.walletBalance(wallet, transactions)
   const yield_ = selectors.walletMonthlyYield(wallet, transactions)
   return (
-    <div className={styles.walletCard} onClick={onClick}>
+    <div className={styles.walletCard} {...pressable(onClick)}>
       <div className={styles.icon} style={{ background: `${wallet.color||'#178C9E'}18`, color: wallet.color||'#178C9E' }}>
         {wallet.icon || '💵'}
       </div>
@@ -108,7 +108,7 @@ function CCCard({ card, transactions, onClick, onPay }) {
   const next    = selectors.cardPeriodTotal(card, transactions, nextM, nextY)
   return (
     <div className={styles.ccCard}>
-      <div className={styles.ccHead} onClick={onClick}>
+      <div className={styles.ccHead} {...pressable(onClick)}>
         <div className={styles.icon} style={{ background: `${card.color||'#A3296B'}18`, color: card.color||'#A3296B' }}>
           {card.icon || '💳'}
         </div>
@@ -142,7 +142,7 @@ function LoanCard({ loan, wallets, transactions, onClick }) {
   const today  = localISO()
   const overdue = status.next && status.next.date < today
   return (
-    <div className={styles.ccCard} onClick={onClick}>
+    <div className={styles.ccCard} {...pressable(onClick)}>
       <div className={styles.ccHead}>
         <div className={styles.icon} style={{ background: 'var(--purple-dim)', color: 'var(--purple)' }}>🏛️</div>
         <div className={styles.info}>

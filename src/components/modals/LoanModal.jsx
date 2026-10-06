@@ -148,10 +148,10 @@ export default function LoanModal({ onClose, initial = null }) {
       <div className={styles.formGroup}>
         <label className={styles.label}>Valor de la cuota</label>
         <div className={styles.segmented}>
-          <button type="button" className={form.mode === 'fixed' ? styles.segOn : ''} onClick={() => set('mode', 'fixed')}>
+          <button type="button" aria-pressed={form.mode === 'fixed'} className={form.mode === 'fixed' ? styles.segOn : ''} onClick={() => set('mode', 'fixed')}>
             La sé
           </button>
-          <button type="button" className={form.mode === 'tna' ? styles.segOn : ''} onClick={() => set('mode', 'tna')}>
+          <button type="button" aria-pressed={form.mode === 'tna'} className={form.mode === 'tna' ? styles.segOn : ''} onClick={() => set('mode', 'tna')}>
             Calcular con la TNA
           </button>
         </div>

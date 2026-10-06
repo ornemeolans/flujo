@@ -26,6 +26,10 @@
   font-family: var(--font-mono);
 }
 .sectionAction {
+  background: none;
+  border: none;
+  padding: 6px 0 6px 8px;
+  font-family: inherit;
   font-size: 12px;
   color: var(--accent);
   cursor: pointer;
@@ -91,13 +95,15 @@
   border-radius: var(--radius-sm);
   padding: 12px 14px;
   color: var(--text);
-  font-size: 15px;
+  /* 16px: con menos, iOS hace zoom al enfocar el campo */
+  font-size: 16px;
   outline: none;
   transition: border-color 0.18s;
   -webkit-appearance: none;
   appearance: none;
 }
 .input:focus { border-color: var(--accent); }
+.input:focus-visible { box-shadow: 0 0 0 3px var(--accent-dim); }
 .input::placeholder { color: var(--text3); }
 select.input { cursor: pointer; }
 select.input option { background: var(--surface2); }
@@ -131,6 +137,8 @@ select.input option { background: var(--surface2); }
 }
 .switchLabel { font-size: 14px; color: var(--text); }
 .switch {
+  border: none;
+  padding: 0;
   width: 44px; height: 26px;
   background: var(--surface4);
   border-radius: 13px;
@@ -251,6 +259,7 @@ select.input option { background: var(--surface2); }
   width: 30px; height: 30px;
   border-radius: 50%;
   cursor: pointer;
+  padding: 0;
   border: 2px solid transparent;
   transition: transform 0.15s, border-color 0.15s;
 }

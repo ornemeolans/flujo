@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useStore, selectors } from '@/store'
 import { fmt2, fmt, MONTHS_SHORT } from '@/utils'
-import { Section, Card, Empty } from '@/components/ui'
+import { Section, Card, Empty, pressable } from '@/components/ui'
 import TxItem from '@/components/TxItem'
 import WalletModal from '@/components/modals/WalletModal'
 import CardModal from '@/components/modals/CardModal'
@@ -135,7 +135,7 @@ function WalletRow({ wallet, transactions, onClick }) {
   const bal    = selectors.walletBalance(wallet, transactions)
   const yield_ = selectors.walletMonthlyYield(wallet, transactions)
   return (
-    <div className={styles.walletRow} onClick={onClick}>
+    <div className={styles.walletRow} {...pressable(onClick)}>
       <div className={styles.walletIcon} style={{ background: `${wallet.color || '#178C9E'}18`, color: wallet.color || '#178C9E' }}>
         {wallet.icon || '💵'}
       </div>
@@ -158,7 +158,7 @@ function CCRow({ card, transactions, currentMonth, currentYear, onClick }) {
   const next  = selectors.cardPeriodTotal(card, transactions, nextM, nextY)
 
   return (
-    <div className={styles.ccRow} onClick={onClick}>
+    <div className={styles.ccRow} {...pressable(onClick)}>
       <div className={styles.ccHeader}>
         <div className={styles.walletIcon} style={{ background: `${card.color || '#A3296B'}18`, color: card.color || '#A3296B' }}>
           {card.icon || '💳'}

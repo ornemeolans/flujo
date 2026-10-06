@@ -29,7 +29,7 @@ export default function BottomNav() {
   const navigate = useNavigate()
 
   return (
-    <nav className={styles.nav}>
+    <nav className={styles.nav} aria-label="Principal">
       <div className={styles.inner}>
         {NAV_ITEMS.map(item => {
           const active = location.pathname === item.path
@@ -38,8 +38,10 @@ export default function BottomNav() {
               key={item.path}
               className={`${styles.btn} ${active ? styles.active : ''}`}
               onClick={() => navigate(item.path)}
+              aria-label={item.label}
+              aria-current={active ? 'page' : undefined}
             >
-              <span className={styles.icon}>{item.icon}</span>
+              <span className={styles.icon} aria-hidden="true">{item.icon}</span>
               <span className={styles.label}>{item.label}</span>
             </button>
           )
