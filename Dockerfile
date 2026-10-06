@@ -7,6 +7,7 @@ RUN npm ci
 COPY index.html vite.config.js ./
 COPY public ./public
 COPY src ./src
+COPY shared ./shared
 # Solo si la API vive en otro dominio: --build-arg VITE_API_URL=https://api.tudominio.com/api
 ARG VITE_API_URL
 RUN npm run build
@@ -17,6 +18,8 @@ WORKDIR /app
 COPY server/package.json server/package-lock.json ./server/
 RUN cd server && npm ci --omit=dev
 COPY server/src ./server/src
+# Lógica de dominio en TypeScript compartida con la PWA (Node 24 la ejecuta sin compilar)
+COPY shared ./shared
 COPY --from=build /app/dist ./dist
 EXPOSE 3001
 WORKDIR /app/server

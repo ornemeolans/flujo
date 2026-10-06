@@ -31,9 +31,10 @@ function googleVerifier(clientId) {
  * @param {string} [opts.googleClientId]
  * @param {string[]} [opts.corsOrigins]
  * @param {(credential: string) => Promise<object>} [opts.verifyGoogle] inyectable para tests
+ * @param {{ publicKey: string, send: (subscription: object, payload: object) => Promise<void> }} [opts.push] Web Push (VAPID)
  * @param {number} [opts.rateLimitMax] intentos por IP cada 15 min en login/registro
  */
-export function createApp({ db, jwtSecret, appUrl, sendMail, googleClientId, corsOrigins = [], verifyGoogle, rateLimitMax = 20 }) {
+export function createApp({ db, jwtSecret, appUrl, sendMail, googleClientId, corsOrigins = [], verifyGoogle, push, rateLimitMax = 20 }) {
   verifyGoogle ??= googleClientId ? googleVerifier(googleClientId) : null
   appUrl = appUrl.replace(/\/$/, '')
 
@@ -54,6 +55,9 @@ export function createApp({ db, jwtSecret, appUrl, sendMail, googleClientId, cor
     setPassword: db.prepare('UPDATE users SET password_hash = ?, email_verified = 1, session_version = session_version + 1 WHERE id = ?'),
     markVerified: db.prepare('UPDATE users SET email_verified = 1 WHERE id = ?'),
     deleteUser: db.prepare('DELETE FROM users WHERE id = ?'),
+    upsertSub: db.prepare('INSERT INTO push_subscriptions (endpoint, user_id, data, created_at) VALUES (?, ?, ?, ?) ON CONFLICT (endpoint) DO UPDATE SET user_id = excluded.user_id, data = excluded.data'),
+    deleteSub: db.prepare('DELETE FROM push_subscriptions WHERE endpoint = ? AND user_id = ?'),
+    subsOf: db.prepare('SELECT endpoint, data FROM push_subscriptions WHERE user_id = ?'),
     insertToken: db.prepare('INSERT INTO auth_tokens (token_hash, user_id, kind, expires_at) VALUES (?, ?, ?, ?)'),
     takeToken: db.prepare('DELETE FROM auth_tokens WHERE token_hash = ? AND kind = ? RETURNING user_id, expires_at'),
     clearTokens: db.prepare('DELETE FROM auth_tokens WHERE user_id = ? AND kind = ?'),
@@ -236,6 +240,44 @@ export function createApp({ db, jwtSecret, appUrl, sendMail, googleClientId, cor
     // El enlace llegó al email: eso prueba que es suyo
     q.setPassword.run(await hashPassword(req.body.password), userId)
     res.json(session(q.userById.get(userId)))
+  })
+
+  // ─── Notificaciones push ──────────────────────────────────
+  app.get('/api/push/key', (_req, res) => {
+    if (!push) return res.status(404).json({ error: 'Notificaciones no configuradas en el servidor' })
+    res.json({ publicKey: push.publicKey })
+  })
+
+  app.post('/api/push/subscribe', auth, (req, res) => {
+    const sub = req.body?.subscription
+    if (!push) return res.status(404).json({ error: 'Notificaciones no configuradas en el servidor' })
+    if (typeof sub?.endpoint !== 'string' || !sub.endpoint.startsWith('https://') || !sub.keys?.p256dh || !sub.keys?.auth) {
+      return res.status(400).json({ error: 'Suscripción inválida' })
+    }
+    q.upsertSub.run(sub.endpoint, req.userId, JSON.stringify({ endpoint: sub.endpoint, keys: sub.keys }), Date.now())
+    res.json({ ok: true })
+  })
+
+  app.post('/api/push/unsubscribe', auth, (req, res) => {
+    q.deleteSub.run(String(req.body?.endpoint || ''), req.userId)
+    res.json({ ok: true })
+  })
+
+  // Notificación de prueba a todos los dispositivos del usuario
+  app.post('/api/push/test', auth, mailLimiter, async (req, res) => {
+    if (!push) return res.status(404).json({ error: 'Notificaciones no configuradas en el servidor' })
+    const subs = q.subsOf.all(req.userId)
+    if (!subs.length) return res.status(400).json({ error: 'Este usuario no tiene notificaciones activadas' })
+    let sent = 0
+    for (const s of subs) {
+      try {
+        await push.send(JSON.parse(s.data), { title: 'Flujo', body: '¡Listo! Así te vamos a avisar de tus vencimientos.', url: '/settings', tag: 'test' })
+        sent++
+      } catch (e) {
+        if (e.statusCode === 404 || e.statusCode === 410) q.deleteSub.run(s.endpoint, req.userId)
+      }
+    }
+    res.json({ sent })
   })
 
   // ─── Sync ─────────────────────────────────────────────────

@@ -6,6 +6,8 @@ import express from 'express'
 import { openDatabase } from './db.js'
 import { createApp } from './app.js'
 import { createMailer } from './mailer.js'
+import { createPush } from './push.js'
+import { startReminderScheduler } from './reminders.js'
 
 const isProd = process.env.NODE_ENV === 'production'
 let jwtSecret = process.env.JWT_SECRET
@@ -16,7 +18,16 @@ if (!jwtSecret) {
 }
 
 const db = openDatabase(process.env.DB_PATH || './data/flujo.db')
+const push = createPush({
+  publicKey: process.env.VAPID_PUBLIC_KEY,
+  privateKey: process.env.VAPID_PRIVATE_KEY,
+  subject: process.env.VAPID_SUBJECT || 'mailto:hola@example.com',
+})
+if (push) startReminderScheduler({ db, sendPush: push.send })
+else console.warn('⚠ VAPID_PUBLIC_KEY/VAPID_PRIVATE_KEY no definidos: notificaciones push desactivadas')
+
 const app = createApp({
+  push,
   db,
   jwtSecret,
   appUrl: process.env.APP_URL || 'http://localhost:5173',

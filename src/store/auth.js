@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { api } from '@/sync/api'
 import { changesSince, applyRemote, wipeLocal, purgeLocal, onLocalChange } from '@/db'
 import { isDemoId } from '@/demo'
+import { disablePush } from '@/pwa/push'
 import { useStore } from '@/store'
 
 // ─── Persistencia de la sesión (localStorage) ───────────────
@@ -84,6 +85,8 @@ export const useAuth = create((set, get) => ({
       await get().syncNow()
       if (get().syncError) throw new Error(`No se pudieron subir los últimos cambios: ${get().syncError}`)
     }
+    // Este dispositivo deja de recibir los avisos de la cuenta
+    await disablePush(get().token).catch(() => {})
     set({ token: null, user: null, syncError: null, lastSyncAt: null })
     write(KEY_SESSION, null)
     write(KEY_SYNC, null)

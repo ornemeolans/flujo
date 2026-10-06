@@ -3,6 +3,7 @@ import { useStore } from '@/store'
 import { exportAllData, importAllData } from '@/db'
 import { Section, Card, Button, Switch } from '@/components/ui'
 import AccountSection from '@/components/AccountSection'
+import RemindersSection from '@/components/RemindersSection'
 import { useAuth } from '@/store/auth'
 import { useTheme, setThemePref } from '@/theme'
 import { today } from '@/utils'
@@ -64,6 +65,8 @@ export default function Settings() {
       {msg && <div className={styles.toast}>{msg}</div>}
 
       <AccountSection />
+
+      <RemindersSection />
 
       {/* Instalar */}
       {!install.installed && (install.canPrompt || install.iosHint) && (

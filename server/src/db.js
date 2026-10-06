@@ -39,6 +39,23 @@ export function openDatabase(path) {
       kind       TEXT NOT NULL CHECK (kind IN ('verify', 'reset')),
       expires_at INTEGER NOT NULL
     );
+
+    -- Suscripciones Web Push (una por dispositivo/navegador)
+    CREATE TABLE IF NOT EXISTS push_subscriptions (
+      endpoint   TEXT PRIMARY KEY,
+      user_id    TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      data       TEXT NOT NULL,
+      created_at INTEGER NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS push_subscriptions_user ON push_subscriptions(user_id);
+
+    -- Recordatorios ya enviados (para no repetirlos)
+    CREATE TABLE IF NOT EXISTS reminders_sent (
+      user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      key     TEXT NOT NULL,
+      sent_at INTEGER NOT NULL,
+      PRIMARY KEY (user_id, key)
+    );
   `)
 
   // Migraciones de columnas agregadas después de la v1.0

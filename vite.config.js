@@ -25,6 +25,8 @@ export default defineConfig({
         ]
       },
       workbox: {
+        // Manejo de notificaciones push (public/push-sw.js)
+        importScripts: ['push-sw.js'],
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
         // La API nunca se sirve desde el cache ni cae en el fallback de la SPA
         navigateFallbackDenylist: [/^\/api\//],
