@@ -9,7 +9,7 @@ import PayCardModal   from '@/components/modals/PayCardModal'
 import LoanModal      from '@/components/modals/LoanModal'
 import styles from './Wallets.module.css'
 import { fmt2, formatDate } from '@/utils'
-import { loanStatus, localISO } from '@/loans'
+import { loanStatus, localISO } from '@shared/loans'
 
 export default function Wallets() {
   const { wallets, cards, transactions, loans } = useStore()

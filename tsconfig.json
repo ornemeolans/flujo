@@ -1,0 +1,28 @@
+{
+  // Migración gradual: el dominio (shared/) y los módulos base de la app están en
+  // TypeScript; los componentes y el store siguen en JS y se migran de a poco.
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "jsx": "react-jsx",
+    "strict": true,
+    "noEmit": true,
+    "skipLibCheck": true,
+    "isolatedModules": true,
+    "verbatimModuleSyntax": true,
+    // shared/ también lo ejecuta Node directamente (type stripping): solo sintaxis borrable
+    "erasableSyntaxOnly": true,
+    "allowImportingTsExtensions": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "types": ["vite/client", "node"],
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"],
+      "@shared/*": ["shared/*"]
+    }
+  },
+  "include": ["shared", "src/**/*.ts", "tests/**/*.ts", "e2e/**/*.ts"]
+}

@@ -2,22 +2,24 @@
 const API_URL = (import.meta.env.VITE_API_URL || '/api').replace(/\/$/, '')
 
 export class ApiError extends Error {
-  constructor(message, status) {
+  status: number
+
+  constructor(message: string, status: number) {
     super(message)
     this.status = status
   }
 }
 
-export async function api(path, { body, token } = {}) {
-  let res
+export async function api<T = any>(path: string, { body, token }: { body?: unknown; token?: string | null } = {}): Promise<T> {
+  let res: Response
   try {
+    const headers: Record<string, string> = {}
+    if (body) headers['content-type'] = 'application/json'
+    if (token) headers.authorization = `Bearer ${token}`
     res = await fetch(API_URL + path, {
       method: body ? 'POST' : 'GET',
-      headers: {
-        ...(body && { 'content-type': 'application/json' }),
-        ...(token && { authorization: `Bearer ${token}` }),
-      },
-      body: body && JSON.stringify(body),
+      headers,
+      body: body ? JSON.stringify(body) : undefined,
     })
   } catch {
     throw new ApiError('Sin conexión con el servidor', 0)

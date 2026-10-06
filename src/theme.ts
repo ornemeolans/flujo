@@ -2,17 +2,19 @@ import { useSyncExternalStore } from 'react'
 
 // Preferencia guardada: 'light' | 'dark'. Sin valor = seguir al sistema.
 // index.html aplica lo mismo antes del primer render para evitar el parpadeo.
-const KEY = 'flujo-theme'
-const META_COLORS = { light: '#EAEAE6', dark: '#0E1F23' }
-const media = window.matchMedia('(prefers-color-scheme: dark)')
-const listeners = new Set()
-let memoryPref = null // por si localStorage no está disponible
+export type Theme = 'light' | 'dark'
 
-export function getThemePref() {
-  try { return localStorage.getItem(KEY) } catch { return memoryPref }
+const KEY = 'flujo-theme'
+const META_COLORS: Record<Theme, string> = { light: '#EAEAE6', dark: '#0E1F23' }
+const media = window.matchMedia('(prefers-color-scheme: dark)')
+const listeners = new Set<() => void>()
+let memoryPref: Theme | null = null // por si localStorage no está disponible
+
+export function getThemePref(): Theme | null {
+  try { return localStorage.getItem(KEY) as Theme | null } catch { return memoryPref }
 }
 
-function resolveTheme() {
+function resolveTheme(): Theme {
   return getThemePref() ?? (media.matches ? 'dark' : 'light')
 }
 
@@ -23,8 +25,8 @@ function applyTheme() {
   listeners.forEach(fn => fn())
 }
 
-/** @param {'light' | 'dark' | null} pref null vuelve a seguir al sistema */
-export function setThemePref(pref) {
+/** null vuelve a seguir al sistema */
+export function setThemePref(pref: Theme | null) {
   memoryPref = pref
   try {
     if (pref) localStorage.setItem(KEY, pref)
@@ -36,14 +38,14 @@ export function setThemePref(pref) {
 media.addEventListener('change', () => { if (!getThemePref()) applyTheme() })
 applyTheme()
 
-function subscribe(fn) {
+function subscribe(fn: () => void) {
   listeners.add(fn)
-  return () => listeners.delete(fn)
+  return () => { listeners.delete(fn) }
 }
 
 /** Tema activo ('light' | 'dark') y si sigue al sistema */
 export function useTheme() {
-  const theme = useSyncExternalStore(subscribe, () => document.documentElement.dataset.theme)
+  const theme = useSyncExternalStore(subscribe, () => document.documentElement.dataset.theme as Theme)
   const pref  = useSyncExternalStore(subscribe, getThemePref)
   return { theme, followsSystem: !pref }
 }

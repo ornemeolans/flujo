@@ -1,4 +1,5 @@
-import { openDB } from 'idb'
+import { openDB, type DBSchema, type IDBPDatabase } from 'idb'
+import type { CreditCard, Loan, SyncMeta, Transaction, Wallet } from '@shared/types'
 
 const DB_NAME = 'flujo_db'
 const DB_VERSION = 3
@@ -8,19 +9,32 @@ export const STORES = {
   CARDS: 'cards',
   TRANSACTIONS: 'transactions',
   LOANS: 'loans',
+} as const
+
+export type StoreName = typeof STORES[keyof typeof STORES]
+export const SYNCED_STORES: StoreName[] = Object.values(STORES)
+
+interface FlujoDB extends DBSchema {
+  wallets: { key: string; value: Wallet; indexes: { type: string } }
+  cards: { key: string; value: CreditCard }
+  transactions: { key: string; value: Transaction; indexes: { date: string; walletId: string; type: string; category: string } }
+  loans: { key: string; value: Loan }
 }
-export const SYNCED_STORES = Object.values(STORES)
+
+/** Registro de cualquier colección sincronizada */
+export type AnyRecord = (Wallet | CreditCard | Transaction | Loan) & SyncMeta
+export interface Change { store: StoreName; record: AnyRecord }
 
 // Cada registro lleva metadatos de sincronización:
 //   updatedAt: ms epoch de la última modificación (last-write-wins)
 //   deletedAt: ms epoch si fue borrado (soft delete / tombstone), o null
 // Los borrados se conservan para poder propagarlos a otros dispositivos.
 
-let dbPromise = null
+let dbPromise: Promise<IDBPDatabase<FlujoDB>> | null = null
 
-export function getDB() {
+export function getDB(): Promise<IDBPDatabase<FlujoDB>> {
   if (!dbPromise) {
-    dbPromise = openDB(DB_NAME, DB_VERSION, {
+    dbPromise = openDB<FlujoDB>(DB_NAME, DB_VERSION, {
       async upgrade(db, oldVersion, _newVersion, tx) {
         if (!db.objectStoreNames.contains(STORES.WALLETS)) {
           const ws = db.createObjectStore(STORES.WALLETS, { keyPath: 'id' })
@@ -43,7 +57,7 @@ export function getDB() {
         // v1 → v2: agregar metadatos de sincronización a los registros existentes
         if (oldVersion > 0 && oldVersion < 2) {
           const now = Date.now()
-          for (const name of SYNCED_STORES) {
+          for (const name of [STORES.WALLETS, STORES.CARDS, STORES.TRANSACTIONS] as const) {
             let cursor = await tx.objectStore(name).openCursor()
             while (cursor) {
               cursor.update({ ...cursor.value, updatedAt: cursor.value.updatedAt ?? now, deletedAt: cursor.value.deletedAt ?? null })
@@ -58,40 +72,45 @@ export function getDB() {
 }
 
 // ─── Notificación de cambios locales (para disparar la sync) ─
-const listeners = new Set()
-export function onLocalChange(cb) {
+const listeners = new Set<() => void>()
+export function onLocalChange(cb: () => void): () => void {
   listeners.add(cb)
-  return () => listeners.delete(cb)
+  return () => { listeners.delete(cb) }
 }
 function notify() { listeners.forEach(cb => cb()) }
 
-const stamp = item => ({ ...item, updatedAt: Date.now(), deletedAt: item.deletedAt ?? null })
+const stamp = <T extends SyncMeta>(item: T): T => ({ ...item, updatedAt: Date.now(), deletedAt: item.deletedAt ?? null })
+
+// Las funciones genéricas reciben el nombre de la colección; los tipos de cada
+// colección están en FlujoDB. Se tipan como `any` hacia afuera para que el
+// store (todavía en JS) no tenga que hacer casts.
+type Rec = any // eslint-disable-line @typescript-eslint/no-explicit-any
 
 // ─── Generic CRUD ───────────────────────────────────────────
 // getAll devuelve solo registros vivos; getAllRaw incluye los borrados
-export async function getAll(store) {
+export async function getAll(store: StoreName): Promise<Rec[]> {
   return (await getAllRaw(store)).filter(r => !r.deletedAt)
 }
 
-export async function getAllRaw(store) {
+export async function getAllRaw(store: StoreName): Promise<Rec[]> {
   const db = await getDB()
   return db.getAll(store)
 }
 
-export async function getById(store, id) {
+export async function getById(store: StoreName, id: string): Promise<Rec | undefined> {
   const db = await getDB()
   const item = await db.get(store, id)
   return item?.deletedAt ? undefined : item
 }
 
-export async function put(store, item) {
+export async function put(store: StoreName, item: Rec): Promise<string> {
   const db = await getDB()
   const res = await db.put(store, stamp(item))
   notify()
   return res
 }
 
-export async function putMany(store, items) {
+export async function putMany(store: StoreName, items: Rec[]): Promise<void> {
   if (!items.length) return
   const db = await getDB()
   const tx = db.transaction(store, 'readwrite')
@@ -99,7 +118,7 @@ export async function putMany(store, items) {
   notify()
 }
 
-export async function remove(store, id) {
+export async function remove(store: StoreName, id: string): Promise<void> {
   const db = await getDB()
   const item = await db.get(store, id)
   if (!item || item.deletedAt) return
@@ -108,15 +127,15 @@ export async function remove(store, id) {
   notify()
 }
 
-export async function getAllByIndex(store, indexName, value) {
+export async function getAllByIndex(store: 'transactions', indexName: 'date' | 'walletId' | 'type' | 'category', value: string): Promise<Rec[]> {
   const db = await getDB()
   return (await db.getAllFromIndex(store, indexName, value)).filter(r => !r.deletedAt)
 }
 
 // ─── Sync helpers ───────────────────────────────────────────
 // Registros modificados localmente después de `since` (ms epoch)
-export async function changesSince(since) {
-  const out = []
+export async function changesSince(since: number): Promise<Change[]> {
+  const out: Change[] = []
   for (const store of SYNCED_STORES) {
     for (const r of await getAllRaw(store)) {
       if ((r.updatedAt ?? 0) > since) out.push({ store, record: r })
@@ -127,7 +146,7 @@ export async function changesSince(since) {
 
 // Aplica registros remotos sin re-estampar updatedAt (gana el más nuevo).
 // Devuelve cuántos registros cambiaron localmente.
-export async function applyRemote(changes) {
+export async function applyRemote(changes: Change[]): Promise<number> {
   const db = await getDB()
   const tx = db.transaction(SYNCED_STORES, 'readwrite')
   let applied = 0
@@ -136,7 +155,7 @@ export async function applyRemote(changes) {
     const os = tx.objectStore(store)
     const local = await os.get(record.id)
     if (!local || (record.updatedAt ?? 0) > (local.updatedAt ?? 0)) {
-      await os.put(record)
+      await os.put(record as Rec)
       applied++
     }
   }
@@ -145,14 +164,39 @@ export async function applyRemote(changes) {
 }
 
 // Borrado físico (al cerrar sesión: los datos quedan en la cuenta)
-export async function wipeLocal() {
+export async function wipeLocal(): Promise<void> {
   const db = await getDB()
   const tx = db.transaction(SYNCED_STORES, 'readwrite')
   await Promise.all([...SYNCED_STORES.map(s => tx.objectStore(s).clear()), tx.done])
 }
 
+// Borrado físico de los registros cuyo id cumple la condición, sin dejar
+// tombstone: no se propaga a la cuenta (se usa para los datos de ejemplo)
+export async function purgeLocal(match: (id: string) => boolean): Promise<number> {
+  const db = await getDB()
+  const tx = db.transaction(SYNCED_STORES, 'readwrite')
+  let n = 0
+  for (const store of SYNCED_STORES) {
+    const os = tx.objectStore(store)
+    for (const key of await os.getAllKeys()) {
+      if (match(key)) { await os.delete(key); n++ }
+    }
+  }
+  await tx.done
+  return n
+}
+
 // ─── Export / Import (backup) ───────────────────────────────
-export async function exportAllData() {
+export interface Backup {
+  wallets: Wallet[]
+  cards: CreditCard[]
+  transactions: Transaction[]
+  loans?: Loan[]
+  exportedAt?: string
+  version?: number
+}
+
+export async function exportAllData(): Promise<Backup> {
   const [wallets, cards, transactions, loans] = await Promise.all([
     getAll(STORES.WALLETS),
     getAll(STORES.CARDS),
@@ -164,11 +208,11 @@ export async function exportAllData() {
 
 // Reemplaza los datos actuales. Usa soft delete para que el reemplazo
 // también se propague a otros dispositivos si hay sesión iniciada.
-export async function importAllData(data) {
+export async function importAllData(data: Partial<Backup>): Promise<void> {
   const db = await getDB()
   const tx = db.transaction(SYNCED_STORES, 'readwrite')
   const now = Date.now()
-  const incoming = {
+  const incoming: Record<StoreName, Rec[]> = {
     [STORES.WALLETS]: data.wallets ?? [],
     [STORES.CARDS]: data.cards ?? [],
     [STORES.TRANSACTIONS]: data.transactions ?? [],
@@ -178,7 +222,7 @@ export async function importAllData(data) {
     const os = tx.objectStore(store)
     const keep = new Set(incoming[store].map(r => r.id))
     for (const r of await os.getAll()) {
-      if (!keep.has(r.id) && !r.deletedAt) await os.put({ ...r, updatedAt: now, deletedAt: now })
+      if (!keep.has(r.id) && !r.deletedAt) await os.put({ ...r, updatedAt: now, deletedAt: now } as Rec)
     }
     for (const r of incoming[store]) await os.put({ ...r, updatedAt: now, deletedAt: null })
   }
@@ -188,7 +232,7 @@ export async function importAllData(data) {
 
 // ─── Almacenamiento persistente ─────────────────────────────
 // Pide al navegador que no borre IndexedDB al liberar espacio.
-export async function requestPersistentStorage() {
+export async function requestPersistentStorage(): Promise<boolean | null> {
   try {
     if (!navigator.storage?.persist) return null
     if (await navigator.storage.persisted()) return true

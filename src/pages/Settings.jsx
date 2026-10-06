@@ -5,6 +5,7 @@ import { Section, Card, Button, Switch } from '@/components/ui'
 import AccountSection from '@/components/AccountSection'
 import { useAuth } from '@/store/auth'
 import { useTheme, setThemePref } from '@/theme'
+import { today } from '@/utils'
 import styles from './Settings.module.css'
 
 export default function Settings() {
@@ -22,7 +23,7 @@ export default function Settings() {
       const url  = URL.createObjectURL(blob)
       const a    = document.createElement('a')
       a.href = url
-      a.download = `flujo-backup-${new Date().toISOString().slice(0,10)}.json`
+      a.download = `flujo-backup-${today()}.json`
       a.click()
       URL.revokeObjectURL(url)
       flash('Backup exportado ✓')

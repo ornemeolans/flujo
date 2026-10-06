@@ -1,9 +1,11 @@
 import { create } from 'zustand'
 import { getAll, getAllRaw, put, putMany, remove, STORES } from '@/db'
 import { nanoid } from '@/utils/nanoid'
-import { pendingLoanPayments, loanCreditId } from '@/loans'
+import { pendingLoanPayments, loanCreditId } from '@shared/loans'
+import { periodKey, closeDayFor, addMonths } from '@shared/cards'
+import { localISO } from '@shared/dates'
 
-const today = () => new Date().toISOString().slice(0, 10)
+const today = () => localISO()
 
 // ─── Daily yield accrual ─────────────────────────────────────
 // Called on app load. Generates one yield transaction per missing day.
@@ -51,7 +53,7 @@ async function accrueYields(wallets, transactions) {
       .sort((a, b) => a.date > b.date ? 1 : -1)
 
     // Compute running balance just before startDate
-    const startStr = startDate.toISOString().slice(0, 10)
+    const startStr = localISO(startDate)
     let runningBal = wallet.initialBalance ?? 0
     for (const t of allWalletTx) {
       if (t.date >= startStr) break
@@ -66,7 +68,7 @@ async function accrueYields(wallets, transactions) {
     const newYields = []
 
     while (cursor < end) {
-      const dateStr = cursor.toISOString().slice(0, 10)
+      const dateStr = localISO(cursor)
 
       // Apply non-yield transactions on this day
       for (const t of allWalletTx) {
@@ -176,7 +178,7 @@ export const useStore = create((set, get) => ({
           // New rate takes effect from tomorrow (next accrual day)
           const tomorrow = new Date(d + 'T12:00:00')
           tomorrow.setDate(tomorrow.getDate() + 1)
-          const tomorrowStr = tomorrow.toISOString().slice(0, 10)
+          const tomorrowStr = localISO(tomorrow)
 
           const history = prev.tnaHistory || []
           // Close previous entry and open new one from tomorrow
@@ -373,15 +375,10 @@ export const selectors = {
     return wallets.reduce((sum, w) => sum + selectors.walletMonthlyYield(w, transactions), 0)
   },
 
-  // 'YYYY-MM' (mes 1-12) — clave de un resumen
-  periodKey({ month, year }) {
-    return `${year}-${String(month + 1).padStart(2, '0')}`
-  },
-
-  // Día de cierre efectivo de un resumen: el puntual si se cargó, si no el habitual
-  closeDayFor(card, month, year) {
-    return card.closeOverrides?.[selectors.periodKey({ month, year })] ?? card.closeDay ?? 15
-  },
+  // Lógica de resúmenes compartida con el servidor (shared/cards.ts)
+  periodKey,
+  closeDayFor,
+  addMonths,
 
   // Determine which billing period a CC expense's FIRST installment falls into
   cardPeriod(card, date) {
@@ -392,14 +389,6 @@ export const selectors = {
     }
     const next = selectors.addMonths({ month: d.getMonth(), year: d.getFullYear() }, 1)
     return { ...next, closeDay: selectors.closeDayFor(card, next.month, next.year), label: 'resumen siguiente' }
-  },
-
-  // Add N months to a {month, year} object
-  addMonths({ month, year }, n) {
-    let m = month + n
-    let y = year + Math.floor(m / 12)
-    m = m % 12
-    return { month: m, year: y }
   },
 
   // Compare two periods: -1, 0, 1

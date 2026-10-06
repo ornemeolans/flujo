@@ -2,7 +2,7 @@ import { useState, useMemo, Fragment } from 'react'
 import { useStore } from '@/store'
 import { Modal, Input, Select, Switch, Button } from '@/components/ui'
 import { fmt2, formatDate } from '@/utils'
-import { localISO, loanDueDate, loanCuotaAmount, sortedRateChanges, tnaForCuota } from '@/loans'
+import { localISO, loanDueDate, loanCuotaAmount, sortedRateChanges, tnaForCuota } from '@shared/loans'
 import styles from './LoanModal.module.css'
 
 const DEFAULT = {
