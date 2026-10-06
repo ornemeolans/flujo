@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { useStore } from '@/store'
-import { startAutoSync } from '@/store/auth'
+import { startAutoSync, useAuth } from '@/store/auth'
 import Layout from '@/components/Layout'
 import Home from '@/pages/Home'
 import Transactions from '@/pages/Transactions'
@@ -14,7 +14,19 @@ import Spinner from '@/components/ui/Spinner'
 export default function App() {
   const { loading, loadAll } = useStore()
 
-  useEffect(() => { loadAll().then(startAutoSync) }, [loadAll])
+  useEffect(() => {
+    loadAll().then(async () => {
+      // /?demo=1 (enlace "Probar demo" de la landing): carga datos de ejemplo si la app está vacía
+      const params = new URLSearchParams(location.search)
+      if (params.has('demo')) {
+        const { wallets, transactions } = useStore.getState()
+        if (!wallets.length && !transactions.length && !useAuth.getState().user) await useStore.getState().loadDemo()
+        params.delete('demo')
+        history.replaceState(null, '', location.pathname + (params.size ? `?${params}` : ''))
+      }
+      startAutoSync()
+    })
+  }, [loadAll])
 
   if (loading) {
     return (

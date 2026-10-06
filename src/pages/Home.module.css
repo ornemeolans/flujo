@@ -112,3 +112,39 @@
 }
 .ccPillLabel { font-size: 9px; color: var(--text3); font-family: var(--font-mono); text-transform: uppercase; }
 .ccPillVal { font-size: 14px; font-weight: 500; font-family: var(--font-mono); }
+
+/* ─── Demo ─── */
+.demoBanner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 14px;
+  margin-bottom: 14px;
+  border-radius: var(--radius);
+  background: var(--gold-dim);
+  color: var(--text);
+  font-size: 13px;
+}
+.demoClear {
+  flex-shrink: 0;
+  padding: 6px 10px;
+  border: 1px solid var(--gold);
+  border-radius: 8px;
+  background: none;
+  color: var(--gold);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+}
+.welcome { margin-bottom: 18px; text-align: center; padding: 22px 18px; }
+.welcomeTitle {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  font-size: 28px;
+  line-height: 1.15;
+  margin-bottom: 8px;
+}
+.welcomeTitle span { color: var(--accent); }
+.welcomeText { font-size: 14px; color: var(--text2); line-height: 1.55; margin-bottom: 16px; }
+.welcomeHint { font-size: 12px; color: var(--text3); margin-top: 10px; }

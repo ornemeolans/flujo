@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { api } from '@/sync/api'
-import { changesSince, applyRemote, wipeLocal, onLocalChange } from '@/db'
+import { changesSince, applyRemote, wipeLocal, purgeLocal, onLocalChange } from '@/db'
+import { isDemoId } from '@/demo'
 import { useStore } from '@/store'
 
 // ─── Persistencia de la sesión (localStorage) ───────────────
@@ -31,15 +32,15 @@ export const useAuth = create((set, get) => ({
   lastSyncAt: read(KEY_SYNC, EMPTY_SYNC).lastSyncAt,
 
   async register({ email, password, name }) {
-    startSession(await api('/auth/register', { body: { email, password, name } }))
+    await startSession(await api('/auth/register', { body: { email, password, name } }))
   },
 
   async login({ email, password }) {
-    startSession(await api('/auth/login', { body: { email, password } }))
+    await startSession(await api('/auth/login', { body: { email, password } }))
   },
 
   async loginWithGoogle(credential) {
-    startSession(await api('/auth/google', { body: { credential } }))
+    await startSession(await api('/auth/google', { body: { credential } }))
   },
 
   async forgotPassword(email) {
@@ -48,7 +49,7 @@ export const useAuth = create((set, get) => ({
 
   // Desde el enlace del email; inicia sesión con la nueva contraseña
   async resetPassword(token, password) {
-    startSession(await api('/auth/reset-password', { body: { token, password } }))
+    await startSession(await api('/auth/reset-password', { body: { token, password } }))
   },
 
   async verifyEmail(token) {
@@ -99,7 +100,10 @@ export const useAuth = create((set, get) => ({
   syncNow,
 }))
 
-function startSession({ token, user }) {
+async function startSession({ token, user }) {
+  // Los datos de ejemplo nunca se suben a la cuenta: se borran antes de que
+  // exista un token con el que sincronizar
+  if (await purgeLocal(isDemoId)) await useStore.getState().refresh()
   write(KEY_SESSION, { token, user })
   // Cuenta nueva en este dispositivo: subir todo lo local y bajar todo lo remoto
   write(KEY_SYNC, EMPTY_SYNC)

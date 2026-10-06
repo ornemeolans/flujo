@@ -1,5 +1,6 @@
 import { create } from 'zustand'
-import { getAll, getAllRaw, put, putMany, remove, STORES } from '@/db'
+import { getAll, getAllRaw, put, putMany, remove, purgeLocal, STORES } from '@/db'
+import { buildDemoData, isDemoId } from '@/demo'
 import { nanoid } from '@/utils/nanoid'
 import { pendingLoanPayments, loanCreditId } from '@shared/loans'
 import { periodKey, closeDayFor, addMonths } from '@shared/cards'
@@ -158,6 +159,26 @@ export const useStore = create((set, get) => ({
       getAll(STORES.LOANS),
     ])
     set({ wallets, cards, transactions, loans })
+  },
+
+  // ─── Modo demo ──────────────────────────────
+  // Carga datos de ejemplo; al cargarse se generan solos los rendimientos y las
+  // cuotas vencidas del préstamo, como con datos reales.
+  async loadDemo() {
+    const demo = buildDemoData()
+    await Promise.all([
+      putMany(STORES.WALLETS, demo.wallets),
+      putMany(STORES.CARDS, demo.cards),
+      putMany(STORES.TRANSACTIONS, demo.transactions),
+      putMany(STORES.LOANS, demo.loans),
+    ])
+    await get().loadAll()
+  },
+
+  // Borra definitivamente los datos de ejemplo (sin tombstones: nunca se sincronizan)
+  async clearDemo() {
+    await purgeLocal(isDemoId)
+    await get().refresh()
   },
 
   setMonth(month, year) {

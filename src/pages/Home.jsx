@@ -2,7 +2,9 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useStore, selectors } from '@/store'
 import { fmt2, fmt, MONTHS_SHORT } from '@/utils'
-import { Section, Card, Empty, pressable } from '@/components/ui'
+import { Section, Card, Empty, Button, pressable } from '@/components/ui'
+import { useAuth } from '@/store/auth'
+import { isDemoId } from '@/demo'
 import TxItem from '@/components/TxItem'
 import WalletModal from '@/components/modals/WalletModal'
 import CardModal from '@/components/modals/CardModal'
@@ -11,7 +13,17 @@ import styles from './Home.module.css'
 
 export default function Home() {
   const navigate = useNavigate()
-  const { wallets, cards, transactions, currentMonth, currentYear } = useStore()
+  const { wallets, cards, transactions, loans, currentMonth, currentYear, loadDemo, clearDemo } = useStore()
+  const signedIn = useAuth(s => !!s.user)
+  const isEmpty = !wallets.length && !cards.length && !transactions.length && !loans.length
+  const demoActive = wallets.some(w => isDemoId(w.id))
+  const [loadingDemo, setLoadingDemo] = useState(false)
+
+  async function handleDemo() {
+    setLoadingDemo(true)
+    await loadDemo()
+    setLoadingDemo(false)
+  }
   const [editWallet, setEditWallet] = useState(null)
   const [editCard, setEditCard]     = useState(null)
   const [editTx, setEditTx]         = useState(null)
@@ -26,6 +38,27 @@ export default function Home() {
 
   return (
     <div className="animate-fadeUp">
+      {demoActive && (
+        <div className={styles.demoBanner} role="status">
+          <span>Estás viendo <strong>datos de ejemplo</strong></span>
+          <button type="button" className={styles.demoClear} onClick={clearDemo}>Borrar y empezar</button>
+        </div>
+      )}
+
+      {isEmpty && !signedIn && (
+        <Card className={styles.welcome}>
+          <h1 className={styles.welcomeTitle}>Tus finanzas, <span>claras</span></h1>
+          <p className={styles.welcomeText}>
+            Billeteras con rendimiento, tarjetas en cuotas y préstamos con débito automático.
+            Todo queda en tu dispositivo y funciona sin conexión.
+          </p>
+          <Button variant="primary" size="lg" onClick={handleDemo} disabled={loadingDemo}>
+            {loadingDemo ? 'Cargando…' : 'Probar con datos de ejemplo'}
+          </Button>
+          <p className={styles.welcomeHint}>O empezá de cero agregando una billetera.</p>
+        </Card>
+      )}
+
       {/* Summary hero */}
       <div className={styles.hero}>
         <div className={styles.heroLabel}>Saldo Total</div>
