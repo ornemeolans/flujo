@@ -5,6 +5,7 @@ import App from './App'
 import { requestPersistentStorage } from './db'
 import './styles/global.css'
 import './theme'
+import './pwa/install' // captura beforeinstallprompt lo antes posible
 
 // Evita que el navegador borre IndexedDB cuando necesita liberar espacio
 requestPersistentStorage()

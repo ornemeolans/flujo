@@ -6,7 +6,8 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
-      registerType: 'autoUpdate',
+      // prompt: la versión nueva se aplica cuando la persona toca "Actualizar" (src/pwa/PwaStatus.jsx)
+      registerType: 'prompt',
       includeAssets: ['favicon.svg', 'apple-touch-icon.png'],
       manifest: {
         name: 'Flujo — Control de Gastos',

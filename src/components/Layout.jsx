@@ -3,6 +3,7 @@ import { useState } from 'react'
 import TopBar from './TopBar'
 import BottomNav from './BottomNav'
 import TxModal from './modals/TxModal'
+import PwaStatus from '@/pwa/PwaStatus'
 import styles from './Layout.module.css'
 
 export default function Layout({ children }) {
@@ -10,6 +11,7 @@ export default function Layout({ children }) {
 
   return (
     <div className={styles.app}>
+      <PwaStatus />
       <TopBar onNewTx={() => setTxModalOpen(true)} />
 
       <main className={styles.main}>

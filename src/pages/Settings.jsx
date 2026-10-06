@@ -6,12 +6,14 @@ import AccountSection from '@/components/AccountSection'
 import { useAuth } from '@/store/auth'
 import { useTheme, setThemePref } from '@/theme'
 import { today } from '@/utils'
+import { useInstallState, promptInstall } from '@/pwa/install'
 import styles from './Settings.module.css'
 
 export default function Settings() {
   const { wallets, cards, transactions, loadAll } = useStore()
   const signedIn = useAuth(s => !!s.user)
   const { theme, followsSystem } = useTheme()
+  const install = useInstallState()
   const [msg, setMsg] = useState('')
 
   function flash(text) { setMsg(text); setTimeout(() => setMsg(''), 3000) }
@@ -62,6 +64,25 @@ export default function Settings() {
       {msg && <div className={styles.toast}>{msg}</div>}
 
       <AccountSection />
+
+      {/* Instalar */}
+      {!install.installed && (install.canPrompt || install.iosHint) && (
+        <Section title="Instalar app">
+          <Card>
+            <p className={styles.desc}>
+              Instalala en tu pantalla de inicio: abre como una app, funciona sin conexión
+              y te puede avisar de los vencimientos.
+            </p>
+            {install.canPrompt ? (
+              <Button variant="primary" size="md" onClick={promptInstall}>Instalar Flujo</Button>
+            ) : (
+              <p className={styles.desc}>
+                En iPhone: tocá <strong>Compartir</strong> en Safari y después <strong>Agregar a inicio</strong>.
+              </p>
+            )}
+          </Card>
+        </Section>
+      )}
 
       {/* Apariencia */}
       <Section title="Apariencia">
