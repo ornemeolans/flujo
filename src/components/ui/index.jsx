@@ -34,16 +34,32 @@ export function Card({ children, className = '', onClick, style }) {
 
 // ─── Section ─────────────────────────────────────────────────
 export function Section({ title, action, onAction, children, className = '' }) {
+  // "Ver todo →": la flecha se dibuja como ícono y no forma parte del nombre accesible
+  const arrow = action?.endsWith('→')
+  const actionText = action?.replace(/\s*→$/, '')
   return (
     <section className={`${styles.section} ${className}`}>
       {(title || action) && (
         <div className={styles.sectionHeader}>
-          {title && <span className={styles.sectionTitle}>{title}</span>}
-          {action && <button type="button" className={styles.sectionAction} onClick={onAction} aria-label={title ? `${action.replace(/^\+\s*/, '')}: ${title}` : undefined}>{action}</button>}
+          {title && <h2 className={styles.sectionTitle}>{title}</h2>}
+          {action && (
+            <button type="button" className={styles.sectionAction} onClick={onAction} aria-label={title ? `${actionText.replace(/^\+\s*/, '')}: ${title}` : undefined}>
+              {actionText}
+              {arrow && <ArrowIcon />}
+            </button>
+          )}
         </div>
       )}
       {children}
     </section>
+  )
+}
+
+function ArrowIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M5 12h14M13 6l6 6-6 6" />
+    </svg>
   )
 }
 
@@ -162,7 +178,9 @@ export function Modal({ title, onClose, children, size = 'default' }) {
         className={`${styles.modal} ${styles[`modal_${size}`]} animate-slideUp`}
       >
         <div className={styles.handle} aria-hidden="true" />
-        <button type="button" className={styles.closeBtn} onClick={onClose} aria-label="Cerrar">×</button>
+        <button type="button" className={styles.closeBtn} onClick={onClose} aria-label="Cerrar">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
+        </button>
         {title && <h2 className={styles.modalTitle} id={titleId}>{title}</h2>}
         {children}
       </div>
@@ -185,10 +203,10 @@ export function Spinner({ size = 24 }) {
 export function Empty({ icon, text, action, onAction }) {
   return (
     <div className={styles.empty}>
-      <div className={styles.emptyIcon}>{icon}</div>
+      <div className={styles.emptyIcon} aria-hidden="true">{icon}</div>
       <div className={styles.emptyText}>{text}</div>
       {action && (
-        <button className={`${styles.btn} ${styles.btn_ghost} ${styles.btn_sm}`} onClick={onAction} style={{ marginTop: 12 }}>
+        <button type="button" className={`${styles.btn} ${styles.btn_ghost} ${styles.btn_sm} ${styles.emptyAction}`} onClick={onAction}>
           {action}
         </button>
       )}

@@ -59,25 +59,33 @@ export default function Home() {
         </Card>
       )}
 
-      {/* Summary hero */}
-      <div className={styles.hero}>
-        <div className={styles.heroLabel}>Saldo Total</div>
-        <div className={`${styles.heroAmount} ${totalBalance < 0 ? styles.neg : styles.pos}`}>
-          {fmt2(totalBalance)}
-        </div>
-        {totalYield > 0 && (
-          <div className={styles.heroYield}>
-            Rendimiento estimado este mes: +{fmt2(totalYield)}
+      {/* Summary hero: doble bisel (bandeja + placa) */}
+      <div className={styles.heroShell}>
+        <div className={styles.hero}>
+          <div className={styles.heroLabel}>
+            <span className={styles.heroDot} aria-hidden="true" />
+            Saldo total · {MONTHS_SHORT[currentMonth]} {currentYear}
           </div>
-        )}
-        <div className={styles.heroPills}>
-          <div className={styles.pill}>
-            <span className={styles.pillLabel}>Ingresos</span>
-            <span className={`${styles.pillVal} ${styles.pillInc}`}>{fmt2(income)}</span>
+          <div className={`${styles.heroAmount} ${totalBalance < 0 ? styles.neg : styles.pos}`}>
+            <Money value={totalBalance} />
           </div>
-          <div className={styles.pill}>
-            <span className={styles.pillLabel}>Egresos</span>
-            <span className={`${styles.pillVal} ${styles.pillExp}`}>{fmt2(expense)}</span>
+          {totalYield > 0 && (
+            <div className={styles.heroYield}>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M4 16l6-6 4 4 6-7M14 7h6v6"/></svg>
+              Rinde +{fmt2(totalYield)} este mes
+            </div>
+          )}
+          <div className={styles.flows}>
+            <div className={styles.flow}>
+              <span className={`${styles.flowIcon} ${styles.flowInc}`} aria-hidden="true">↑</span>
+              <span className={styles.flowLabel}>Ingresos</span>
+              <span className={`${styles.flowVal} ${styles.pillInc}`}>{fmt2(income)}</span>
+            </div>
+            <div className={styles.flow}>
+              <span className={`${styles.flowIcon} ${styles.flowExp}`} aria-hidden="true">↓</span>
+              <span className={styles.flowLabel}>Egresos</span>
+              <span className={`${styles.flowVal} ${styles.pillExp}`}>{fmt2(expense)}</span>
+            </div>
           </div>
         </div>
       </div>
@@ -90,41 +98,49 @@ export default function Home() {
       >
         {wallets.length === 0
           ? <Empty icon="🏦" text="Sin billeteras" action="+ Agregar" onAction={() => setEditWallet({})} />
-          : wallets.slice(0, 3).map(w => (
-            <WalletRow
-              key={w.id}
-              wallet={w}
-              transactions={transactions}
-              onClick={() => setEditWallet(w)}
-            />
-          ))
+          : (
+            <div className={styles.list}>
+              {wallets.slice(0, 3).map(w => (
+                <WalletRow
+                  key={w.id}
+                  wallet={w}
+                  transactions={transactions}
+                  onClick={() => setEditWallet(w)}
+                />
+              ))}
+            </div>
+          )
         }
       </Section>
 
       {/* Credit Cards */}
       <Section
-        title="Tarjetas de Crédito"
+        title="Tarjetas de crédito"
         action="Ver todo →"
         onAction={() => navigate('/wallets')}
       >
         {cards.length === 0
           ? <Empty icon="💳" text="Sin tarjetas" action="+ Agregar" onAction={() => setEditCard({})} />
-          : cards.slice(0, 2).map(card => (
-            <CCRow
-              key={card.id}
-              card={card}
-              transactions={transactions}
-              currentMonth={currentMonth}
-              currentYear={currentYear}
-              onClick={() => setEditCard(card)}
-            />
-          ))
+          : (
+            <div className={styles.list}>
+              {cards.slice(0, 2).map(card => (
+                <CCRow
+                  key={card.id}
+                  card={card}
+                  transactions={transactions}
+                  currentMonth={currentMonth}
+                  currentYear={currentYear}
+                  onClick={() => setEditCard(card)}
+                />
+              ))}
+            </div>
+          )
         }
       </Section>
 
       {/* Recent transactions */}
       <Section
-        title="Últimas Transacciones"
+        title="Últimos movimientos"
         action="Ver todo →"
         onAction={() => navigate('/transactions')}
       >
@@ -164,12 +180,20 @@ export default function Home() {
 }
 
 // ─── Sub-components ──────────────────────────────────────────
+// Importe con los centavos más chicos: se lee primero la parte entera
+function Money({ value }) {
+  const text = fmt2(value)
+  const i = text.lastIndexOf(',')
+  if (i < 0) return text
+  return <>{text.slice(0, i)}<span className={styles.cents}>{text.slice(i)}</span></>
+}
+
 function WalletRow({ wallet, transactions, onClick }) {
   const bal    = selectors.walletBalance(wallet, transactions)
   const yield_ = selectors.walletMonthlyYield(wallet, transactions)
   return (
     <div className={styles.walletRow} {...pressable(onClick)}>
-      <div className={styles.walletIcon} style={{ background: `${wallet.color || '#178C9E'}18`, color: wallet.color || '#178C9E' }}>
+      <div className={styles.walletIcon} style={{ '--tint': wallet.color || '#178C9E' }} aria-hidden="true">
         {wallet.icon || '💵'}
       </div>
       <div className={styles.walletInfo}>
@@ -193,7 +217,7 @@ function CCRow({ card, transactions, currentMonth, currentYear, onClick }) {
   return (
     <div className={styles.ccRow} {...pressable(onClick)}>
       <div className={styles.ccHeader}>
-        <div className={styles.walletIcon} style={{ background: `${card.color || '#A3296B'}18`, color: card.color || '#A3296B' }}>
+        <div className={styles.walletIcon} style={{ '--tint': card.color || '#A3296B' }} aria-hidden="true">
           {card.icon || '💳'}
         </div>
         <div>
@@ -204,11 +228,11 @@ function CCRow({ card, transactions, currentMonth, currentYear, onClick }) {
       <div className={styles.ccPills}>
         <div className={styles.ccPill}>
           <span className={styles.ccPillLabel}>Resumen actual</span>
-          <span className={styles.ccPillVal} style={{ color: 'var(--red)' }}>{fmt2(current)}</span>
+          <span className={`${styles.ccPillVal} ${styles.pillExp}`}>{fmt2(current)}</span>
         </div>
         <div className={styles.ccPill}>
           <span className={styles.ccPillLabel}>Próximo</span>
-          <span className={styles.ccPillVal} style={{ color: 'var(--text2)' }}>{fmt2(next)}</span>
+          <span className={`${styles.ccPillVal} ${styles.muted}`}>{fmt2(next)}</span>
         </div>
       </div>
     </div>

@@ -9,7 +9,7 @@ export default function TxItem({ tx, wallets, cards, onClick }) {
 
   return (
     <div className={styles.row} {...pressable(onClick && (() => onClick(tx)))}>
-      <div className={styles.icon} style={{ background: `${cat.color}18` }}>
+      <div className={styles.icon} style={{ background: `${cat.color}1F` }} aria-hidden="true">
         {cat.icon}
       </div>
       <div className={styles.info}>

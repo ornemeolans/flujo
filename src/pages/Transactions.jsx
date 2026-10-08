@@ -42,6 +42,7 @@ export default function Transactions() {
           <button
             key={f.id}
             className={`${styles.chip} ${filter === f.id ? styles.chipActive : ''}`}
+            aria-pressed={filter === f.id}
             onClick={() => setFilter(f.id)}
           >
             {f.label}

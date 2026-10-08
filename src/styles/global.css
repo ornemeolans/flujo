@@ -2,25 +2,45 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html { scroll-behavior: smooth; -webkit-tap-highlight-color: transparent; }
 body {
-  font-family: 'DM Sans', sans-serif;
-  background: var(--bg);
+  font-family: var(--font-sans);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.45;
+  /* Luz ambiental: un halo turquesa arriba y uno cálido abajo, fijos al viewport */
+  background:
+    radial-gradient(900px 520px at 100% -8%, var(--ambient1), transparent 62%),
+    radial-gradient(760px 480px at -12% 108%, var(--ambient2), transparent 60%),
+    var(--bg);
+  background-attachment: fixed;
   color: var(--text);
   min-height: 100vh;
   min-height: 100dvh;
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
 }
+/* Grano: textura de papel fija detrás del contenido (no se repinta al hacer scroll) */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: var(--grain);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
 #root { min-height: 100vh; min-height: 100dvh; }
 input, select, button, textarea { font-family: inherit; }
 button { cursor: pointer; }
 a { color: inherit; text-decoration: none; }
+h1, h2, h3 { text-wrap: balance; }
+p { text-wrap: pretty; }
 
 /* ─── Design Tokens ──────────────────────────────────────── */
 /* ── Paleta Ibiza ───────────────────────────────────────── */
 /* Ibiza White          #EAEAE6  |  Esparto Beige     #C2A878 */
 /* Bougainvillea Purple #A3296B  |  Cove Turquoise    #178C9E */
+/* Turquesa = único acento de interfaz. Buganvilla = solo significado (egresos, deudas). */
 /* Los colores de texto cumplen contraste WCAG AA (4.5:1) sobre todas las superficies. */
-/* Claro por defecto; oscuro con data-theme="dark" en <html> (ver src/theme.js). */
+/* Claro por defecto; oscuro con data-theme="dark" en <html> (ver src/theme.ts). */
 :root {
   color-scheme: light;
 
@@ -60,13 +80,39 @@ a { color: inherit; text-decoration: none; }
 
   --overlay:     rgba(28,42,46,0.45);
 
-  --radius:      14px;
-  --radius-sm:   8px;
-  --radius-lg:   20px;
-  --shadow:      0 8px 32px rgba(28,42,46,0.14);
-  --shadow-sm:   0 2px 12px rgba(28,42,46,0.08);
-  --font-serif:  'DM Serif Display', serif;
-  --font-mono:   'DM Mono', monospace;
+  --ambient1:    rgba(23,140,158,0.13);
+  --ambient2:    rgba(194,168,120,0.22);
+  --grain:       0.05;
+  --ink:         #1C2A2E;
+  --on-ink:      #F6F5F1;
+  --glass:       rgba(246,245,241,0.72);
+
+  /* Radios: contenedores suaves, elementos internos más cerrados */
+  --radius:      18px;
+  --radius-sm:   12px;
+  --radius-lg:   28px;
+  --radius-xl:   34px;
+  /* Sombras teñidas con el tono del texto, nunca negro puro */
+  --shadow:      0 24px 48px -20px rgba(28,42,46,0.30), 0 2px 6px -2px rgba(28,42,46,0.08);
+  --shadow-sm:   0 12px 24px -16px rgba(28,42,46,0.28);
+  --highlight:   inset 0 1px 0 rgba(255,255,255,0.75);
+
+  --font-serif:  'DM Serif Display', Georgia, serif;
+  --font-sans:   'DM Sans', system-ui, sans-serif;
+  /* Importes: sans con cifras tabulares (alinean en columna sin parecer una terminal) */
+  --font-num:    'DM Sans', system-ui, sans-serif;
+
+  /* Movimiento: curvas con inercia, nada lineal */
+  --ease:        cubic-bezier(0.32, 0.72, 0, 1);
+  --ease-spring: cubic-bezier(0.34, 1.4, 0.64, 1);
+  --t-base:      background-color .3s var(--ease), border-color .3s var(--ease), color .3s var(--ease), box-shadow .3s var(--ease), transform .3s var(--ease), opacity .3s var(--ease);
+
+  /* Capas */
+  --z-bar:       80;
+  --z-fab:       90;
+  --z-overlay:   998;
+  --z-modal:     999;
+
   --nav-height:  80px;
   --safe-bottom: env(safe-area-inset-bottom, 0px);
 }
@@ -108,10 +154,18 @@ a { color: inherit; text-decoration: none; }
   --gold:        #C9B183;
   --gold-dim:    rgba(194,168,120,0.15);
 
-  --overlay:     rgba(0,0,0,0.65);
+  --overlay:     rgba(4,12,14,0.65);
 
-  --shadow:      0 8px 32px rgba(0,0,0,0.5);
-  --shadow-sm:   0 2px 12px rgba(0,0,0,0.35);
+  --ambient1:    rgba(43,176,196,0.12);
+  --ambient2:    rgba(163,41,107,0.10);
+  --grain:       0.07;
+  --ink:         #EAEAE6;
+  --on-ink:      #0E1F23;
+  --glass:       rgba(21,44,50,0.72);
+
+  --shadow:      0 24px 48px -20px rgba(3,12,14,0.80), 0 2px 6px -2px rgba(3,12,14,0.40);
+  --shadow-sm:   0 12px 24px -16px rgba(3,12,14,0.75);
+  --highlight:   inset 0 1px 0 rgba(234,234,230,0.06);
 }
 
 /* ─── Scrollbar ──────────────────────────────────────────── */
@@ -121,7 +175,7 @@ a { color: inherit; text-decoration: none; }
 
 /* ─── Animations ─────────────────────────────────────────── */
 @keyframes fadeUp {
-  from { opacity: 0; transform: translateY(12px); }
+  from { opacity: 0; transform: translateY(16px); }
   to   { opacity: 1; transform: translateY(0); }
 }
 @keyframes slideUp {
@@ -139,17 +193,27 @@ a { color: inherit; text-decoration: none; }
   0%, 100% { opacity: 1; }
   50%       { opacity: 0.4; }
 }
+@keyframes shimmer {
+  from { background-position: 150% 0; }
+  to   { background-position: -50% 0; }
+}
 
-.animate-fadeUp  { animation: fadeUp  0.3s cubic-bezier(0.34,1.56,0.64,1) both; }
-.animate-slideUp { animation: slideUp 0.35s cubic-bezier(0.34,1.2,0.64,1) both; }
-.animate-fadeIn  { animation: fadeIn  0.2s ease both; }
+.animate-slideUp { animation: slideUp 0.5s var(--ease) both; }
+.animate-fadeIn  { animation: fadeIn  0.25s var(--ease) both; }
+
+/* Entrada escalonada: cada bloque de la página sube con un pequeño retraso */
+.animate-fadeUp > * { animation: fadeUp 0.5s var(--ease) both; }
+.animate-fadeUp > :nth-child(2) { animation-delay: 40ms; }
+.animate-fadeUp > :nth-child(3) { animation-delay: 80ms; }
+.animate-fadeUp > :nth-child(4) { animation-delay: 120ms; }
+.animate-fadeUp > :nth-child(n+5) { animation-delay: 160ms; }
 
 /* ─── Accesibilidad ──────────────────────────────────────── */
 :focus-visible {
   outline: 2px solid var(--accent);
-  outline-offset: 2px;
-  border-radius: 4px;
+  outline-offset: 3px;
 }
+::selection { background: var(--accent-dim); color: var(--text); }
 .sr-only {
   position: absolute;
   width: 1px; height: 1px;
@@ -162,6 +226,7 @@ a { color: inherit; text-decoration: none; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
+    animation-delay: 0ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
@@ -169,7 +234,7 @@ a { color: inherit; text-decoration: none; }
 }
 
 /* ─── Utility ────────────────────────────────────────────── */
-.mono { font-family: var(--font-mono); }
+.num { font-family: var(--font-num); font-variant-numeric: tabular-nums; }
 .serif { font-family: var(--font-serif); }
 .text-accent  { color: var(--accent); }
 .text-red     { color: var(--red); }

@@ -38,6 +38,9 @@
   }
   </script>
 
+  <!-- Marca la página con JS antes de pintar: sin JS, todo el contenido queda visible -->
+  <script>document.documentElement.classList.add('js')</script>
+
   <link rel="preload" href="/fonts/dm-serif-display-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin />
   <link rel="preload" href="/fonts/dm-sans-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin />
 
@@ -48,127 +51,275 @@
     @font-face { font-family: 'DM Sans'; font-weight: 600; font-display: swap; src: url('/fonts/dm-sans-latin-600-normal.woff2') format('woff2'); }
     @font-face { font-family: 'DM Mono'; font-weight: 400; font-display: swap; src: url('/fonts/dm-mono-latin-400-normal.woff2') format('woff2'); }
 
-    /* Paleta Ibiza — mismos tokens que la app (contraste WCAG AA) */
+    /* Paleta Ibiza — mismos tokens que la app (contraste WCAG AA).
+       Turquesa es el único acento de interfaz; buganvilla solo marca deudas y egresos. */
     :root {
       color-scheme: light;
-      --bg: #EAEAE6; --surface: #F6F5F1; --surface2: #EFEEE9;
+      --bg: #EAEAE6; --surface: #F6F5F1; --surface2: #EFEEE9; --surface3: #E6E4DD;
       --text: #1C2A2E; --text2: #46565A; --text3: #556467;
       --accent: #0E6672; --turquoise: #178C9E; --purple: #A3296B; --purple-text: #A3296B; --beige: #C2A878;
-      --border: rgba(28,42,46,0.10); --shadow: 0 24px 60px rgba(28,42,46,0.16);
+      --accent-dim: rgba(23,140,158,0.12); --purple-dim: rgba(163,41,107,0.10); --beige-dim: rgba(194,168,120,0.24);
+      --border: rgba(28,42,46,0.09); --border2: rgba(28,42,46,0.15);
+      --ink: #1C2A2E; --on-ink: #F6F5F1;
+      --glass: rgba(246,245,241,0.72);
+      --highlight: inset 0 1px 0 rgba(255,255,255,0.75);
+      --shadow: 0 40px 80px -36px rgba(28,42,46,0.45), 0 2px 8px -2px rgba(28,42,46,0.08);
+      --shadow-sm: 0 16px 32px -20px rgba(28,42,46,0.35);
+      --ambient1: rgba(23,140,158,0.16); --ambient2: rgba(194,168,120,0.26);
+      --grain: 0.05;
       --serif: 'DM Serif Display', Georgia, serif; --sans: 'DM Sans', system-ui, sans-serif; --mono: 'DM Mono', ui-monospace, monospace;
+      --ease: cubic-bezier(0.32, 0.72, 0, 1); --spring: cubic-bezier(0.34, 1.4, 0.64, 1);
     }
     @media (prefers-color-scheme: dark) {
       :root {
         color-scheme: dark;
-        --bg: #0E1F23; --surface: #152C32; --surface2: #1B363D;
+        --bg: #0E1F23; --surface: #152C32; --surface2: #1B363D; --surface3: #1F3C43;
         --text: #EAEAE6; --text2: #A9BCBC; --text3: #97AEAF;
         --accent: #3DBDD0; --purple-text: #EC97C4;
-        --border: rgba(234,234,230,0.10); --shadow: 0 24px 60px rgba(0,0,0,0.45);
+        --accent-dim: rgba(43,176,196,0.14); --purple-dim: rgba(222,106,168,0.14); --beige-dim: rgba(194,168,120,0.16);
+        --border: rgba(234,234,230,0.09); --border2: rgba(234,234,230,0.16);
+        --ink: #EAEAE6; --on-ink: #0E1F23;
+        --glass: rgba(21,44,50,0.72);
+        --highlight: inset 0 1px 0 rgba(234,234,230,0.06);
+        --shadow: 0 40px 80px -36px rgba(3,12,14,0.9), 0 2px 8px -2px rgba(3,12,14,0.4);
+        --shadow-sm: 0 16px 32px -20px rgba(3,12,14,0.8);
+        --ambient1: rgba(43,176,196,0.13); --ambient2: rgba(163,41,107,0.11);
+        --grain: 0.07;
       }
     }
+
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    html { scroll-behavior: smooth; }
-    body { font-family: var(--sans); background: var(--bg); color: var(--text); line-height: 1.6; -webkit-font-smoothing: antialiased; overflow-x: hidden; }
+    html { scroll-behavior: smooth; scroll-padding-top: 100px; }
+    body {
+      font-family: var(--sans); color: var(--text); line-height: 1.6; -webkit-font-smoothing: antialiased; overflow-x: hidden;
+      background:
+        radial-gradient(1100px 700px at 92% -10%, var(--ambient1), transparent 60%),
+        radial-gradient(900px 600px at -10% 40%, var(--ambient2), transparent 60%),
+        var(--bg);
+    }
+    /* Grano de papel: fijo y sin eventos, no se repinta al hacer scroll */
+    body::before {
+      content: ''; position: fixed; inset: 0; z-index: -1; pointer-events: none; opacity: var(--grain);
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    }
     a { color: inherit; }
     img { display: block; max-width: 100%; height: auto; }
-    :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 6px; }
-    .wrap { max-width: 1120px; margin: 0 auto; padding: 0 16px; }
-    .skip { position: absolute; left: -9999px; top: 8px; background: var(--surface); padding: 8px 14px; border-radius: 8px; z-index: 10; }
+    h1, h2, h3 { text-wrap: balance; }
+    p { text-wrap: pretty; }
+    ::selection { background: var(--accent-dim); }
+    :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 8px; }
+    .wrap { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
+    .skip { position: absolute; left: -9999px; top: 8px; background: var(--surface); padding: 8px 14px; border-radius: 8px; z-index: 30; }
     .skip:focus { left: 16px; }
-    @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } * { transition: none !important; } }
 
-    /* ─── Nav ─── */
-    header { position: sticky; top: 0; z-index: 5; background: color-mix(in srgb, var(--bg) 85%, transparent); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); }
-    .nav { display: flex; align-items: center; justify-content: space-between; height: 64px; gap: 16px; }
-    .logo { font-family: var(--serif); font-size: 28px; text-decoration: none; line-height: 1; }
+    /* ─── Botones: píldora con ícono anidado ─── */
+    .btn {
+      display: inline-flex; align-items: center; gap: 12px; padding: 7px 7px 7px 22px; border-radius: 999px;
+      font-weight: 600; font-size: 15px; text-decoration: none; white-space: nowrap;
+      transition: transform .4s var(--ease), background-color .3s var(--ease), box-shadow .4s var(--ease);
+    }
+    .btn:active { transform: scale(0.97); }
+    .btn-primary { background: var(--ink); color: var(--on-ink); box-shadow: 0 18px 36px -18px rgba(14,31,35,0.7); }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 24px 40px -18px rgba(14,31,35,0.75); }
+    .btn .orb {
+      width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center;
+      background: color-mix(in srgb, var(--on-ink) 14%, transparent);
+      transition: transform .5s var(--spring);
+    }
+    .btn:hover .orb { transform: translate(2px, -1px) scale(1.06); }
+    .btn .orb svg { width: 16px; height: 16px; }
+    .btn-sm { padding: 5px 5px 5px 16px; font-size: 14px; gap: 10px; }
+    .btn-sm .orb { width: 30px; height: 30px; }
+    .link {
+      display: inline-flex; align-items: center; gap: 6px; font-weight: 500; font-size: 15px; color: var(--text);
+      text-decoration: underline; text-decoration-color: var(--border2); text-underline-offset: 5px;
+      transition: text-decoration-color .3s var(--ease);
+    }
+    .link:hover { text-decoration-color: currentColor; }
+
+    /* ─── Nav: isla flotante ─── */
+    header { position: fixed; top: 14px; left: 0; right: 0; z-index: 20; padding: 0 14px; pointer-events: none; }
+    .nav {
+      pointer-events: auto; max-width: 860px; margin: 0 auto; height: 60px; padding: 0 8px 0 22px;
+      display: flex; align-items: center; justify-content: space-between; gap: 16px; border-radius: 999px;
+      background: var(--glass); backdrop-filter: blur(18px) saturate(1.4); -webkit-backdrop-filter: blur(18px) saturate(1.4);
+      box-shadow: var(--highlight), 0 0 0 1px var(--border), var(--shadow-sm);
+    }
+    .logo { font-family: var(--serif); font-size: 28px; letter-spacing: -0.03em; text-decoration: none; line-height: 1; }
     .logo span { color: var(--accent); }
-    .nav ul { display: flex; gap: 26px; list-style: none; font-size: 15px; }
-    .nav ul a { text-decoration: none; color: var(--text2); }
-    .nav ul a:hover { color: var(--text); }
-    @media (max-width: 720px) { .nav ul { display: none; } }
-
-    .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 12px 20px; border-radius: 12px; font-weight: 600; font-size: 15px; text-decoration: none; transition: transform .15s, box-shadow .15s; white-space: nowrap; }
-    .btn:hover { transform: translateY(-1px); }
-    .btn-primary { background: var(--accent); color: var(--bg); box-shadow: 0 8px 24px color-mix(in srgb, var(--accent) 30%, transparent); }
-    .btn-ghost { border: 1px solid var(--border); background: var(--surface); }
-    .btn-sm { padding: 9px 14px; font-size: 14px; border-radius: 10px; }
+    .nav ul { display: flex; gap: 4px; list-style: none; font-size: 14.5px; }
+    .nav ul a { display: block; padding: 7px 13px; border-radius: 999px; text-decoration: none; color: var(--text2); transition: background-color .3s var(--ease), color .3s var(--ease); }
+    .nav ul a:hover { color: var(--text); background: color-mix(in srgb, var(--text) 6%, transparent); }
+    @media (max-width: 760px) { .nav ul { display: none; } }
 
     /* ─── Hero ─── */
-    .hero { position: relative; padding: 72px 0 40px; overflow-x: clip; }
-    .hero::before, .hero::after { content: ''; position: absolute; border-radius: 50%; filter: blur(90px); z-index: -1; }
-    .hero::before { width: 520px; height: 520px; background: var(--turquoise); opacity: .16; right: -80px; top: -60px; }
-    .hero::after { width: 420px; height: 420px; background: var(--purple); opacity: .13; right: 260px; top: 300px; }
-    .hero-grid { display: grid; grid-template-columns: 1.1fr .9fr; gap: 48px; align-items: center; }
-    .eyebrow { display: inline-flex; align-items: center; gap: 8px; font-family: var(--mono); font-size: 13px; color: var(--text2); background: var(--surface); border: 1px solid var(--border); padding: 6px 12px; border-radius: 999px; }
-    .eyebrow i { width: 8px; height: 8px; border-radius: 50%; background: var(--turquoise); }
-    h1 { font-family: var(--serif); font-weight: 400; font-size: clamp(44px, 7vw, 76px); line-height: 1.02; letter-spacing: -1px; margin: 22px 0 18px; }
-    h1 em { font-style: normal; color: var(--purple-text); }
-    .lead { font-size: clamp(17px, 2vw, 20px); color: var(--text2); max-width: 540px; }
-    .ctas { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 30px; }
-    .note { margin-top: 14px; font-size: 13px; color: var(--text3); }
-    .phone { width: min(320px, 78vw); margin: 0 auto; padding: 11px; border-radius: 46px; background: #1C2A2E; box-shadow: var(--shadow); }
-    .phone img { border-radius: 36px; }
-    .hero .phone { transform: rotate(3deg); }
-    @media (max-width: 860px) { .hero-grid { grid-template-columns: 1fr; } .hero { padding-top: 48px; } .hero .phone { transform: none; margin-top: 12px; } }
+    .hero { padding: 150px 0 80px; min-height: 100dvh; display: flex; align-items: center; overflow-x: clip; }
+    .hero-grid { display: grid; grid-template-columns: 1.15fr .85fr; gap: 56px; align-items: center; }
+    .eyebrow {
+      display: inline-flex; align-items: center; gap: 9px; font-size: 13.5px; font-weight: 500; color: var(--text2);
+      background: var(--surface); padding: 6px 14px 6px 8px; border-radius: 999px; box-shadow: var(--highlight), 0 0 0 1px var(--border);
+    }
+    .eyebrow i { width: 20px; height: 20px; border-radius: 50%; display: grid; place-items: center; background: var(--accent-dim); }
+    .eyebrow i::after { content: ''; width: 7px; height: 7px; border-radius: 50%; background: var(--turquoise); }
+    h1 { font-family: var(--serif); font-weight: 400; font-size: clamp(56px, 9vw, 112px); line-height: .92; letter-spacing: -0.035em; margin: 28px 0 26px; }
+    h1 em { font-style: normal; color: var(--accent); }
+    .lead { font-size: clamp(17px, 1.8vw, 20px); color: var(--text2); max-width: 34em; }
+    .ctas { display: flex; flex-wrap: wrap; align-items: center; gap: 14px 26px; margin-top: 36px; }
+    .note { margin-top: 18px; font-size: 13.5px; color: var(--text3); }
+
+    /* Teléfono: doble bisel (bandeja translúcida + marco) */
+    .device { position: relative; width: min(340px, 80vw); margin: 0 auto; }
+    .tray { padding: 9px; border-radius: 58px; background: color-mix(in srgb, var(--surface) 50%, transparent); box-shadow: inset 0 0 0 1px var(--border), var(--shadow); }
+    .phone { padding: 10px; border-radius: 49px; background: #1C2A2E; box-shadow: inset 0 1px 0 rgba(255,255,255,0.12), inset 0 0 0 1px rgba(255,255,255,0.05); }
+    .phone img { border-radius: 39px; }
+    .hero .device { transform: rotate(3deg); }
+    /* Aviso flotante sobre el teléfono */
+    .toast {
+      position: absolute; left: -64px; bottom: 96px; width: 272px; display: flex; gap: 12px; align-items: center; padding: 12px 14px;
+      border-radius: 20px; background: var(--glass); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+      box-shadow: var(--highlight), 0 0 0 1px var(--border), var(--shadow); transform: rotate(-5deg); font-size: 13px; line-height: 1.35;
+    }
+    .toast b { display: block; font-weight: 600; }
+    .toast span { color: var(--text2); }
+    .toast i { flex: 0 0 34px; height: 34px; border-radius: 11px; display: grid; place-items: center; background: var(--accent-dim); color: var(--accent); font-style: normal; }
+    .toast i svg { width: 17px; height: 17px; }
+    @media (max-width: 900px) {
+      .hero { padding-top: 120px; min-height: 0; }
+      .hero-grid { grid-template-columns: 1fr; gap: 48px; }
+      .hero .device, .toast { transform: none; }
+      .toast { left: -12px; bottom: 60px; }
+    }
 
     /* ─── Secciones ─── */
-    section { padding: 72px 0; }
-    .kicker { font-family: var(--mono); font-size: 13px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--accent); }
-    h2 { font-family: var(--serif); font-weight: 400; font-size: clamp(32px, 4.5vw, 46px); line-height: 1.1; margin: 10px 0 14px; }
-    .sub { color: var(--text2); max-width: 640px; font-size: 17px; }
+    section { padding: clamp(88px, 12vw, 152px) 0; }
+    .kicker { display: inline-flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 500; color: var(--accent); }
+    .kicker::before { content: ''; width: 22px; height: 1px; background: currentColor; }
+    h2 { font-family: var(--serif); font-weight: 400; font-size: clamp(38px, 5.4vw, 64px); line-height: 1; letter-spacing: -0.03em; margin: 16px 0 18px; }
+    .sub { color: var(--text2); max-width: 36em; font-size: 17.5px; }
 
-    .features { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 40px; }
-    .card { background: var(--surface); border: 1px solid var(--border); border-radius: 18px; padding: 24px; }
-    .card h3 { font-size: 18px; font-weight: 600; margin: 14px 0 6px; }
-    .card p { color: var(--text2); font-size: 15px; }
-    .icon { width: 44px; height: 44px; border-radius: 12px; display: grid; place-items: center; background: color-mix(in srgb, var(--c, var(--turquoise)) 16%, transparent); color: var(--c, var(--turquoise)); }
-    .icon svg { width: 22px; height: 22px; }
-    @media (max-width: 900px) { .features { grid-template-columns: 1fr 1fr; } }
-    @media (max-width: 600px) { .features { grid-template-columns: 1fr; } }
+    /* ─── Bento de funciones ─── */
+    .bento { display: grid; grid-template-columns: repeat(6, 1fr); gap: 14px; margin-top: 56px; }
+    .cell {
+      position: relative; overflow: hidden; display: flex; flex-direction: column; padding: 28px; border-radius: 30px;
+      background: var(--surface); box-shadow: var(--highlight), 0 0 0 1px var(--border), var(--shadow-sm);
+    }
+    .cell h3 { font-size: 19px; font-weight: 600; letter-spacing: -0.01em; margin-bottom: 8px; }
+    .cell p { color: var(--text2); font-size: 15.5px; max-width: 34em; }
+    .cell .icon { width: 42px; height: 42px; border-radius: 14px; display: grid; place-items: center; margin-bottom: 22px; background: var(--accent-dim); color: var(--accent); }
+    .cell .icon svg { width: 21px; height: 21px; }
+    .c-loans { grid-column: span 4; grid-row: span 2; }
+    .c-cards, .c-yield { grid-column: span 2; }
+    .c-offline, .c-remind { grid-column: span 3; }
+    .c-sync { grid-column: span 6; flex-direction: row; align-items: center; gap: 28px; }
+    .c-sync .icon { margin: 0; flex: 0 0 auto; }
+    .c-sync div { flex: 1; }
+    /* Mini cronograma: el préstamo como protagonista */
+    .sched { margin-top: auto; padding-top: 32px; display: grid; gap: 8px; }
+    .sched li { list-style: none; display: grid; grid-template-columns: 56px 1fr auto; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 16px; background: var(--surface2); font-size: 14.5px; font-variant-numeric: tabular-nums; }
+    .sched li span:first-child { color: var(--text3); font-weight: 500; }
+    .sched li b { font-weight: 600; }
+    .sched .paid { color: var(--text3); }
+    .sched .paid b { text-decoration: line-through; font-weight: 500; }
+    .sched .next { background: var(--purple-dim); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--purple) 30%, transparent); }
+    .sched .next b { color: var(--purple-text); }
+    .tag { justify-self: start; font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 6px; background: var(--accent-dim); color: var(--accent); }
+    .next .tag { background: var(--purple); color: #fff; }
+    .spark { margin-top: auto; padding-top: 24px; }
+    .spark svg { width: 100%; height: 64px; }
+    @media (max-width: 960px) {
+      .c-loans { grid-column: span 6; grid-row: auto; }
+      .c-cards, .c-yield, .c-offline, .c-remind { grid-column: span 3; }
+    }
+    @media (max-width: 640px) {
+      .bento { grid-template-columns: 1fr; }
+      .bento > * { grid-column: auto !important; }
+      .c-sync { flex-direction: column; align-items: flex-start; gap: 0; }
+      .c-sync .icon { margin-bottom: 22px; }
+      .cell { padding: 24px; border-radius: 26px; }
+    }
 
-    .shots { display: flex; gap: 28px; justify-content: center; margin-top: 44px; }
+    /* ─── Pantallas: cascada ─── */
+    .shots { display: flex; justify-content: center; align-items: flex-start; gap: 0; margin-top: 64px; }
     .shots figure { text-align: center; }
-    .shots .phone { width: 250px; padding: 9px; border-radius: 38px; }
-    .shots .phone img { border-radius: 30px; }
-    .shots figcaption { margin-top: 14px; font-size: 14px; color: var(--text2); }
-    @media (max-width: 860px) { .shots { overflow-x: auto; justify-content: flex-start; padding: 8px 4px 20px; scroll-snap-type: x mandatory; } .shots figure { flex: 0 0 auto; scroll-snap-align: center; } }
+    .shots .device { width: 270px; }
+    .shots .tray { border-radius: 50px; padding: 8px; }
+    .shots .phone { border-radius: 42px; padding: 9px; }
+    .shots .phone img { border-radius: 33px; }
+    .shots figure:nth-child(1) { transform: rotate(-4deg) translate(28px, 48px); }
+    .shots figure:nth-child(2) { position: relative; z-index: 1; }
+    .shots figure:nth-child(3) { transform: rotate(4deg) translate(-28px, 48px); }
+    .shots figcaption { margin-top: 18px; font-size: 14.5px; color: var(--text2); }
+    @media (max-width: 900px) {
+      .shots { overflow-x: auto; justify-content: flex-start; gap: 18px; padding: 8px 20px 24px; margin: 48px -20px 0; scroll-snap-type: x mandatory; scrollbar-width: none; }
+      .shots::-webkit-scrollbar { display: none; }
+      .shots figure { flex: 0 0 auto; scroll-snap-align: center; transform: none !important; }
+      .shots .device { width: 240px; }
+    }
 
-    /* ─── Cómo está hecho ─── */
-    .metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-top: 40px; }
-    .metric { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 20px; }
-    .metric b { display: block; font-family: var(--serif); font-weight: 400; font-size: 40px; line-height: 1; color: var(--accent); }
-    .metric span { display: block; margin-top: 8px; font-size: 14px; color: var(--text2); }
-    @media (max-width: 860px) { .metrics { grid-template-columns: 1fr 1fr; } }
-
-    .tech { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 16px; }
-    .tech h3 { font-size: 17px; font-weight: 600; margin-bottom: 12px; }
-    .tech ul { list-style: none; display: grid; gap: 12px; }
-    .tech li { color: var(--text2); font-size: 15px; padding-left: 20px; position: relative; }
-    .tech li::before { content: ''; position: absolute; left: 0; top: 9px; width: 8px; height: 8px; border-radius: 2px; background: var(--beige); }
-    .tech li strong { color: var(--text); font-weight: 600; }
+    /* ─── Cómo está hecho: split editorial ─── */
+    .split { display: grid; grid-template-columns: .8fr 1.2fr; gap: 64px; align-items: start; }
+    .split-head { position: sticky; top: 120px; }
+    .metrics { display: grid; grid-template-columns: repeat(2, 1fr); border-top: 1px solid var(--border2); }
+    .metric { padding: 26px 0 26px; border-bottom: 1px solid var(--border2); }
+    .metric:nth-child(odd) { padding-right: 24px; }
+    .metric:nth-child(even) { padding-left: 24px; border-left: 1px solid var(--border2); }
+    .metric b { display: block; font-family: var(--serif); font-weight: 400; font-size: clamp(48px, 6vw, 72px); line-height: .9; letter-spacing: -0.03em; }
+    .metric span { display: block; margin-top: 12px; font-size: 14.5px; color: var(--text2); max-width: 26em; }
+    .block { margin-top: 48px; }
+    .block h3 { font-size: 13.5px; font-weight: 600; color: var(--text3); margin-bottom: 18px; }
+    .decisions { list-style: none; counter-reset: d; }
+    .decisions li { counter-increment: d; display: grid; grid-template-columns: 40px 1fr; padding: 16px 0; border-top: 1px solid var(--border); color: var(--text2); font-size: 15.5px; }
+    .decisions li::before { content: counter(d, decimal-leading-zero); font-family: var(--mono); font-size: 13px; color: var(--text3); padding-top: 3px; }
+    .decisions li strong { color: var(--text); font-weight: 600; }
     .chips { display: flex; flex-wrap: wrap; gap: 8px; }
-    .chip { font-family: var(--mono); font-size: 13px; padding: 6px 11px; border-radius: 8px; background: var(--surface2); border: 1px solid var(--border); }
-    @media (max-width: 860px) { .tech { grid-template-columns: 1fr; } }
-
-    .arch { margin-top: 16px; }
+    .chip { font-family: var(--mono); font-size: 13px; padding: 6px 12px; border-radius: 8px; background: var(--surface); box-shadow: inset 0 0 0 1px var(--border); }
+    .arch { margin-top: 48px; padding: 24px; border-radius: 30px; background: var(--surface); box-shadow: var(--highlight), 0 0 0 1px var(--border), var(--shadow-sm); }
     .arch svg { width: 100%; height: auto; }
     .arch text { font-family: var(--sans); fill: var(--text); }
     .arch .muted { fill: var(--text2); font-size: 13px; }
-    .arch .box { fill: var(--surface2); stroke: var(--border); }
+    .arch .box { fill: var(--surface2); stroke: var(--border2); }
     .arch .line { stroke: var(--text3); stroke-width: 1.5; fill: none; }
+    @media (max-width: 900px) { .split { grid-template-columns: 1fr; gap: 40px; } .split-head { position: static; } }
+    @media (max-width: 520px) { .metrics { grid-template-columns: 1fr; } .metric:nth-child(n) { padding: 22px 0; border-left: none; } }
 
-    .final { text-align: center; }
+    /* ─── CTA final ─── */
+    .final-shell { padding: 8px; border-radius: 44px; background: color-mix(in srgb, var(--surface) 50%, transparent); box-shadow: inset 0 0 0 1px var(--border), var(--shadow); }
+    .final {
+      position: relative; overflow: hidden; isolation: isolate; text-align: center; padding: clamp(56px, 9vw, 104px) 24px;
+      border-radius: 36px; background: var(--surface); box-shadow: var(--highlight), 0 0 0 1px var(--border);
+    }
+    .final::before {
+      content: ''; position: absolute; z-index: -1; inset: -40% -10% auto; height: 120%;
+      background: radial-gradient(closest-side at 30% 50%, var(--accent-dim), transparent), radial-gradient(closest-side at 72% 60%, var(--beige-dim), transparent);
+    }
+    .final h2 { margin-top: 0; }
+    .final .sub { margin: 0 auto; }
     .final .ctas { justify-content: center; }
-    footer { border-top: 1px solid var(--border); padding: 28px 0 40px; font-size: 14px; color: var(--text2); }
+
+    footer { padding: 40px 0 48px; font-size: 14px; color: var(--text2); }
     footer .wrap { display: flex; flex-wrap: wrap; gap: 12px 24px; justify-content: space-between; align-items: center; }
-    footer nav { display: flex; gap: 20px; flex-wrap: wrap; }
+    footer nav { display: flex; gap: 22px; flex-wrap: wrap; }
+    footer a { text-decoration-color: var(--border2); text-underline-offset: 4px; }
+    footer a:hover { text-decoration-color: currentColor; }
+
+    /* ─── Aparición al hacer scroll (solo con JS; sin JS todo queda visible) ─── */
+    .js .reveal { opacity: 0; transform: translateY(32px); transition: opacity .9s var(--ease), transform .9s var(--ease); transition-delay: var(--d, 0ms); }
+    .js .reveal.in { opacity: 1; transform: none; }
+    .shots figure.reveal.in:nth-child(1) { transform: rotate(-4deg) translate(28px, 48px); }
+    .shots figure.reveal.in:nth-child(3) { transform: rotate(4deg) translate(-28px, 48px); }
+
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      *, *::before, *::after { transition: none !important; animation: none !important; }
+      .js .reveal { opacity: 1; transform: none; }
+    }
   </style>
 </head>
 <body>
   <a class="skip" href="#contenido">Saltar al contenido</a>
 
   <header>
-    <div class="wrap nav">
+    <div class="nav">
       <a class="logo" href="/" aria-label="Flujo, inicio">flu<span>jo</span></a>
       <nav aria-label="Secciones">
         <ul>
@@ -178,7 +329,10 @@
           <li><a href="https://github.com/ornemeolans/flujo">GitHub</a></li>
         </ul>
       </nav>
-      <a class="btn btn-primary btn-sm" href="https://flujo-app.up.railway.app/">Abrir la app</a>
+      <a class="btn btn-primary btn-sm" href="https://flujo-app.up.railway.app/">
+        Abrir la app
+        <span class="orb" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M9 7h8v8"/></svg></span>
+      </a>
     </div>
   </header>
 
@@ -186,63 +340,86 @@
     <div class="hero">
       <div class="wrap hero-grid">
         <div>
-          <span class="eyebrow"><i aria-hidden="true"></i>PWA · funciona sin conexión</span>
-          <h1>Tus finanzas,<br /><em>claras.</em></h1>
+          <span class="eyebrow"><i aria-hidden="true"></i>App web instalable · funciona sin conexión</span>
+          <h1>Tus finanzas, <em>claras.</em></h1>
           <p class="lead">
             Flujo junta tus billeteras, tus tarjetas en cuotas y tus préstamos en un solo lugar.
             Las cuotas se debitan solas al vencer y te avisa antes de cada vencimiento.
           </p>
           <div class="ctas">
-            <a class="btn btn-primary" href="https://flujo-app.up.railway.app/?demo=1">Probar la demo</a>
-            <a class="btn btn-ghost" href="https://github.com/ornemeolans/flujo">Ver el código</a>
+            <a class="btn btn-primary" href="https://flujo-app.up.railway.app/?demo=1">
+              Probar la demo
+              <span class="orb" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+            </a>
+            <a class="link" href="https://github.com/ornemeolans/flujo">Ver el código en GitHub</a>
           </div>
           <p class="note">La demo carga datos de ejemplo: no hace falta crear una cuenta.</p>
         </div>
-        <div class="phone">
-          <picture>
-            <source srcset="/img/inicio-dark.webp" media="(prefers-color-scheme: dark)" />
-            <img src="/img/inicio-light.webp" width="780" height="1688" alt="Pantalla de inicio de Flujo: saldo total, rendimiento del mes, billeteras y tarjeta de crédito" fetchpriority="high" />
-          </picture>
+        <div class="device">
+          <div class="tray">
+            <div class="phone">
+              <picture>
+                <source srcset="/img/inicio-dark.webp" media="(prefers-color-scheme: dark)" />
+                <img src="/img/inicio-light.webp" width="780" height="1688" alt="Pantalla de inicio de Flujo: saldo total, rendimiento del mes, billeteras y tarjeta de crédito" fetchpriority="high" />
+              </picture>
+            </div>
+          </div>
+          <div class="toast" aria-hidden="true">
+            <i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></i>
+            <div><b>Cuota 4 de 12 debitada</b><span>$194.248,84 · Banco Galicia</span></div>
+          </div>
         </div>
       </div>
     </div>
 
     <section id="funciones">
       <div class="wrap">
-        <p class="kicker">Funciones</p>
-        <h2>Pensada para cómo se usa la plata en Argentina</h2>
-        <p class="sub">Cuotas sin interés, resúmenes que cierran un día distinto cada mes, préstamos con IVA sobre los intereses, plata que rinde en una cuenta remunerada.</p>
+        <p class="kicker reveal">Funciones</p>
+        <h2 class="reveal">Pensada para cómo se usa la plata en Argentina</h2>
+        <p class="sub reveal">Cuotas sin interés, resúmenes que cierran un día distinto cada mes, préstamos con IVA sobre los intereses, plata que rinde en una cuenta remunerada.</p>
 
-        <div class="features">
-          <article class="card">
-            <div class="icon" style="--c: var(--purple)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 21h18M5 21V10l7-5 7 5v11M9 21v-6h6v6"/></svg></div>
+        <div class="bento">
+          <article class="cell c-loans reveal">
+            <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 21h18M5 21V10l7-5 7 5v11M9 21v-6h6v6"/></svg></div>
             <h3>Préstamos con débito automático</h3>
             <p>Sistema francés con IVA sobre los intereses, cambios de tasa y vencimientos que pasan al lunes si caen en fin de semana.</p>
+            <ul class="sched" aria-label="Ejemplo de cronograma de cuotas">
+              <li class="paid"><span>1/12</span><span class="tag">Debitada</span><b>$197.815,54</b></li>
+              <li class="paid"><span>2/12</span><span class="tag">Debitada</span><b>$196.695,21</b></li>
+              <li class="paid"><span>3/12</span><span class="tag">Debitada</span><b>$195.507,65</b></li>
+              <li class="next"><span>4/12</span><span class="tag">Lun 12 Oct</span><b>$194.248,84</b></li>
+              <li><span>5/12</span><span></span><b>$192.914,50</b></li>
+            </ul>
           </article>
-          <article class="card">
-            <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg></div>
+          <article class="cell c-cards reveal" style="--d: 80ms">
+            <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="5" width="19" height="14" rx="3"/><path d="M2.5 10h19M6.5 15h4"/></svg></div>
             <h3>Tarjetas y cuotas</h3>
             <p>Cada consumo cae en el resumen que corresponde según el cierre, y las cuotas se reparten solas en los meses siguientes.</p>
           </article>
-          <article class="card">
-            <div class="icon" style="--c: var(--beige)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 17l6-6 4 4 8-8M15 7h6v6"/></svg></div>
+          <article class="cell c-yield reveal" style="--d: 160ms">
+            <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 17l6-6 4 4 8-8M15 7h6v6"/></svg></div>
             <h3>Rendimientos diarios</h3>
             <p>Las billeteras con TNA suman el interés de cada día, respetando los cambios de tasa desde el día en que rigen.</p>
+            <div class="spark" aria-hidden="true">
+              <svg viewBox="0 0 240 64" preserveAspectRatio="none"><defs><linearGradient id="sg" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#178C9E" stop-opacity=".28"/><stop offset="1" stop-color="#178C9E" stop-opacity="0"/></linearGradient></defs><path d="M0 56 C40 52 60 48 90 42 S150 30 180 20 S220 8 240 4 V64 H0Z" fill="url(#sg)"/><path d="M0 56 C40 52 60 48 90 42 S150 30 180 20 S220 8 240 4" fill="none" stroke="#178C9E" stroke-width="2"/></svg>
+            </div>
           </article>
-          <article class="card">
-            <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 12.5a7 7 0 0114 0M8.5 15.5a3.5 3.5 0 017 0M12 19h.01M2 8.8a11 11 0 0120 0"/></svg></div>
+          <article class="cell c-offline reveal">
+            <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5a7 7 0 0114 0M8.5 15.5a3.5 3.5 0 017 0M12 19h.01M2 8.8a11 11 0 0120 0"/></svg></div>
             <h3>Funciona sin conexión</h3>
             <p>Todo se guarda primero en el dispositivo. Sin internet la app sigue andando y sincroniza cuando volvés a estar online.</p>
           </article>
-          <article class="card">
-            <div class="icon" style="--c: var(--purple)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M18 8a6 6 0 00-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 01-3.4 0"/></svg></div>
+          <article class="cell c-remind reveal" style="--d: 80ms">
+            <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 00-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 01-3.4 0"/></svg></div>
             <h3>Recordatorios</h3>
             <p>Notificaciones el día antes de cada cuota y dos días antes del cierre de tus tarjetas, aunque no abras la app.</p>
           </article>
-          <article class="card">
-            <div class="icon" style="--c: var(--beige)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M17 1l4 4-4 4M3 11V9a4 4 0 014-4h14M7 23l-4-4 4-4M21 13v2a4 4 0 01-4 4H3"/></svg></div>
-            <h3>Sincronización entre dispositivos</h3>
-            <p>Cuenta opcional con email o Google. Lo que cargás en el celular aparece en la compu, y viceversa.</p>
+          <article class="cell c-sync reveal">
+            <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 1l4 4-4 4M3 11V9a4 4 0 014-4h14M7 23l-4-4 4-4M21 13v2a4 4 0 01-4 4H3"/></svg></div>
+            <div>
+              <h3>Sincronización entre dispositivos</h3>
+              <p>Cuenta opcional con email o Google. Lo que cargás en el celular aparece en la compu, y viceversa.</p>
+            </div>
           </article>
         </div>
       </div>
@@ -250,20 +427,20 @@
 
     <section id="pantallas">
       <div class="wrap">
-        <p class="kicker">Pantallas</p>
-        <h2>Modo claro y oscuro</h2>
-        <p class="sub">Con la paleta Ibiza, según tu dispositivo o elegido a mano.</p>
+        <p class="kicker reveal">Pantallas</p>
+        <h2 class="reveal">Modo claro y oscuro</h2>
+        <p class="sub reveal">Con la paleta Ibiza, según tu dispositivo o elegido a mano.</p>
         <div class="shots">
-          <figure>
-            <div class="phone"><img src="/img/prestamos-light.webp" width="780" height="1688" loading="lazy" alt="Cuentas: billeteras, tarjeta y préstamo en la cuota 4 de 12" /></div>
+          <figure class="reveal">
+            <div class="device"><div class="tray"><div class="phone"><img src="/img/prestamos-light.webp" width="780" height="1688" loading="lazy" alt="Cuentas: billeteras, tarjeta y préstamo en la cuota 4 de 12" /></div></div></div>
             <figcaption>Préstamos y tarjetas</figcaption>
           </figure>
-          <figure>
-            <div class="phone"><img src="/img/cronograma-dark.webp" width="780" height="1688" loading="lazy" alt="Cronograma del préstamo en modo oscuro, con las cuotas debitadas tachadas" /></div>
+          <figure class="reveal" style="--d: 120ms">
+            <div class="device"><div class="tray"><div class="phone"><img src="/img/cronograma-dark.webp" width="780" height="1688" loading="lazy" alt="Cronograma del préstamo en modo oscuro, con las cuotas debitadas tachadas" /></div></div></div>
             <figcaption>Cronograma de cuotas</figcaption>
           </figure>
-          <figure>
-            <div class="phone"><img src="/img/analisis-light.webp" width="780" height="1688" loading="lazy" alt="Análisis: egresos por categoría y últimos 6 meses" /></div>
+          <figure class="reveal" style="--d: 240ms">
+            <div class="device"><div class="tray"><div class="phone"><img src="/img/analisis-light.webp" width="780" height="1688" loading="lazy" alt="Análisis: egresos por categoría y últimos 6 meses" /></div></div></div>
             <figcaption>Análisis del mes</figcaption>
           </figure>
         </div>
@@ -271,30 +448,33 @@
     </section>
 
     <section id="como-esta-hecho">
-      <div class="wrap">
-        <p class="kicker">Cómo está hecho</p>
-        <h2>Detrás de la app</h2>
-        <p class="sub">Un proyecto full-stack de punta a punta: diseño, frontend offline-first, API propia, tests y deploy.</p>
-
-        <div class="metrics">
-          <div class="metric"><b>97+</b><span>Lighthouse rendimiento · 100 en accesibilidad, buenas prácticas y SEO</span></div>
-          <div class="metric"><b>38</b><span>tests automáticos: lógica, API y de punta a punta en un navegador real</span></div>
-          <div class="metric"><b>AA</b><span>WCAG 2.1 en tema claro y oscuro, auditado con axe en cada cambio</span></div>
-          <div class="metric"><b>100%</b><span>offline: después de la primera visita, funciona sin internet</span></div>
+      <div class="wrap split">
+        <div class="split-head">
+          <p class="kicker reveal">Cómo está hecho</p>
+          <h2 class="reveal">Detrás de la app</h2>
+          <p class="sub reveal">Un proyecto full-stack de punta a punta: diseño, frontend offline-first, API propia, tests y deploy.</p>
         </div>
 
-        <div class="tech">
-          <div class="card">
+        <div>
+          <div class="metrics reveal">
+            <div class="metric"><b>97+</b><span>Lighthouse rendimiento · 100 en accesibilidad, buenas prácticas y SEO</span></div>
+            <div class="metric"><b>38</b><span>tests automáticos: lógica, API y de punta a punta en un navegador real</span></div>
+            <div class="metric"><b>AA</b><span>WCAG 2.1 en tema claro y oscuro, auditado con axe en cada cambio</span></div>
+            <div class="metric"><b>100%</b><span>offline: después de la primera visita, funciona sin internet</span></div>
+          </div>
+
+          <div class="block reveal">
             <h3>Decisiones técnicas</h3>
-            <ul>
-              <li><strong>Offline-first:</strong> IndexedDB es la fuente de verdad del dispositivo; el servidor solo sincroniza.</li>
-              <li><strong>Sincronización last-write-wins</strong> con borrados lógicos (tombstones) y un cursor incremental por usuario.</li>
-              <li><strong>IDs determinísticos</strong> para cuotas y rendimientos: dos dispositivos generan el mismo registro y la sync los unifica.</li>
-              <li><strong>Dominio compartido en TypeScript</strong>: la app y el servidor calculan las mismas fechas y montos.</li>
-              <li><strong>Seguridad:</strong> contraseñas con scrypt, JWT con versión de sesión y protección contra el secuestro de cuentas al vincular Google.</li>
+            <ul class="decisions">
+              <li><span><strong>Offline-first:</strong> IndexedDB es la fuente de verdad del dispositivo; el servidor solo sincroniza.</span></li>
+              <li><span><strong>Sincronización last-write-wins</strong> con borrados lógicos (tombstones) y un cursor incremental por usuario.</span></li>
+              <li><span><strong>IDs determinísticos</strong> para cuotas y rendimientos: dos dispositivos generan el mismo registro y la sync los unifica.</span></li>
+              <li><span><strong>Dominio compartido en TypeScript</strong>: la app y el servidor calculan las mismas fechas y montos.</span></li>
+              <li><span><strong>Seguridad:</strong> contraseñas con scrypt, JWT con versión de sesión y protección contra el secuestro de cuentas al vincular Google.</span></li>
             </ul>
           </div>
-          <div class="card">
+
+          <div class="block reveal">
             <h3>Stack</h3>
             <div class="chips">
               <span class="chip">React 18</span><span class="chip">TypeScript</span><span class="chip">Vite</span><span class="chip">Zustand</span>
@@ -303,41 +483,49 @@
               <span class="chip">Vitest</span><span class="chip">Playwright</span><span class="chip">axe-core</span><span class="chip">Lighthouse CI</span>
               <span class="chip">GitHub Actions</span><span class="chip">Docker</span><span class="chip">Railway</span>
             </div>
-            <figure class="arch">
-              <svg viewBox="0 0 460 210" role="img" aria-labelledby="arch-title">
-                <title id="arch-title">Arquitectura: la PWA guarda en IndexedDB y sincroniza con la API Express y SQLite, que envía recordatorios push</title>
-                <rect class="box" x="10" y="20" width="170" height="74" rx="12"/>
-                <text x="26" y="50" font-weight="600" font-size="15">PWA</text>
-                <text class="muted" x="26" y="72">React · Service Worker</text>
-                <rect class="box" x="10" y="122" width="170" height="64" rx="12"/>
-                <text x="26" y="150" font-weight="600" font-size="15">IndexedDB</text>
-                <text class="muted" x="26" y="170">datos del dispositivo</text>
-                <path class="line" d="M95 94v28"/>
-                <rect class="box" x="280" y="20" width="170" height="74" rx="12"/>
-                <text x="296" y="50" font-weight="600" font-size="15">API</text>
-                <text class="muted" x="296" y="72">Express · SQLite</text>
-                <rect class="box" x="280" y="122" width="170" height="64" rx="12"/>
-                <text x="296" y="150" font-weight="600" font-size="15">Recordatorios</text>
-                <text class="muted" x="296" y="170">Web Push · 9 hs</text>
-                <path class="line" d="M365 94v28"/>
-                <path class="line" d="M180 48h100M180 66h100"/>
-                <text class="muted" x="198" y="40">sync</text>
-                <text class="muted" x="194" y="86">LWW</text>
-                <path class="line" d="M280 160c-40 0-60-50-100-85" stroke-dasharray="4 4"/>
-              </svg>
-            </figure>
           </div>
+
+          <figure class="arch reveal">
+            <svg viewBox="0 0 460 210" role="img" aria-labelledby="arch-title">
+              <title id="arch-title">Arquitectura: la PWA guarda en IndexedDB y sincroniza con la API Express y SQLite, que envía recordatorios push</title>
+              <rect class="box" x="10" y="20" width="170" height="74" rx="14"/>
+              <text x="26" y="50" font-weight="600" font-size="15">PWA</text>
+              <text class="muted" x="26" y="72">React · Service Worker</text>
+              <rect class="box" x="10" y="122" width="170" height="64" rx="14"/>
+              <text x="26" y="150" font-weight="600" font-size="15">IndexedDB</text>
+              <text class="muted" x="26" y="170">datos del dispositivo</text>
+              <path class="line" d="M95 94v28"/>
+              <rect class="box" x="280" y="20" width="170" height="74" rx="14"/>
+              <text x="296" y="50" font-weight="600" font-size="15">API</text>
+              <text class="muted" x="296" y="72">Express · SQLite</text>
+              <rect class="box" x="280" y="122" width="170" height="64" rx="14"/>
+              <text x="296" y="150" font-weight="600" font-size="15">Recordatorios</text>
+              <text class="muted" x="296" y="170">Web Push · 9 hs</text>
+              <path class="line" d="M365 94v28"/>
+              <path class="line" d="M180 48h100M180 66h100"/>
+              <text class="muted" x="198" y="40">sync</text>
+              <text class="muted" x="194" y="86">LWW</text>
+              <path class="line" d="M280 160c-40 0-60-50-100-85" stroke-dasharray="4 4"/>
+            </svg>
+          </figure>
         </div>
       </div>
     </section>
 
-    <section class="final">
+    <section>
       <div class="wrap">
-        <h2>Probala en 10 segundos</h2>
-        <p class="sub" style="margin: 0 auto">Abrí la demo con datos de ejemplo, o instalala en tu celular desde el navegador.</p>
-        <div class="ctas">
-          <a class="btn btn-primary" href="https://flujo-app.up.railway.app/?demo=1">Probar la demo</a>
-          <a class="btn btn-ghost" href="https://flujo-app.up.railway.app/">Abrir la app</a>
+        <div class="final-shell reveal">
+          <div class="final">
+            <h2>Probala en 10 segundos</h2>
+            <p class="sub">Abrí la demo con datos de ejemplo, o instalala en tu celular desde el navegador.</p>
+            <div class="ctas">
+              <a class="btn btn-primary" href="https://flujo-app.up.railway.app/?demo=1">
+                Probar la demo
+                <span class="orb" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+              </a>
+              <a class="link" href="https://flujo-app.up.railway.app/">Abrir la app vacía</a>
+            </div>
+          </div>
         </div>
       </div>
     </section>
@@ -353,5 +541,17 @@
       </nav>
     </div>
   </footer>
+
+  <script>
+    // Aparición al entrar en pantalla: IntersectionObserver, sin listeners de scroll
+    (function () {
+      var items = document.querySelectorAll('.reveal')
+      if (!('IntersectionObserver' in window)) { items.forEach(function (el) { el.classList.add('in') }); return }
+      var io = new IntersectionObserver(function (entries) {
+        entries.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target) } })
+      }, { rootMargin: '0px 0px -8% 0px' })
+      items.forEach(function (el) { io.observe(el) })
+    })()
+  </script>
 </body>
 </html>

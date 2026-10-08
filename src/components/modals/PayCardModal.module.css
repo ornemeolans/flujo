@@ -14,15 +14,14 @@
 
     .summaryLabel {
         font-size: 11px;
-        font-family: var(--font-mono);
+        font-family: var(--font-num);
         color: var(--text3);
-        text-transform: uppercase;
-        letter-spacing: 0.8px;
+        letter-spacing: 0.01em;
     }
 
     .summaryPeriod {
         font-size: 11px;
-        font-family: var(--font-mono);
+        font-family: var(--font-num);
         color: var(--text2);
     }
 
@@ -37,7 +36,7 @@
         margin-top: 8px;
         font-size: 12px;
         color: var(--text3);
-        font-family: var(--font-mono);
+        font-family: var(--font-num);
     }
 
     .warning {

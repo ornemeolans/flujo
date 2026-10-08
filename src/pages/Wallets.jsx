@@ -26,21 +26,26 @@ export default function Wallets() {
 
   return (
     <div className="animate-fadeUp">
-      <Section title="Mis Billeteras" action="+ Nueva" onAction={() => setEditWallet({})}>
+      <Section title="Mis billeteras" action="+ Nueva" onAction={() => setEditWallet({})}>
         {wallets.length === 0
           ? <Empty icon="🏦" text="Agregá tu primera billetera" action="+ Agregar" onAction={() => setEditWallet({})} />
-          : wallets.map(w => (
-              <WalletCard key={w.id} wallet={w} transactions={transactions} onClick={() => setEditWallet(w)} />
-            ))
+          : (
+            <div className={styles.list}>
+              {wallets.map(w => (
+                <WalletCard key={w.id} wallet={w} transactions={transactions} onClick={() => setEditWallet(w)} />
+              ))}
+            </div>
+          )
         }
         {wallets.length >= 2 && (
           <button className={styles.transferBtn} onClick={() => setTransferOpen(true)}>
-            ↔ Transferir entre billeteras
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M4 8h14M14 4l4 4-4 4M20 16H6M10 12l-4 4 4 4"/></svg>
+            Transferir entre billeteras
           </button>
         )}
       </Section>
 
-      <Section title="Tarjetas de Crédito" action="+ Nueva" onAction={() => setEditCard({})}>
+      <Section title="Tarjetas de crédito" action="+ Nueva" onAction={() => setEditCard({})}>
         {cards.length === 0
           ? <Empty icon="💳" text="Agregá una tarjeta de crédito" action="+ Agregar" onAction={() => setEditCard({})} />
           : cards.map(c => (
@@ -84,7 +89,7 @@ function WalletCard({ wallet, transactions, onClick }) {
   const yield_ = selectors.walletMonthlyYield(wallet, transactions)
   return (
     <div className={styles.walletCard} {...pressable(onClick)}>
-      <div className={styles.icon} style={{ background: `${wallet.color||'#178C9E'}18`, color: wallet.color||'#178C9E' }}>
+      <div className={styles.icon} style={{ '--tint': wallet.color||'#178C9E' }} aria-hidden="true">
         {wallet.icon || '💵'}
       </div>
       <div className={styles.info}>
@@ -109,7 +114,7 @@ function CCCard({ card, transactions, onClick, onPay }) {
   return (
     <div className={styles.ccCard}>
       <div className={styles.ccHead} {...pressable(onClick)}>
-        <div className={styles.icon} style={{ background: `${card.color||'#A3296B'}18`, color: card.color||'#A3296B' }}>
+        <div className={styles.icon} style={{ '--tint': card.color||'#A3296B' }} aria-hidden="true">
           {card.icon || '💳'}
         </div>
         <div className={styles.info}>
@@ -120,11 +125,11 @@ function CCCard({ card, transactions, onClick, onPay }) {
       <div className={styles.ccPills}>
         <div className={styles.ccPill}>
           <div className={styles.pillLbl}>Resumen actual</div>
-          <div className={styles.pillVal} style={{ color: 'var(--red)' }}>{fmt2(current)}</div>
+          <div className={`${styles.pillVal} ${styles.neg}`}>{fmt2(current)}</div>
         </div>
         <div className={styles.ccPill}>
           <div className={styles.pillLbl}>Próximo resumen</div>
-          <div className={styles.pillVal} style={{ color: 'var(--text2)' }}>{fmt2(next)}</div>
+          <div className={`${styles.pillVal} ${styles.muted}`}>{fmt2(next)}</div>
         </div>
       </div>
       {current > 0 && (
@@ -144,7 +149,7 @@ function LoanCard({ loan, wallets, transactions, onClick }) {
   return (
     <div className={styles.ccCard} {...pressable(onClick)}>
       <div className={styles.ccHead}>
-        <div className={styles.icon} style={{ background: 'var(--purple-dim)', color: 'var(--purple)' }}>🏛️</div>
+        <div className={styles.icon} style={{ '--tint': 'var(--purple)' }} aria-hidden="true">🏛️</div>
         <div className={styles.info}>
           <div className={styles.name}>{loan.name}</div>
           <div className={styles.sub}>
@@ -152,16 +157,18 @@ function LoanCard({ loan, wallets, transactions, onClick }) {
           </div>
         </div>
       </div>
-      <div className={styles.loanBar}><div style={{ width: `${(status.paid / status.total) * 100}%` }} /></div>
+      <div className={styles.loanBar} role="progressbar" aria-label="Cuotas pagadas" aria-valuemin={0} aria-valuemax={status.total} aria-valuenow={status.paid}>
+        <div style={{ transform: `scaleX(${status.paid / status.total})` }} />
+      </div>
       {!status.done && (
         <div className={styles.ccPills}>
           <div className={styles.ccPill}>
             <div className={styles.pillLbl}>{overdue ? 'Vencida sin debitar' : `Vence ${formatDate(status.next.date)}`}</div>
-            <div className={styles.pillVal} style={{ color: 'var(--red)' }}>{fmt2(status.next.amount)}</div>
+            <div className={`${styles.pillVal} ${styles.neg}`}>{fmt2(status.next.amount)}</div>
           </div>
           <div className={styles.ccPill}>
             <div className={styles.pillLbl}>Resta pagar</div>
-            <div className={styles.pillVal} style={{ color: 'var(--text2)' }}>{fmt2(status.remaining)}</div>
+            <div className={`${styles.pillVal} ${styles.muted}`}>{fmt2(status.remaining)}</div>
           </div>
         </div>
       )}

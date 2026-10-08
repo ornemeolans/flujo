@@ -1,117 +1,191 @@
+/* ─── Hero: doble bisel ───────────────── */
+/* Bandeja exterior translúcida + placa interior con su propio filo de luz */
+.heroShell {
+  padding: 6px;
+  margin-bottom: 40px;
+  border-radius: var(--radius-xl);
+  background: color-mix(in srgb, var(--surface) 45%, transparent);
+  box-shadow: inset 0 0 0 1px var(--border), var(--shadow);
+}
 .hero {
-  background: linear-gradient(135deg, var(--surface) 0%, var(--surface2) 100%);
-  border: 1px solid var(--border2);
-  border-radius: 20px;
-  padding: 22px;
-  margin-bottom: 28px;
   position: relative;
   overflow: hidden;
+  padding: 24px 22px 20px;
+  border-radius: calc(var(--radius-xl) - 6px);
+  background: var(--surface);
+  box-shadow: var(--highlight), 0 0 0 1px var(--border);
+  isolation: isolate;
 }
+/* Luz turquesa y cálida en la esquina: profundidad sin degradado plano */
 .hero::before {
   content: '';
   position: absolute;
-  top: -50px; right: -50px;
-  width: 200px; height: 200px;
-  border-radius: 50%;
-  background: var(--accent-dim);
-  filter: blur(50px);
+  z-index: -1;
+  top: -140px; right: -140px;
+  width: 380px; height: 380px;
+  background:
+    radial-gradient(closest-side at 45% 45%, var(--accent-dim), transparent),
+    radial-gradient(closest-side at 62% 70%, var(--earth-dim), transparent);
   pointer-events: none;
 }
 
 .heroLabel {
-  font-size: 11px;
-  color: var(--text3);
-  font-family: var(--font-mono);
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text2);
+  margin-bottom: 12px;
+}
+.heroDot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--accent2);
+  box-shadow: 0 0 0 4px var(--accent-dim);
 }
 .heroAmount {
   font-family: var(--font-serif);
-  font-size: 44px;
-  line-height: 1;
-  margin-bottom: 4px;
+  font-size: clamp(42px, 13vw, 56px);
+  line-height: 0.95;
+  letter-spacing: -0.03em;
+  margin-bottom: 14px;
+  font-variant-numeric: lining-nums;
 }
+.cents {
+  font-size: 0.5em;
+  letter-spacing: 0;
+  color: var(--text3);
+  margin-left: 1px;
+}
+.neg .cents { color: inherit; }
 .pos { color: var(--text); }
 .neg { color: var(--red); }
 
 .heroYield {
-  font-size: 12px;
+  display: inline-flex;
+  white-space: nowrap;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 11px;
+  margin-bottom: 22px;
+  border-radius: 999px;
+  background: var(--accent-dim);
   color: var(--accent);
-  font-family: var(--font-mono);
-  margin-bottom: 18px;
+  font-size: 12.5px;
+  font-weight: 500;
 }
 
-.heroPills { display: flex; gap: 10px; }
-.pill {
-  flex: 1;
-  background: var(--surface3);
-  border-radius: 10px;
-  padding: 10px 12px;
-  display: flex; flex-direction: column; gap: 3px;
+/* Ingresos | Egresos separados por una línea, no por dos cajas */
+.flows {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
 }
-.pillLabel { font-size: 10px; color: var(--text3); font-family: var(--font-mono); }
-.pillVal { font-size: 16px; font-weight: 500; font-family: var(--font-mono); }
+.flow {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  column-gap: 7px;
+  row-gap: 4px;
+  min-width: 0;
+}
+.flow + .flow { padding-left: 16px; border-left: 1px solid var(--border); }
+.flowIcon {
+  width: 20px; height: 20px;
+  display: grid;
+  place-items: center;
+  border-radius: 7px;
+  font-size: 11px;
+  font-weight: 600;
+}
+.flowInc { background: var(--accent-dim); color: var(--accent); }
+.flowExp { background: var(--red-dim); color: var(--red); }
+.flowLabel { font-size: 12px; color: var(--text2); }
+.flowVal {
+  grid-column: 1 / -1;
+  font-family: var(--font-num);
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 .pillInc { color: var(--accent); }
 .pillExp { color: var(--red); }
+.muted { color: var(--text2); }
+
+/* ─── Lista agrupada ─────────────────── */
+/* Una sola superficie con divisores finos, en vez de una tarjeta por fila */
+.list {
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--highlight), 0 0 0 1px var(--border), var(--shadow-sm);
+  overflow: hidden;
+}
 
 /* ─── Wallet row ─────────────────────── */
 .walletRow {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 12px 14px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  margin-bottom: 8px;
+  gap: 14px;
+  padding: 14px 16px;
   cursor: pointer;
-  transition: all 0.18s;
+  transition: var(--t-base);
 }
-.walletRow:hover { border-color: var(--border2); background: var(--surface2); }
+.walletRow + .walletRow::before,
+.ccRow + .ccRow::before {
+  content: '';
+  position: absolute;
+  top: 0; right: 16px; left: 70px;
+  height: 1px;
+  background: var(--border);
+}
+.walletRow:hover, .ccRow:hover { background: var(--surface2); }
+.walletRow:active, .ccRow:active { background: var(--surface3); }
 
 .walletIcon {
   width: 40px; height: 40px;
-  border-radius: 12px;
+  border-radius: 13px;
   display: flex; align-items: center; justify-content: center;
-  font-size: 18px;
+  font-size: 19px;
   flex-shrink: 0;
+  background: color-mix(in srgb, var(--tint, var(--accent2)) 14%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--tint, var(--accent2)) 18%, transparent);
 }
 .walletInfo { flex: 1; min-width: 0; }
-.walletName { font-size: 14px; font-weight: 500; }
-.walletTna  { font-size: 10px; color: var(--accent); font-family: var(--font-mono); margin-top: 2px; }
+.walletName { font-size: 15px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.walletTna  { font-size: 12px; color: var(--accent); margin-top: 2px; font-weight: 500; }
 .walletRight { text-align: right; }
-.walletBal  { font-family: var(--font-mono); font-size: 15px; font-weight: 500; }
-.walletYield { font-size: 10px; color: var(--accent); font-family: var(--font-mono); }
+.walletBal  { font-family: var(--font-num); font-size: 15.5px; font-weight: 600; letter-spacing: -0.01em; }
+.walletYield { font-size: 12px; color: var(--accent); margin-top: 2px; }
 
 /* ─── CC row ─────────────────────────── */
 .ccRow {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 14px;
-  margin-bottom: 8px;
+  position: relative;
+  padding: 14px 16px 16px;
   cursor: pointer;
-  transition: all 0.18s;
+  transition: var(--t-base);
 }
-.ccRow:hover { border-color: var(--border2); background: var(--surface2); }
 .ccHeader {
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin-bottom: 12px;
+  gap: 14px;
+  margin-bottom: 14px;
 }
-.ccClose { font-size: 11px; color: var(--text3); font-family: var(--font-mono); margin-top: 2px; }
-.ccPills { display: flex; gap: 8px; }
-.ccPill {
-  flex: 1;
-  background: var(--surface3);
-  border-radius: 8px;
-  padding: 8px 10px;
-  display: flex; flex-direction: column; gap: 3px;
+.ccClose { font-size: 12px; color: var(--text3); margin-top: 2px; }
+.ccPills {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  margin-left: 54px;
 }
-.ccPillLabel { font-size: 9px; color: var(--text3); font-family: var(--font-mono); text-transform: uppercase; }
-.ccPillVal { font-size: 14px; font-weight: 500; font-family: var(--font-mono); }
+.ccPill { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.ccPill + .ccPill { padding-left: 14px; border-left: 1px solid var(--border); }
+.ccPillLabel { font-size: 12px; color: var(--text2); }
+.ccPillVal { font-size: 15px; font-weight: 600; font-family: var(--font-num); letter-spacing: -0.01em; }
 
 /* ─── Demo ─── */
 .demoBanner {
@@ -119,32 +193,38 @@
   align-items: center;
   justify-content: space-between;
   gap: 10px;
-  padding: 10px 14px;
-  margin-bottom: 14px;
-  border-radius: var(--radius);
+  padding: 8px 8px 8px 16px;
+  margin-bottom: 18px;
+  border-radius: 999px;
   background: var(--gold-dim);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--earth) 35%, transparent);
   color: var(--text);
   font-size: 13px;
 }
 .demoClear {
   flex-shrink: 0;
-  padding: 6px 10px;
-  border: 1px solid var(--gold);
-  border-radius: 8px;
-  background: none;
-  color: var(--gold);
+  padding: 7px 13px;
+  border: none;
+  border-radius: 999px;
+  background: var(--ink);
+  color: var(--on-ink);
   font-family: inherit;
-  font-size: 12px;
+  font-size: 12.5px;
   font-weight: 600;
+  transition: var(--t-base);
 }
-.welcome { margin-bottom: 18px; text-align: center; padding: 22px 18px; }
+.demoClear:hover { opacity: 0.88; }
+.demoClear:active { transform: scale(0.96); }
+
+.welcome { margin-bottom: 24px; padding: 30px 22px 24px; text-align: left; }
 .welcomeTitle {
   font-family: var(--font-serif);
   font-weight: 400;
-  font-size: 28px;
-  line-height: 1.15;
-  margin-bottom: 8px;
+  font-size: 38px;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  margin-bottom: 12px;
 }
 .welcomeTitle span { color: var(--accent); }
-.welcomeText { font-size: 14px; color: var(--text2); line-height: 1.55; margin-bottom: 16px; }
-.welcomeHint { font-size: 12px; color: var(--text3); margin-top: 10px; }
+.welcomeText { font-size: 15px; color: var(--text2); line-height: 1.55; margin-bottom: 22px; max-width: 36ch; }
+.welcomeHint { font-size: 13px; color: var(--text3); margin-top: 12px; text-align: center; }

@@ -124,7 +124,7 @@ export default function Settings() {
       </Section>
 
       {/* Backup */}
-      <Section title="Backup y Restauración">
+      <Section title="Backup y restauración">
         <Card>
           <p className={styles.desc}>
             Tus datos se guardan localmente en este dispositivo usando IndexedDB

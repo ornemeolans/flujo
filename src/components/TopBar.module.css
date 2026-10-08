@@ -1,33 +1,46 @@
 .bar {
   position: sticky;
   top: 0;
-  z-index: 80;
-  padding: 16px 20px 12px;
+  z-index: var(--z-bar);
+  padding: 18px 20px 14px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: linear-gradient(to bottom, var(--bg) 60%, transparent);
+  background: linear-gradient(to bottom, var(--bg) 55%, transparent);
 }
 
 .logo {
   font-family: var(--font-serif);
-  font-size: 26px;
-  letter-spacing: -0.5px;
+  font-size: 30px;
+  line-height: 1;
+  letter-spacing: -0.03em;
   color: var(--text);
 }
 .logo span { color: var(--accent); }
 
 .monthBtn {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  color: var(--text2);
-  background: var(--surface2);
-  border: 1px solid var(--border2);
-  padding: 6px 12px;
-  border-radius: 20px;
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 6px;
-  transition: border-color 0.2s, color 0.2s;
+  gap: 8px;
+  padding: 8px 12px 8px 14px;
+  border: none;
+  border-radius: 999px;
+  background: var(--surface);
+  box-shadow: var(--highlight), 0 0 0 1px var(--border), var(--shadow-sm);
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 500;
+  transition: var(--t-base);
 }
-.monthBtn:hover { border-color: var(--border3); color: var(--text); }
+.monthBtn:hover { background: var(--surface2); }
+.monthBtn:active { transform: scale(0.96); }
+.monthBtn svg { color: var(--text3); }
+.chevron {
+  display: grid;
+  place-items: center;
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  background: var(--surface3);
+  transition: transform .4s var(--ease-spring);
+}
+.monthBtn:hover .chevron { transform: translateY(1px); }

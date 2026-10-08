@@ -28,7 +28,7 @@ test('demo: carga datos de ejemplo y el préstamo debita sus cuotas solo', async
 
 test('crear una billetera y un préstamo desde cero', async ({ page }) => {
   await page.goto('/wallets')
-  await page.getByRole('button', { name: 'Nueva: Mis Billeteras' }).click()
+  await page.getByRole('button', { name: 'Nueva: Mis billeteras' }).click()
   const wallet = page.getByRole('dialog', { name: 'Nueva Billetera' })
   await wallet.getByLabel('Nombre').fill('Banco')
   await wallet.getByLabel('Saldo Inicial').fill('500000')
@@ -84,7 +84,7 @@ for (const colorScheme of ['light', 'dark'] as const) {
     await expect(page.getByText('Estás viendo datos de ejemplo')).toBeVisible()
     for (const name of ['Inicio', 'Cuentas', 'Movimientos', 'Análisis', 'Config']) {
       await nav(page, name).click()
-      await page.waitForTimeout(400) // animación de entrada
+      await page.waitForTimeout(800) // animación de entrada escalonada
       const { violations } = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa']).analyze()
       expect(violations.map(v => `${name}: ${v.id} (${v.nodes.length}) ${v.help}`)).toEqual([])
     }

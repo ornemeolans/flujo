@@ -19,7 +19,7 @@
 
 .flowIcon { font-size: 22px; margin-bottom: 4px; }
 .flowName { font-size: 12px; font-weight: 500; }
-.flowBal  { font-size: 11px; color: var(--text2); font-family: var(--font-mono); margin-top: 2px; }
+.flowBal  { font-size: 11px; color: var(--text2); font-family: var(--font-num); margin-top: 2px; }
 
 .flowArrow {
   font-size: 20px;

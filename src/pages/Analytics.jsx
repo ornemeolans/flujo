@@ -5,6 +5,8 @@ import { MONTHS_SHORT, getCat, fmt, fmt2 } from '@/utils'
 import { Card, Section } from '@/components/ui'
 import styles from './Analytics.module.css'
 
+const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+
 const COLORS = ['#178C9E','#A3296B','#C2A878','#2BB0C4','#D2559A','#3A6E8F','#7D5BA6','#C7754F','#4F9A7A','#B08D4F','#2E9E8A','#7F9496']
 
 export default function Analytics() {
@@ -73,13 +75,16 @@ export default function Analytics() {
             <div className={styles.donutWrap}>
               {/* Decorativo: el desglose de abajo tiene los mismos datos como texto */}
               <div aria-hidden="true">
-              <ResponsiveContainer width="100%" height={180}>
+              <ResponsiveContainer width="100%" height={210}>
                 <PieChart>
                   <Pie
                     data={pieData}
                     cx="50%" cy="50%"
-                    innerRadius={52} outerRadius={80}
-                    paddingAngle={2}
+                    innerRadius={72} outerRadius={96}
+                    paddingAngle={3}
+                    cornerRadius={4}
+                    stroke="none"
+                    isAnimationActive={!reducedMotion}
                     rootTabIndex={-1}
                     dataKey="value"
                   >
@@ -88,7 +93,7 @@ export default function Analytics() {
                     ))}
                   </Pie>
                   <Tooltip
-                    contentStyle={{ background: 'var(--surface2)', border: '1px solid var(--border2)', borderRadius: 8, fontFamily: 'var(--font-mono)', fontSize: 12 }}
+                    contentStyle={{ background: 'var(--surface)', border: 'none', boxShadow: 'var(--shadow)', borderRadius: 12, fontFamily: 'var(--font-num)', fontSize: 12 }}
                     formatter={v => [`$${v.toLocaleString('es-AR')}`, '']}
                   />
                 </PieChart>
@@ -130,14 +135,14 @@ export default function Analytics() {
       )}
 
       {/* Last 6 months bar */}
-      <Section title="Últimos 6 meses (egresos)">
+      <Section title="Egresos, últimos 6 meses">
         <Card>
           <div className={styles.bars}>
             {last6.map((d, i) => (
               <div key={i} className={styles.barCol}>
                 <div className={styles.barTrack}>
                   <div
-                    className={styles.barFill}
+                    className={`${styles.barFill} ${i === last6.length - 1 ? styles.barCurrent : ''}`}
                     style={{ height: `${(d.value / maxBar) * 100}%` }}
                   />
                 </div>

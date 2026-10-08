@@ -9,26 +9,29 @@
 
 .main {
   flex: 1;
-  padding: 0 16px calc(var(--nav-height) + var(--safe-bottom) + 32px);
+  padding: 4px 16px calc(var(--nav-height) + var(--safe-bottom) + 40px);
   overflow-x: hidden;
 }
 
 .fab {
   position: fixed;
-  bottom: calc(var(--nav-height) + var(--safe-bottom) + 16px);
-  right: max(20px, calc(50vw - 240px + 20px));
-  width: 52px;
-  height: 52px;
-  border-radius: 16px;
-  background: var(--purple);
-  color: white;
+  bottom: calc(var(--nav-height) + var(--safe-bottom) + 18px);
+  right: max(18px, calc(50vw - 240px + 18px));
+  width: 58px;
+  height: 58px;
+  border-radius: 20px;
+  background: var(--accent);
+  color: var(--bg);
   border: none;
-  z-index: 90;
+  z-index: var(--z-fab);
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 24px var(--purple-glow);
-  transition: transform 0.15s, box-shadow 0.15s;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.22), 0 14px 30px -10px var(--accent), 0 0 0 4px color-mix(in srgb, var(--bg) 70%, transparent);
+  transition: var(--t-base);
 }
-.fab:hover  { transform: scale(1.06); box-shadow: 0 8px 32px var(--purple-glow); }
-.fab:active { transform: scale(0.93); }
+.fab svg { transition: transform .5s var(--ease-spring); }
+.fab:hover  { transform: translateY(-2px); background: var(--accent2); }
+.fab:hover svg { transform: rotate(90deg); }
+.fab:active { transform: scale(0.92); }
+:root[data-theme="dark"] .fab:hover { background: #5CCBDB; }
