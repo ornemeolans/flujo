@@ -8,6 +8,7 @@ import { openDatabase } from './db.js'
 import { createApp } from './app.js'
 import { createMailer } from './mailer.js'
 import { createPush } from './push.js'
+import { createAi } from './ai.js'
 import { startReminderScheduler } from './reminders.js'
 
 const isProd = process.env.NODE_ENV === 'production'
@@ -27,8 +28,12 @@ const push = createPush({
 if (push) startReminderScheduler({ db, sendPush: push.send })
 else console.warn('⚠ VAPID_PUBLIC_KEY/VAPID_PRIVATE_KEY no definidos: notificaciones push desactivadas')
 
+const ai = createAi({ apiKey: process.env.GEMINI_API_KEY, model: process.env.GEMINI_MODEL || undefined })
+if (!ai) console.warn('⚠ GEMINI_API_KEY no definida: funciones de IA desactivadas')
+
 const app = createApp({
   push,
+  ai,
   db,
   jwtSecret,
   appUrl: process.env.APP_URL || 'http://localhost:5173',

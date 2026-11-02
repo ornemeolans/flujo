@@ -57,12 +57,12 @@ export const hashEmailToken = token => createHash('sha256').update(String(token)
 
 export const newUserId = () => randomUUID()
 
-// Límite simple en memoria contra fuerza bruta: N intentos por IP por ventana
-export function rateLimit({ max, windowMs }) {
+// Límite simple en memoria contra fuerza bruta: N intentos por IP (o la clave pedida) por ventana
+export function rateLimit({ max, windowMs, keyOf = req => req.ip }) {
   const hits = new Map()
   return (req, res, next) => {
     const now = Date.now()
-    const key = req.ip
+    const key = keyOf(req)
     const entry = hits.get(key)
     if (!entry || now > entry.reset) {
       hits.set(key, { count: 1, reset: now + windowMs })

@@ -5,6 +5,7 @@ import {
   Badge
 } from '@/components/ui'
 import { CATEGORIES, PALETTE, WALLET_ICONS, MONTHS_SHORT, today, getCat, fmt2 } from '@/utils'
+import { useAiAvailable, aiRequest } from '@/sync/useAi'
 import styles from './TxModal.module.css'
 
 const DEFAULT_TX = {
@@ -28,6 +29,9 @@ export default function TxModal({ onClose, initial = null }) {
   } : DEFAULT_TX)
   const [cuotasOn, setCuotasOn] = useState((initial?.cuotas ?? 1) > 1)
   const [saving, setSaving] = useState(false)
+  const aiAvailable = useAiAvailable()
+  const [suggesting, setSuggesting] = useState(false)
+  const [suggestError, setSuggestError] = useState(null)
 
   // Default walletId to first available
   useEffect(() => {
@@ -69,6 +73,18 @@ export default function TxModal({ onClose, initial = null }) {
     })
     setSaving(false)
     onClose()
+  }
+
+  async function suggestCategory() {
+    setSuggesting(true)
+    setSuggestError(null)
+    try {
+      const { category } = await aiRequest('/ai/categorize', { desc: form.desc })
+      set('category', category)
+    } catch (e) {
+      setSuggestError(e.message)
+    }
+    setSuggesting(false)
   }
 
   async function handleDelete() {
@@ -119,7 +135,14 @@ export default function TxModal({ onClose, initial = null }) {
 
       {/* Category */}
       <div className={styles.formGroup}>
-        <label className={styles.label}>Categoría</label>
+        <div className={styles.catHeader}>
+          <label className={styles.label}>Categoría</label>
+          {aiAvailable && form.type === 'expense' && (
+            <button type="button" className={styles.suggestBtn} onClick={suggestCategory} disabled={suggesting || !form.desc?.trim()}>
+              {suggesting ? 'Pensando…' : 'Sugerir con IA'}
+            </button>
+          )}
+        </div>
         <div className={styles.catGrid}>
           {CATEGORIES.map(cat => (
             <div
@@ -132,6 +155,11 @@ export default function TxModal({ onClose, initial = null }) {
             </div>
           ))}
         </div>
+        {aiAvailable && form.type === 'expense' && (
+          <p className={`${styles.suggestHint} ${suggestError ? styles.suggestError : ''}`} role="status">
+            {suggestError ?? 'La sugerencia envía la descripción a Gemini, de Google.'}
+          </p>
+        )}
       </div>
 
       {/* Payment method */}

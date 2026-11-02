@@ -78,3 +78,8 @@
 .barCurrent { background: var(--accent); }
 .barLabel { font-size: 12px; color: var(--text2); margin-top: 8px; font-weight: 500; }
 .barVal   { font-size: 10.5px; color: var(--text3); margin-top: 2px; white-space: nowrap; }
+
+/* Resumen escrito con IA */
+.aiSummary { font-size: 16px; line-height: 1.6; max-width: 60ch; }
+.aiHint { font-size: 14px; color: var(--text2); line-height: 1.55; margin-bottom: 14px; max-width: 60ch; }
+.aiError { font-size: 13px; color: var(--red); margin-bottom: 12px; }

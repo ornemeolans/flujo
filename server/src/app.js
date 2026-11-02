@@ -32,9 +32,11 @@ function googleVerifier(clientId) {
  * @param {string[]} [opts.corsOrigins]
  * @param {(credential: string) => Promise<object>} [opts.verifyGoogle] inyectable para tests
  * @param {{ publicKey: string, send: (subscription: object, payload: object) => Promise<void> }} [opts.push] Web Push (VAPID)
+ * @param {{ categorize: (desc: string) => Promise<string>, summarizeMonth: (data: object) => Promise<string> } | null} [opts.ai] funciones con Gemini
  * @param {number} [opts.rateLimitMax] intentos por IP cada 15 min en login/registro
+ * @param {number} [opts.aiRateLimitMax] pedidos de IA por usuario por hora
  */
-export function createApp({ db, jwtSecret, appUrl, sendMail, googleClientId, corsOrigins = [], verifyGoogle, push, rateLimitMax = 20 }) {
+export function createApp({ db, jwtSecret, appUrl, sendMail, googleClientId, corsOrigins = [], verifyGoogle, push, ai, rateLimitMax = 20, aiRateLimitMax = 30 }) {
   verifyGoogle ??= googleClientId ? googleVerifier(googleClientId) : null
   appUrl = appUrl.replace(/\/$/, '')
 
@@ -126,11 +128,13 @@ export function createApp({ db, jwtSecret, appUrl, sendMail, googleClientId, cor
   const mailLimiter = rateLimit({ max: Math.ceil(rateLimitMax / 4), windowMs: 15 * 60 * 1000 })
   const auth = requireAuth(jwtSecret, id => q.userById.get(id))
 
+  const aiLimiter = rateLimit({ max: aiRateLimitMax, windowMs: 60 * 60 * 1000, keyOf: req => req.userId })
+
   const validPassword = p => typeof p === 'string' && p.length >= 8 && p.length <= 200
 
   // ─── Config pública (la PWA la consulta para mostrar el botón de Google) ──
   app.get('/api/config', (_req, res) => {
-    res.json({ googleClientId: googleClientId || null })
+    res.json({ googleClientId: googleClientId || null, aiEnabled: !!ai })
   })
 
   // ─── Registro con email y contraseña ──────────────────────
@@ -278,6 +282,41 @@ export function createApp({ db, jwtSecret, appUrl, sendMail, googleClientId, cor
       }
     }
     res.json({ sent })
+  })
+
+  // ─── IA (Gemini) ──────────────────────────────────────────
+  const requireAi = (_req, res, next) => (ai ? next() : res.status(404).json({ error: 'IA no configurada en el servidor' }))
+  const amount = n => typeof n === 'number' && Number.isFinite(n) && n >= 0
+
+  // Sin el detalle del error: puede traer datos del proveedor
+  async function aiResponse(res, run) {
+    try {
+      res.json(await run())
+    } catch (e) {
+      console.error('Error de IA:', e.message)
+      res.status(502).json({ error: 'No se pudo completar, probá más tarde' })
+    }
+  }
+
+  app.post('/api/ai/categorize', auth, requireAi, aiLimiter, (req, res) => {
+    const desc = typeof req.body?.desc === 'string' ? req.body.desc.trim() : ''
+    if (!desc || desc.length > 200) return res.status(400).json({ error: 'Descripción inválida' })
+    aiResponse(res, async () => ({ category: await ai.categorize(desc) }))
+  })
+
+  app.post('/api/ai/month-summary', auth, requireAi, aiLimiter, (req, res) => {
+    const { month, income, expense, previousExpense = 0, categories } = req.body ?? {}
+    const validCategories = Array.isArray(categories) && categories.length <= 20 &&
+      categories.every(c => typeof c?.label === 'string' && c.label.length <= 40 && amount(c.amount))
+    if (typeof month !== 'string' || month.length > 30 || !amount(income) || !amount(expense) || !amount(previousExpense) || !validCategories) {
+      return res.status(400).json({ error: 'Datos del mes inválidos' })
+    }
+    aiResponse(res, async () => ({
+      summary: await ai.summarizeMonth({
+        month, income, expense, previousExpense,
+        categories: categories.map(({ label, amount }) => ({ label, amount })),
+      }),
+    }))
   })
 
   // ─── Sync ─────────────────────────────────────────────────

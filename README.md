@@ -135,6 +135,7 @@ Regenerar capturas e imágenes: `SCREENSHOTS=1 npx playwright test e2e/screensho
 | `RESEND_API_KEY`, `MAIL_FROM` | Emails de verificación y recuperación. Sin clave, los emails se imprimen en la consola. |
 | `APP_URL` | URL pública: los enlaces de los emails apuntan ahí. |
 | `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT` | Notificaciones push (`npx web-push generate-vapid-keys`). Sin claves, quedan desactivadas. |
+| `GEMINI_API_KEY`, `GEMINI_MODEL` | Sugerencia de categoría y resumen del mes con Gemini. Sin clave, no aparecen. En producción, usar un proyecto con facturación: en el plan gratuito Google puede usar lo que recibe para mejorar sus productos. |
 | `CORS_ORIGINS` | Solo si la PWA y la API están en dominios distintos (buildear con `VITE_API_URL`). |
 
 ## Deploy

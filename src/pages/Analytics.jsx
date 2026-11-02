@@ -1,13 +1,60 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts'
 import { useStore, selectors } from '@/store'
-import { MONTHS_SHORT, getCat, fmt, fmt2 } from '@/utils'
-import { Card, Section } from '@/components/ui'
+import { MONTHS, MONTHS_SHORT, getCat, fmt, fmt2 } from '@/utils'
+import { Button, Card, Section } from '@/components/ui'
+import { useAiAvailable, aiRequest } from '@/sync/useAi'
 import styles from './Analytics.module.css'
 
 const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
 const COLORS = ['#178C9E','#A3296B','#C2A878','#2BB0C4','#D2559A','#3A6E8F','#7D5BA6','#C7754F','#4F9A7A','#B08D4F','#2E9E8A','#7F9496']
+
+function MonthSummary({ month, year, income, expense, previousExpense, byCategory }) {
+  const aiAvailable = useAiAvailable()
+  const [result, setResult] = useState(null) // { key, summary }
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState(null)
+
+  if (!aiAvailable) return null
+
+  // Si cambian el mes o los datos, el resumen anterior deja de valer
+  const payload = {
+    month: `${MONTHS[month]} ${year}`,
+    income, expense, previousExpense,
+    categories: byCategory.map(({ category, amount }) => ({ label: getCat(category).label, amount })),
+  }
+  const key = JSON.stringify(payload)
+  const summary = result?.key === key ? result.summary : null
+
+  async function generate() {
+    setLoading(true)
+    setError(null)
+    try {
+      const { summary } = await aiRequest('/ai/month-summary', payload)
+      setResult({ key, summary })
+    } catch (e) {
+      setError(e.message)
+    }
+    setLoading(false)
+  }
+
+  return (
+    <Section title="Resumen del mes">
+      <Card>
+        {summary
+          ? <p className={styles.aiSummary}>{summary}</p>
+          : <p className={styles.aiHint}>Genera un resumen escrito con IA. Envía a Gemini, de Google, los totales y las categorías del mes, sin las descripciones de tus movimientos.</p>}
+        {error && <p className={styles.aiError} role="alert">{error}</p>}
+        {!summary && (
+          <Button variant="ghost" size="md" onClick={generate} disabled={loading}>
+            {loading ? 'Escribiendo…' : 'Generar resumen'}
+          </Button>
+        )}
+      </Card>
+    </Section>
+  )
+}
 
 export default function Analytics() {
   const { transactions, wallets, cards, currentMonth, currentYear } = useStore()
@@ -67,6 +114,17 @@ export default function Analytics() {
           </div>
         </div>
       </div>
+
+      {byCategory.length > 0 && (
+        <MonthSummary
+          month={currentMonth}
+          year={currentYear}
+          income={income}
+          expense={expense}
+          previousExpense={last6[4].value}
+          byCategory={byCategory}
+        />
+      )}
 
       {/* Donut chart */}
       {byCategory.length > 0 && (

@@ -70,6 +70,34 @@ test('sin conexión: avisa y la app sigue funcionando', async ({ page, context }
   await expect(page.getByText(/Sin conexión/)).toBeHidden()
 })
 
+test('IA: sugiere la categoría y resume el mes con la sesión iniciada', async ({ page }) => {
+  await page.route('**/api/**', route => {
+    const path = new URL(route.request().url()).pathname
+    if (path === '/api/config') return route.fulfill({ json: { aiEnabled: true, googleClientId: null } })
+    if (path === '/api/ai/categorize') return route.fulfill({ json: { category: 'transport' } })
+    if (path === '/api/ai/month-summary') return route.fulfill({ json: { summary: 'Gastaste menos que el mes pasado.' } })
+    return route.fulfill({ json: { cursor: 0, changes: [] } })
+  })
+  // La demo solo carga sin sesión: primero los datos, después la sesión
+  await page.goto('/?demo=1')
+  await expect(page.getByText('Estás viendo datos de ejemplo')).toBeVisible()
+  await page.evaluate(() => localStorage.setItem('flujo.session', JSON.stringify({ token: 't', user: { id: 'u', email: 'a@b.c', emailVerified: true } })))
+  await page.goto('/')
+
+  await page.getByRole('button', { name: 'Nueva transacción' }).click()
+  const dialog = page.getByRole('dialog')
+  const suggest = dialog.getByRole('button', { name: 'Sugerir con IA' })
+  await expect(suggest).toBeDisabled()
+  await dialog.getByLabel('Descripción').fill('Nafta YPF')
+  await suggest.click()
+  await expect(dialog.locator('[class*="catBtnSelected"]')).toContainText('Transporte')
+  await page.keyboard.press('Escape')
+
+  await nav(page, 'Análisis').click()
+  await page.getByRole('button', { name: 'Generar resumen' }).click()
+  await expect(page.getByText('Gastaste menos que el mes pasado.')).toBeVisible()
+})
+
 test('teclado: se puede navegar y abrir una tarjeta sin mouse', async ({ page }) => {
   await page.goto('/wallets?demo=1')
   await expect(page.getByText('Visa Galicia')).toBeVisible()
