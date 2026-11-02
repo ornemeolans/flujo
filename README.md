@@ -4,7 +4,7 @@
 
 **Tus finanzas, claras.** Una PWA *offline-first* para controlar billeteras, tarjetas en cuotas y préstamos con débito automático, pensada para cómo se usa la plata en Argentina.
 
-[**Probar la demo**](https://flujo-app.up.railway.app/?demo=1) · [App](https://flujo-app.up.railway.app) · [Landing](https://flujo-app.netlify.app)
+[**Probar la demo**](https://flujo-t2n1.onrender.com/?demo=1) · [App](https://flujo-t2n1.onrender.com) · [Landing](https://flujo-app.netlify.app)
 
 [![CI](https://github.com/ornemeolans/flujo/actions/workflows/ci.yml/badge.svg)](https://github.com/ornemeolans/flujo/actions/workflows/ci.yml)
 ![Lighthouse rendimiento](https://img.shields.io/badge/rendimiento-97%2B-0E6672)
@@ -43,7 +43,7 @@ flowchart LR
     SW[Service Worker<br/>Workbox] -.cache offline.-> UI
   end
   IDB <-- "POST /api/sync<br/>last-write-wins" --> API[Express API]
-  API <--> DB[(SQLite)]
+  API <--> DB[(Turso)]
   API -- "Web Push (VAPID)<br/>a las 9 hs" --> SW
   SHARED[shared/ · TypeScript<br/>préstamos, tarjetas, fechas] --- UI
   SHARED --- API
@@ -81,9 +81,9 @@ flowchart LR
 ## Stack
 
 **Frontend:** React 18, Vite, Zustand, React Router, CSS Modules, Recharts, `idb`, `vite-plugin-pwa` (Workbox).<br/>
-**Backend:** Node 24, Express, SQLite (`node:sqlite`), JWT, Google Identity Services, Resend, Web Push.<br/>
+**Backend:** Node 24, Express, Turso (libSQL), JWT, Google Identity Services, Resend, Web Push.<br/>
 **Calidad:** TypeScript (estricto, migración gradual), Vitest, Playwright, axe-core, Lighthouse CI, GitHub Actions.<br/>
-**Infra:** Docker, Railway (app + API + volumen SQLite), Netlify (landing).
+**Infra:** Docker, Render (app + API), Turso (base de datos), Netlify (landing).
 
 ## Estructura
 
@@ -98,7 +98,7 @@ flujo/
 │   ├── components/    # Design system (ui/), modales y layout
 │   ├── pages/         # Inicio, Movimientos, Cuentas, Análisis, Config
 │   └── demo.ts        # Datos de ejemplo
-├── server/            # API Express + SQLite, recordatorios push
+├── server/            # API Express + Turso, recordatorios push
 ├── tests/             # Vitest
 ├── e2e/               # Playwright (+ generador de capturas)
 ├── landing/           # Landing estática (Netlify)
@@ -141,7 +141,7 @@ Regenerar capturas e imágenes: `SCREENSHOTS=1 npx playwright test e2e/screensho
 
 ## Deploy
 
-- **App + API (Railway, con Docker):** el `Dockerfile` construye la PWA y la sirve desde Express junto con la API. Necesita un volumen montado en `/data`, donde vive la base SQLite.
+- **App + API (Render, con Docker):** el `Dockerfile` construye la PWA y la sirve desde Express junto con la API. La base vive en Turso (`DATABASE_URL`). Para importar un respaldo: `node --env-file=.env.turso scripts/import-sqlite.js <respaldo.db>`, dentro de `server/`. En el plan gratuito el servicio se duerme tras 15 minutos sin uso, y con él se frenan los recordatorios push.
 - **Landing (Netlify):** importar el repo con *Base directory* `landing`. No tiene build; los headers y redirecciones están en `landing/netlify.toml`.
 
 ```bash

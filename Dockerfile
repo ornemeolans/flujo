@@ -1,5 +1,5 @@
-# PWA + API en un solo contenedor. Los datos (SQLite) van en /data: montar un volumen ahí
-# (Railway no admite la instrucción VOLUME; se agrega desde el panel, o con -v en docker run).
+# PWA + API en un solo contenedor. Sin Turso, los datos (SQLite) van en /data: montar un volumen ahí
+# (se agrega desde el panel del hosting, o con -v en docker run). Con DATABASE_URL (Turso) no hace falta.
 FROM node:24-slim AS build
 WORKDIR /app
 COPY package.json package-lock.json ./
