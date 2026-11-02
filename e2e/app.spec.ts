@@ -57,6 +57,11 @@ test('crear una billetera y un préstamo desde cero', async ({ page }) => {
 test('sin conexión: avisa y la app sigue funcionando', async ({ page, context }) => {
   await page.goto('/?demo=1')
   await expect(page.getByText('Estás viendo datos de ejemplo')).toBeVisible()
+  // Las pantallas se descargan al abrirlas: hay que esperar a que el service
+  // worker termine de cachearlas y controle la página antes de cortar la red
+  await page.evaluate(() => navigator.serviceWorker.ready)
+  await page.reload()
+  await expect(page.getByText('Estás viendo datos de ejemplo')).toBeVisible()
   await context.setOffline(true)
   await expect(page.getByRole('status').getByText(/Sin conexión/)).toBeVisible()
   await nav(page, 'Cuentas').click()
