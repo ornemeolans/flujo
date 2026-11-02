@@ -34,6 +34,10 @@ export function buildDemoData(today: ISODate = localISO()): DemoData {
       tnaEnabled: true, tna: 32, tnaHistory: [], tnaChangedAt: ago(60), createdAt: ago(60),
     },
     { id: 'demo-efectivo', name: 'Efectivo', type: 'cash', initialBalance: 45000, icon: '💵', color: '#C2A878', createdAt: ago(75) },
+    {
+      id: 'demo-ahorros', name: 'Fondo de emergencia', type: 'savings', initialBalance: 600000, icon: '💰', color: '#4F9A7A',
+      tnaEnabled: true, tna: 38, tnaHistory: [], tnaChangedAt: ago(60), createdAt: ago(60),
+    },
   ]
 
   const cards: CreditCard[] = [
@@ -52,7 +56,7 @@ export function buildDemoData(today: ISODate = localISO()): DemoData {
       tx({ type: 'expense', amount: 520000, walletId: 'demo-banco', category: 'home', date: dayOfMonth(today, m, 5), desc: 'Alquiler' }),
       tx({ type: 'expense', amount: 68000, walletId: 'demo-banco', category: 'services', date: dayOfMonth(today, m, 8), desc: 'Luz, gas e internet' }),
       tx({ type: 'expense', amount: 300000, walletId: 'demo-banco', category: 'transfer', date: dayOfMonth(today, m, 2), desc: 'Ahorro → salida', isTransfer: true }),
-      tx({ type: 'income', amount: 300000, walletId: 'demo-mp', category: 'transfer', date: dayOfMonth(today, m, 2), desc: 'Ahorro → entrada', isTransfer: true }),
+      tx({ type: 'income', amount: 300000, walletId: 'demo-ahorros', category: 'transfer', date: dayOfMonth(today, m, 2), desc: 'Ahorro → entrada', isTransfer: true }),
     )
   }
   const recent: Transaction[] = [

@@ -38,7 +38,7 @@ export default function TransferModal({ onClose }) {
   }
 
   return (
-    <Modal title="Transferir entre billeteras" onClose={onClose}>
+    <Modal title="Transferir entre cuentas" onClose={onClose}>
       {/* Visual flow */}
       <div className={styles.flow}>
         <div className={styles.flowBox} style={{ borderColor: fromWallet?.color || 'var(--border2)' }}>

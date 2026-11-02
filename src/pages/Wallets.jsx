@@ -20,6 +20,9 @@ export default function Wallets() {
   const [payingCard,   setPayingCard]   = useState(null)  // card obj
   const [editLoan,     setEditLoan]     = useState(null)  // loan obj   | {}
 
+  const accounts = wallets.filter(w => !selectors.isSavings(w))
+  const savings  = wallets.filter(selectors.isSavings)
+
   function openCardDetail(card)  { setDetailCard(card) }
   function openCardEdit(card)    { setDetailCard(null); setEditCard(card) }
   function openCardPay(card)     { setDetailCard(null); setPayingCard(card) }
@@ -27,11 +30,11 @@ export default function Wallets() {
   return (
     <div className="animate-fadeUp">
       <Section title="Mis billeteras" action="+ Nueva" onAction={() => setEditWallet({})}>
-        {wallets.length === 0
+        {accounts.length === 0
           ? <Empty icon="🏦" text="Agregá tu primera billetera" action="+ Agregar" onAction={() => setEditWallet({})} />
           : (
             <div className={styles.list}>
-              {wallets.map(w => (
+              {accounts.map(w => (
                 <WalletCard key={w.id} wallet={w} transactions={transactions} onClick={() => setEditWallet(w)} />
               ))}
             </div>
@@ -40,9 +43,22 @@ export default function Wallets() {
         {wallets.length >= 2 && (
           <button className={styles.transferBtn} onClick={() => setTransferOpen(true)}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M4 8h14M14 4l4 4-4 4M20 16H6M10 12l-4 4 4 4"/></svg>
-            Transferir entre billeteras
+            Transferir entre cuentas
           </button>
         )}
+      </Section>
+
+      <Section title="Ahorros" action="+ Nueva" onAction={() => setEditWallet({ savings: true })}>
+        {savings.length === 0
+          ? <Empty icon="💰" text="Separá lo que ahorrás de tu saldo disponible" action="+ Agregar" onAction={() => setEditWallet({ savings: true })} />
+          : (
+            <div className={styles.list}>
+              {savings.map(w => (
+                <WalletCard key={w.id} wallet={w} transactions={transactions} onClick={() => setEditWallet(w)} />
+              ))}
+            </div>
+          )
+        }
       </Section>
 
       <Section title="Tarjetas de crédito" action="+ Nueva" onAction={() => setEditCard({})}>
@@ -67,7 +83,7 @@ export default function Wallets() {
         }
       </Section>
 
-      {editWallet  !== null && <WalletModal  initial={editWallet.id ? editWallet : null} onClose={() => setEditWallet(null)} />}
+      {editWallet  !== null && <WalletModal  initial={editWallet.id ? editWallet : null} savings={editWallet.savings} onClose={() => setEditWallet(null)} />}
       {editCard    !== null && <CardModal    initial={editCard.id   ? editCard   : null} onClose={() => setEditCard(null)} />}
       {detailCard           && (
         <CardDetailModal
@@ -177,6 +193,6 @@ function LoanCard({ loan, wallets, transactions, onClick }) {
 }
 
 function walletTypeLabel(type) {
-  const map = { cash: 'Efectivo', virtual: 'Virtual', bank: 'Banco', savings: 'Inversión', other: 'Otro' }
+  const map = { cash: 'Efectivo', virtual: 'Virtual', bank: 'Banco', savings: 'Ahorros', other: 'Otro' }
   return map[type] ?? type
 }

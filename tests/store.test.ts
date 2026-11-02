@@ -1,10 +1,10 @@
 import 'fake-indexeddb/auto'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { getAll, getAllRaw, applyRemote, changesSince, put, remove, wipeLocal } from '@/db'
-import { useStore, selectors } from '@/store'
+import { useStore, selectors, tnaForDate, migrateSavings } from '@/store'
 import { buildDemoData, isDemoId } from '@/demo'
 import { localISO } from '@shared/dates'
-import type { CreditCard, Transaction } from '@shared/types'
+import type { CreditCard, Transaction, Wallet } from '@shared/types'
 
 beforeEach(async () => {
   await wipeLocal()
@@ -35,6 +35,82 @@ describe('selectores de tarjeta', () => {
       { id: 'pago', type: 'expense', amount: 50_000, walletId: 'banco', category: 'services', date: '2026-10-06', keepsCardExpenses: true },
     ]
     expect(selectors.monthTotals(txs, 9, 2026).expense).toBe(50_000)
+  })
+})
+
+describe('transferencias', () => {
+  const leg = (id: string, type: Transaction['type'], walletId: string, extra: Partial<Transaction> = {}): Transaction =>
+    ({ id, type, amount: 100, walletId, category: 'transfer', date: '2026-10-05', ...extra })
+
+  it('no cuentan como ingreso ni egreso, pero mueven el saldo de cada cuenta', () => {
+    const banco: Wallet = { id: 'banco', name: 'Banco', type: 'bank', initialBalance: 500 }
+    const mp: Wallet = { id: 'mp', name: 'MP', type: 'virtual', initialBalance: 0 }
+    // Registros viejos: con la marca, o cargados a mano solo con la categoría
+    const txs: Transaction[] = [
+      leg('a', 'expense', 'banco', { isTransfer: true }),
+      leg('b', 'income', 'mp', { isTransfer: true }),
+      leg('c', 'expense', 'banco'),
+      leg('d', 'income', 'mp'),
+      { id: 'e', type: 'expense', amount: 30, walletId: 'banco', category: 'food', date: '2026-10-05' },
+    ]
+    expect(selectors.monthTotals(txs, 9, 2026)).toEqual({ income: 0, expense: 30 })
+    expect(selectors.expensesByCategory(txs, 9, 2026)).toEqual([{ category: 'food', amount: 30 }])
+    expect(selectors.walletBalance(banco, txs)).toBe(270)
+    expect(selectors.walletBalance(mp, txs)).toBe(200)
+  })
+
+  it('editar o borrar una pata actualiza también la otra', async () => {
+    const { transfer, saveTransaction, deleteTransaction } = useStore.getState()
+    await transfer({ fromId: 'banco', toId: 'mp', amount: 100, date: '2026-10-05' })
+    const [one] = useStore.getState().transactions
+
+    await saveTransaction({ ...one, amount: 250, date: '2026-10-06' })
+    expect(useStore.getState().transactions.map(t => [t.amount, t.date]))
+      .toEqual([[250, '2026-10-06'], [250, '2026-10-06']])
+
+    await deleteTransaction(one.id)
+    expect(useStore.getState().transactions).toEqual([])
+  })
+})
+
+describe('ahorros', () => {
+  const w = (id: string, name: string, type: Wallet['type'], extra: Partial<Wallet> = {}): Wallet =>
+    ({ id, name, type, initialBalance: 100, ...extra })
+
+  it('se descuentan del disponible y se suman aparte', () => {
+    const wallets = [w('banco', 'Banco', 'bank'), w('fondo', 'Fondo', 'savings')]
+    expect(selectors.totalBalance(wallets, [])).toBe(100)
+    expect(selectors.totalSavings(wallets, [])).toBe(100)
+  })
+
+  it('la actualización mueve las cuentas de ahorro y respeta las demás', async () => {
+    const wallets = [
+      w('a', 'Mis ahorros', 'bank', { tnaEnabled: true, tna: 30 }),
+      w('b', 'Caja de ahorro Galicia', 'bank'),
+      w('c', 'Ahorro viaje', 'other', { savingsReviewed: true }),
+    ]
+    for (const wallet of wallets) await put('wallets', wallet)
+    const types = Object.fromEntries((await migrateSavings(await getAll('wallets'))).map(x => [x.id, x.type]))
+    expect(types).toEqual({ a: 'savings', b: 'bank', c: 'other' })
+    expect((await getAll('wallets')).find(x => x.id === 'a')).toMatchObject({ tnaEnabled: true, tna: 30 })
+  })
+
+  it('una cuenta de ahorro con TNA genera rendimientos', async () => {
+    await put('wallets', w('fondo', 'Fondo', 'savings', { tnaEnabled: true, tna: 36.5, createdAt: '2020-01-01' }))
+    await useStore.getState().loadAll()
+    expect(useStore.getState().transactions.some(t => t.walletId === 'fondo' && t.isYield)).toBe(true)
+  })
+
+  it('un cambio de TNA rige desde su fecha y activarla no genera rendimientos pasados', async () => {
+    const wallet = w('t', 'T', 'savings', { tna: 40, tnaChangedAt: '2026-10-10', tnaHistory: [{ tna: 30, from: '2026-01-01' }] })
+    expect(tnaForDate(wallet, '2026-10-09')).toBe(30)
+    expect(tnaForDate(wallet, '2026-10-10')).toBe(40)
+
+    await put('wallets', w('n', 'N', 'savings', { createdAt: '2020-01-01', savingsReviewed: true }))
+    await useStore.getState().refresh()
+    const [saved] = useStore.getState().wallets
+    await useStore.getState().saveWallet({ ...saved, tnaEnabled: true, tna: 50 })
+    expect(useStore.getState().transactions.filter(t => t.isYield)).toEqual([])
   })
 })
 

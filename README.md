@@ -29,6 +29,7 @@
 - **Préstamos con débito automático.** Sistema francés con IVA (21%) sobre los intereses, o la cuota informada por el banco. Las cuotas se debitan solas de la billetera al vencer, y si el vencimiento cae en fin de semana pasa al lunes. Admite cambios de tasa desde una cuota: el resto se recalcula sobre el saldo pendiente.
 - **Tarjetas de crédito.** Cada consumo cae en el resumen que corresponde según el cierre, que se puede mover un mes puntual. Las cuotas se reparten en los resúmenes siguientes, y al pagar se marcan sin duplicar los egresos del mes.
 - **Billeteras con rendimiento.** Interés diario por TNA, respetando la fecha de cada cambio de tasa.
+- **Ahorros aparte.** Cuentas de ahorro con TNA opcional que no suman al saldo disponible. Las transferencias entre cuentas se ven en los movimientos, pero no cuentan como ingreso ni egreso.
 - **Recordatorios push.** Avisos el día antes de cada cuota y 2 días antes del cierre de cada tarjeta, aunque no abras la app.
 - **Sin conexión y sincronizada.** Todo funciona offline. Con una cuenta opcional (email o Google), los datos se sincronizan entre dispositivos.
 - **Cuidada.** Modo claro y oscuro, instalable, accesible con teclado y lector de pantalla.

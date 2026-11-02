@@ -19,8 +19,9 @@ export default function Transactions() {
 
   const filtered = useMemo(() => {
     let list = monthTx
-    if (filter === 'income')  list = list.filter(t => t.type === 'income')
-    else if (filter === 'expense') list = list.filter(t => t.type === 'expense')
+    if (filter === 'income')  list = list.filter(t => t.type === 'income' && !selectors.isTransfer(t))
+    else if (filter === 'expense') list = list.filter(t => t.type === 'expense' && !selectors.isTransfer(t))
+    else if (filter === 'transfer') list = list.filter(selectors.isTransfer)
     else if (filter.startsWith('w:')) list = list.filter(t => t.walletId === filter.slice(2))
     else if (filter.startsWith('c:')) list = list.filter(t => t.walletId === filter.slice(2))
     return list.sort((a, b) => new Date(b.date) - new Date(a.date))
@@ -30,6 +31,7 @@ export default function Transactions() {
     { id: ALL,        label: 'Todos' },
     { id: 'income',   label: '↑ Ingresos' },
     { id: 'expense',  label: '↓ Egresos' },
+    { id: 'transfer', label: '↔ Transferencias' },
     ...wallets.map(w => ({ id: `w:${w.id}`, label: `${w.icon || '💵'} ${w.name}` })),
     ...cards.map(c =>   ({ id: `c:${c.id}`, label: `${c.icon || '💳'} ${c.name}` })),
   ]

@@ -32,6 +32,9 @@ export interface FlujoState {
 
 export const useStore: UseBoundStore<StoreApi<FlujoState>>
 
+export function tnaForDate(wallet: Wallet, dateStr: ISODate): number | undefined
+export function migrateSavings(wallets: Wallet[]): Promise<Wallet[]>
+
 export interface CardPeriod extends MonthRef {
   closeDay: number
   label: 'resumen actual' | 'resumen siguiente'
@@ -47,7 +50,9 @@ export interface CardLineItem {
 
 export const selectors: {
   walletBalance(wallet: Wallet, transactions: Transaction[]): number
+  isSavings(wallet: Wallet): boolean
   totalBalance(wallets: Wallet[], transactions: Transaction[]): number
+  totalSavings(wallets: Wallet[], transactions: Transaction[]): number
   walletMonthlyYield(wallet: Wallet, transactions: Transaction[]): number
   totalMonthlyYield(wallets: Wallet[], transactions: Transaction[]): number
   periodKey(ref: MonthRef): string
@@ -58,6 +63,7 @@ export const selectors: {
   cardPeriodItems(card: CreditCard, transactions: Transaction[], month: number, year: number): CardLineItem[]
   cardPeriodTotal(card: CreditCard, transactions: Transaction[], month: number, year: number): number
   monthTransactions(transactions: Transaction[], month: number, year: number): Transaction[]
+  isTransfer(t: Transaction): boolean
   countsInTotals(t: Transaction): boolean
   monthTotals(transactions: Transaction[], month: number, year: number): { income: number; expense: number }
   expensesByCategory(transactions: Transaction[], month: number, year: number): { category: string; amount: number }[]

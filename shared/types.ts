@@ -21,6 +21,8 @@ export interface Wallet extends SyncMeta {
   /** Tasas anteriores: cada una rige desde `from` */
   tnaHistory?: { tna: number; from: ISODate }[]
   tnaChangedAt?: ISODate
+  /** Ya pasó por la migración a Ahorros: no se vuelve a clasificar por nombre */
+  savingsReviewed?: boolean
   createdAt?: ISODate
 }
 

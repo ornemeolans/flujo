@@ -10,17 +10,20 @@ const DEFAULT = {
   tnaEnabled: false, tna: '',
 }
 
-export default function WalletModal({ onClose, initial = null }) {
+const SAVINGS_DEFAULT = { ...DEFAULT, type: 'savings', icon: '💰', color: '#4F9A7A' }
+
+export default function WalletModal({ onClose, initial = null, savings = false }) {
   const { saveWallet, deleteWallet } = useStore()
   const isEdit = !!initial
   const [form, setForm] = useState(initial ? {
     ...initial,
     initialBalance: String(initial.initialBalance ?? 0),
     tna: String(initial.tna ?? ''),
-  } : DEFAULT)
+  } : savings ? SAVINGS_DEFAULT : DEFAULT)
   const [saving, setSaving] = useState(false)
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
+  const isSavings = form.type === 'savings'
 
   const monthlyYield = form.tnaEnabled && form.tna && form.initialBalance
     ? Number(form.initialBalance) * (Number(form.tna) / 100 / 12)
@@ -46,15 +49,20 @@ export default function WalletModal({ onClose, initial = null }) {
   }
 
   return (
-    <Modal title={isEdit ? 'Editar Billetera' : 'Nueva Billetera'} onClose={onClose}>
+    <Modal title={`${isEdit ? 'Editar' : 'Nueva'} ${isSavings ? 'cuenta de ahorro' : 'Billetera'}`} onClose={onClose}>
       <Input
         label="Nombre"
-        placeholder="Ej: Mercado Pago"
+        placeholder={isSavings ? 'Ej: Fondo de emergencia' : 'Ej: Mercado Pago'}
         value={form.name}
         onChange={e => set('name', e.target.value)}
       />
 
-      <Select label="Tipo" value={form.type} onChange={e => set('type', e.target.value)}>
+      <Select
+        label="Tipo"
+        value={form.type}
+        onChange={e => set('type', e.target.value)}
+        hint={isSavings ? 'Va a la sección Ahorros y no suma a tu saldo disponible' : undefined}
+      >
         {WALLET_TYPES.map(t => (
           <option key={t.id} value={t.id}>{t.icon} {t.label}</option>
         ))}
@@ -104,7 +112,7 @@ export default function WalletModal({ onClose, initial = null }) {
           <Button variant="danger" size="sm" onClick={handleDelete}>Eliminar</Button>
         )}
         <Button variant="primary" size="lg" onClick={handleSave} disabled={saving} className={styles.saveBtn}>
-          {saving ? 'Guardando…' : isEdit ? 'Guardar cambios' : 'Crear billetera'}
+          {saving ? 'Guardando…' : isEdit ? 'Guardar cambios' : isSavings ? 'Crear ahorro' : 'Crear billetera'}
         </Button>
       </div>
     </Modal>

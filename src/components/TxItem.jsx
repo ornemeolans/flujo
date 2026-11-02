@@ -23,7 +23,7 @@ export default function TxItem({ tx, wallets, cards, onClick }) {
           )}
         </div>
       </div>
-      <div className={`${styles.amount} ${tx.type === 'income' ? styles.inc : styles.exp}`}>
+      <div className={`${styles.amount} ${selectors.isTransfer(tx) ? styles.transfer : tx.type === 'income' ? styles.inc : styles.exp}`}>
         {tx.type === 'income' ? '+' : '-'}{fmt(tx.amount)}
       </div>
     </div>

@@ -228,3 +228,10 @@
 .welcomeTitle span { color: var(--accent); }
 .welcomeText { font-size: 15px; color: var(--text2); line-height: 1.55; margin-bottom: 22px; max-width: 36ch; }
 .welcomeHint { font-size: 13px; color: var(--text3); margin-top: 12px; text-align: center; }
+
+/* Ahorros: fuera del disponible */
+.heroSavings {
+  margin-top: 8px;
+  font-size: 13px;
+  color: var(--text2);
+}

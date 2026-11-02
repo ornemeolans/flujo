@@ -65,7 +65,7 @@ export const WALLET_TYPES: { id: string; icon: string; label: string }[] = [
   { id: 'cash',    icon: '💵', label: 'Efectivo' },
   { id: 'virtual', icon: '📱', label: 'Virtual (Mercado Pago, etc.)' },
   { id: 'bank',    icon: '🏦', label: 'Banco / Caja de ahorro' },
-  { id: 'savings', icon: '💰', label: 'Inversión / Plazo fijo' },
+  { id: 'savings', icon: '💰', label: 'Ahorros / Inversión / Plazo fijo' },
   { id: 'other',   icon: '🔷', label: 'Otro' },
 ]
 

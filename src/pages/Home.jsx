@@ -28,8 +28,11 @@ export default function Home() {
   const [editCard, setEditCard]     = useState(null)
   const [editTx, setEditTx]         = useState(null)
 
+  const accounts      = wallets.filter(w => !selectors.isSavings(w))
+  const savings       = wallets.filter(selectors.isSavings)
   const totalBalance  = selectors.totalBalance(wallets, transactions)
-  const totalYield    = selectors.totalMonthlyYield(wallets, transactions)
+  const totalSavings  = selectors.totalSavings(wallets, transactions)
+  const totalYield   = selectors.totalMonthlyYield(wallets, transactions)
   const { income, expense } = selectors.monthTotals(transactions, currentMonth, currentYear)
 
   const recentTx = [...transactions]
@@ -64,7 +67,7 @@ export default function Home() {
         <div className={styles.hero}>
           <div className={styles.heroLabel}>
             <span className={styles.heroDot} aria-hidden="true" />
-            Saldo total · {MONTHS_SHORT[currentMonth]} {currentYear}
+            Disponible · {MONTHS_SHORT[currentMonth]} {currentYear}
           </div>
           <div className={`${styles.heroAmount} ${totalBalance < 0 ? styles.neg : styles.pos}`}>
             <Money value={totalBalance} />
@@ -74,6 +77,9 @@ export default function Home() {
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M4 16l6-6 4 4 6-7M14 7h6v6"/></svg>
               Rinde +{fmt2(totalYield)} este mes
             </div>
+          )}
+          {savings.length > 0 && (
+            <div className={styles.heroSavings}>Ahorros aparte: {fmt2(totalSavings)}</div>
           )}
           <div className={styles.flows}>
             <div className={styles.flow}>
@@ -96,11 +102,11 @@ export default function Home() {
         action="Ver todo →"
         onAction={() => navigate('/wallets')}
       >
-        {wallets.length === 0
+        {accounts.length === 0
           ? <Empty icon="🏦" text="Sin billeteras" action="+ Agregar" onAction={() => setEditWallet({})} />
           : (
             <div className={styles.list}>
-              {wallets.slice(0, 3).map(w => (
+              {accounts.slice(0, 3).map(w => (
                 <WalletRow
                   key={w.id}
                   wallet={w}
@@ -112,6 +118,26 @@ export default function Home() {
           )
         }
       </Section>
+
+      {/* Savings */}
+      {savings.length > 0 && (
+        <Section
+          title="Ahorros"
+          action="Ver todo →"
+          onAction={() => navigate('/wallets')}
+        >
+          <div className={styles.list}>
+            {savings.slice(0, 3).map(w => (
+              <WalletRow
+                key={w.id}
+                wallet={w}
+                transactions={transactions}
+                onClick={() => setEditWallet(w)}
+              />
+            ))}
+          </div>
+        </Section>
+      )}
 
       {/* Credit Cards */}
       <Section

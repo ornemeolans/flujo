@@ -72,7 +72,7 @@ export default function TxModal({ onClose, initial = null }) {
   }
 
   async function handleDelete() {
-    if (!confirm('¿Eliminar esta transacción?')) return
+    if (!confirm(initial.transferPairId ? '¿Eliminar esta transferencia? Se borra de las dos cuentas.' : '¿Eliminar esta transacción?')) return
     await deleteTransaction(initial.id)
     onClose()
   }

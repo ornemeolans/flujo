@@ -13,7 +13,9 @@ const today = () => localISO()
 // Respects tnaHistory: [{tna, from}] so rate changes only apply from next day.
 // Never deletes past yields — only adds missing ones going forward.
 
-function tnaForDate(wallet, dateStr) {
+export function tnaForDate(wallet, dateStr) {
+  // La tasa actual rige desde tnaChangedAt; antes, la del historial
+  if (wallet.tnaChangedAt && dateStr >= wallet.tnaChangedAt) return wallet.tna
   // tnaHistory is sorted ascending by `from`
   const history = wallet.tnaHistory || []
   let rate = wallet.tna // current rate as fallback
@@ -36,8 +38,10 @@ async function accrueYields(wallets, transactions) {
       .sort((a, b) => a.date > b.date ? 1 : -1)
 
     // Start from: day after last yield, or wallet creation date
-    let startDate = wallet.createdAt
-      ? new Date(wallet.createdAt + 'T12:00:00')
+    // (si la TNA se activó después de crearla, rinde desde ese día, no antes)
+    const firstDay = wallet.tnaChangedAt > wallet.createdAt ? wallet.tnaChangedAt : wallet.createdAt
+    let startDate = firstDay
+      ? new Date(firstDay + 'T12:00:00')
       : new Date(todayStr + 'T12:00:00')
 
     if (yieldTxs.length > 0) {
@@ -119,6 +123,19 @@ async function accrueLoanPayments(loans) {
   await putMany(STORES.TRANSACTIONS, loans.flatMap(l => pendingLoanPayments(l, existingIds)))
 }
 
+// ─── Migración a Ahorros ─────────────────────────────────────
+// Las cuentas creadas como ahorro antes de que existiera la sección pasan a
+// Ahorros al abrir la app. "Caja de ahorro" es una cuenta bancaria común.
+// savingsReviewed evita pisar la decisión de quien la devuelva a otro tipo.
+const looksLikeSavings = w => /ahorro/i.test(w.name) && !/caja\s+de\s+ahorro/i.test(w.name)
+
+export async function migrateSavings(wallets) {
+  const pending = wallets.filter(w => w.type !== 'savings' && !w.savingsReviewed && looksLikeSavings(w))
+  if (!pending.length) return wallets
+  await putMany(STORES.WALLETS, pending.map(w => ({ ...w, type: 'savings', savingsReviewed: true })))
+  return getAll(STORES.WALLETS)
+}
+
 export const useStore = create((set, get) => ({
   // ─── Data ───────────────────────────────────
   wallets: [],
@@ -133,12 +150,13 @@ export const useStore = create((set, get) => ({
 
   // ─── Bootstrap ──────────────────────────────
   async loadAll() {
-    const [wallets, cards, transactions, loans] = await Promise.all([
+    const [storedWallets, cards, transactions, loans] = await Promise.all([
       getAll(STORES.WALLETS),
       getAll(STORES.CARDS),
       getAll(STORES.TRANSACTIONS),
       getAll(STORES.LOANS),
     ])
+    const wallets = await migrateSavings(storedWallets)
     set({ wallets, cards, transactions, loans, loading: false })
 
     // Debitar cuotas vencidas antes de calcular rendimientos (afectan el saldo)
@@ -188,7 +206,7 @@ export const useStore = create((set, get) => ({
   // ─── Wallets ────────────────────────────────
   async saveWallet(data) {
     const d = today()
-    let item = data.id ? { ...data } : { ...data, id: nanoid(), createdAt: d }
+    let item = data.id ? { ...data, savingsReviewed: true } : { ...data, id: nanoid(), createdAt: d, savingsReviewed: true }
 
     if (data.id) {
       const prev = get().wallets.find(w => w.id === data.id)
@@ -307,13 +325,18 @@ export const useStore = create((set, get) => ({
   async saveTransaction(data) {
     const item = data.id ? data : { ...data, id: nanoid(), createdAt: today() }
     await put(STORES.TRANSACTIONS, item)
+    // Las dos patas de una transferencia mantienen monto y fecha
+    const pair = get().transactions.find(t => t.id === item.transferPairId)
+    if (pair) await put(STORES.TRANSACTIONS, { ...pair, amount: item.amount, date: item.date })
     const transactions = await getAll(STORES.TRANSACTIONS)
     set({ transactions })
     return item
   },
 
   async deleteTransaction(id) {
+    const pairId = get().transactions.find(t => t.id === id)?.transferPairId
     await remove(STORES.TRANSACTIONS, id)
+    if (pairId) await remove(STORES.TRANSACTIONS, pairId)
     const transactions = await getAll(STORES.TRANSACTIONS)
     set({ transactions })
   },
@@ -374,8 +397,21 @@ export const selectors = {
       )
   },
 
+  isSavings(wallet) {
+    return wallet.type === 'savings'
+  },
+
+  // Saldo disponible: los ahorros no cuentan
   totalBalance(wallets, transactions) {
-    return wallets.reduce((sum, w) => sum + selectors.walletBalance(w, transactions), 0)
+    return wallets
+      .filter(w => !selectors.isSavings(w))
+      .reduce((sum, w) => sum + selectors.walletBalance(w, transactions), 0)
+  },
+
+  totalSavings(wallets, transactions) {
+    return wallets
+      .filter(selectors.isSavings)
+      .reduce((sum, w) => sum + selectors.walletBalance(w, transactions), 0)
   },
 
   // Monthly yield for a wallet — sum of actual daily yield transactions this month
@@ -461,9 +497,15 @@ export const selectors = {
     })
   },
 
-  // Card payments that keep their expenses would count twice in totals
+  // También cubre las cargadas a mano con la categoría Transferencia
+  isTransfer(t) {
+    return !!t.isTransfer || t.category === 'transfer'
+  },
+
+  // Card payments that keep their expenses would count twice in totals.
+  // Las transferencias mueven plata entre cuentas: no son ingreso ni egreso.
   countsInTotals(t) {
-    return !t.keepsCardExpenses
+    return !t.keepsCardExpenses && !selectors.isTransfer(t)
   },
 
   monthTotals(transactions, month, year) {
