@@ -12,7 +12,7 @@ const lastLink = to => {
 
 before(async () => {
   const app = createApp({
-    db: openDatabase(':memory:'),
+    db: await openDatabase(':memory:'),
     jwtSecret: 'test-secret',
     appUrl: 'http://app.test',
     sendMail: async m => { mails.push(m) },
@@ -146,7 +146,7 @@ test('recuperación de contraseña invalida las sesiones anteriores', async () =
 })
 
 test('límite de intentos de login', async () => {
-  const app = createApp({ db: openDatabase(':memory:'), jwtSecret: 's', appUrl: 'http://x', sendMail: async () => {}, rateLimitMax: 2 })
+  const app = createApp({ db: await openDatabase(':memory:'), jwtSecret: 's', appUrl: 'http://x', sendMail: async () => {}, rateLimitMax: 2 })
   const srv = await new Promise(r => { const s = app.listen(0, () => r(s)) })
   const url = `http://localhost:${srv.address().port}/api/auth/login`
   const post = () => fetch(url, { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}' }).then(r => r.status)

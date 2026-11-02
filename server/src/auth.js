@@ -29,7 +29,7 @@ export function signToken(user, secret) {
 
 // Middleware: exige `Authorization: Bearer <jwt>` vigente y deja el usuario en req.user
 export function requireAuth(secret, getUser) {
-  return (req, res, next) => {
+  return async (req, res, next) => {
     const [scheme, token] = (req.headers.authorization || '').split(' ')
     if (scheme !== 'Bearer' || !token) return res.status(401).json({ error: 'No autenticado' })
     let payload
@@ -38,7 +38,7 @@ export function requireAuth(secret, getUser) {
     } catch {
       return res.status(401).json({ error: 'Sesión vencida, volvé a iniciar sesión' })
     }
-    const user = getUser(payload.sub)
+    const user = await getUser(payload.sub)
     if (!user || (payload.v ?? 0) !== user.session_version) {
       return res.status(401).json({ error: 'Sesión vencida, volvé a iniciar sesión' })
     }

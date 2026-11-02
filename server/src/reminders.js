@@ -66,7 +66,7 @@ export async function runReminders({ db, sendPush, now = new Date() }) {
   if (hour < SEND_HOUR) return { sent: 0 }
   const today = todayIn(TIME_ZONE, now)
 
-  const users = db.prepare('SELECT DISTINCT user_id FROM push_subscriptions').all()
+  const users = await db.prepare('SELECT DISTINCT user_id FROM push_subscriptions').all()
   const records = db.prepare('SELECT store, data FROM records WHERE user_id = ? AND deleted_at IS NULL AND store IN (\'loans\', \'cards\', \'transactions\')')
   const subsOf = db.prepare('SELECT endpoint, data FROM push_subscriptions WHERE user_id = ?')
   const wasSent = db.prepare('SELECT 1 FROM reminders_sent WHERE user_id = ? AND key = ?')
@@ -76,18 +76,18 @@ export async function runReminders({ db, sendPush, now = new Date() }) {
   let sent = 0
   for (const { user_id: userId } of users) {
     const data = { loans: [], cards: [], transactions: [] }
-    for (const r of records.all(userId)) data[r.store].push(JSON.parse(r.data))
+    for (const r of await records.all(userId)) data[r.store].push(JSON.parse(r.data))
 
     for (const reminder of computeReminders(data, today)) {
-      if (wasSent.get(userId, reminder.key)) continue
-      markSent.run(userId, reminder.key, Date.now()) // antes de enviar: nunca duplicar
-      for (const sub of subsOf.all(userId)) {
+      if (await wasSent.get(userId, reminder.key)) continue
+      await markSent.run(userId, reminder.key, Date.now()) // antes de enviar: nunca duplicar
+      for (const sub of await subsOf.all(userId)) {
         try {
           await sendPush(JSON.parse(sub.data), { title: reminder.title, body: reminder.body, url: reminder.url, tag: reminder.key })
           sent++
         } catch (e) {
           // 404/410: la suscripción ya no existe (desinstaló la app o revocó el permiso)
-          if (e.statusCode === 404 || e.statusCode === 410) dropSub.run(sub.endpoint)
+          if (e.statusCode === 404 || e.statusCode === 410) await dropSub.run(sub.endpoint)
           else console.error('Push falló:', e.statusCode ?? e.message)
         }
       }

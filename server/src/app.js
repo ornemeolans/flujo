@@ -10,6 +10,20 @@ import { actionEmail } from './mailer.js'
 const STORES = new Set(['wallets', 'cards', 'transactions', 'loans'])
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const MAX_CHANGES = 5000
+const SYNC_BATCH = 500
+// Gana el updatedAt más reciente. La regla y el seq van en el SQL: así cada lote
+// es atómico y hace un solo viaje a la base, aunque traiga cientos de cambios.
+const UPSERT_RECORD = `
+  INSERT INTO records (user_id, store, id, data, updated_at, deleted_at, seq)
+  VALUES (?, ?, ?, ?, ?, ?, (SELECT COALESCE(MAX(seq), 0) + 1 FROM records))
+  ON CONFLICT (user_id, store, id) DO UPDATE SET
+    data = excluded.data, updated_at = excluded.updated_at, deleted_at = excluded.deleted_at, seq = excluded.seq
+  WHERE excluded.updated_at > records.updated_at
+`
+// Se borra todo explícitamente: en Turso no conviene depender de ON DELETE CASCADE
+const DELETE_ACCOUNT = ['reminders_sent', 'push_subscriptions', 'auth_tokens', 'records']
+  .map(t => `DELETE FROM ${t} WHERE user_id = ?`)
+  .concat('DELETE FROM users WHERE id = ?')
 const VERIFY_TTL = 3 * 24 * 60 * 60 * 1000 // 3 días
 const RESET_TTL = 60 * 60 * 1000           // 1 hora
 
@@ -41,6 +55,11 @@ export function createApp({ db, jwtSecret, appUrl, sendMail, googleClientId, cor
   appUrl = appUrl.replace(/\/$/, '')
 
   const app = express()
+  // Express 4 no captura el rechazo de un handler async: sin esto, un error de base tumba el proceso
+  for (const method of ['get', 'post']) {
+    const register = app[method].bind(app)
+    app[method] = (path, ...handlers) => register(path, ...handlers.map(h => (req, res, next) => Promise.resolve(h(req, res, next)).catch(next)))
+  }
   app.set('trust proxy', 1)
   app.use(express.json({ limit: '5mb' }))
   if (corsOrigins.length) app.use(cors({ origin: corsOrigins }))
@@ -56,7 +75,6 @@ export function createApp({ db, jwtSecret, appUrl, sendMail, googleClientId, cor
     dropPassword: db.prepare('UPDATE users SET password_hash = NULL, session_version = session_version + 1 WHERE id = ?'),
     setPassword: db.prepare('UPDATE users SET password_hash = ?, email_verified = 1, session_version = session_version + 1 WHERE id = ?'),
     markVerified: db.prepare('UPDATE users SET email_verified = 1 WHERE id = ?'),
-    deleteUser: db.prepare('DELETE FROM users WHERE id = ?'),
     upsertSub: db.prepare('INSERT INTO push_subscriptions (endpoint, user_id, data, created_at) VALUES (?, ?, ?, ?) ON CONFLICT (endpoint) DO UPDATE SET user_id = excluded.user_id, data = excluded.data'),
     deleteSub: db.prepare('DELETE FROM push_subscriptions WHERE endpoint = ? AND user_id = ?'),
     subsOf: db.prepare('SELECT endpoint, data FROM push_subscriptions WHERE user_id = ?'),
@@ -64,13 +82,6 @@ export function createApp({ db, jwtSecret, appUrl, sendMail, googleClientId, cor
     takeToken: db.prepare('DELETE FROM auth_tokens WHERE token_hash = ? AND kind = ? RETURNING user_id, expires_at'),
     clearTokens: db.prepare('DELETE FROM auth_tokens WHERE user_id = ? AND kind = ?'),
     purgeTokens: db.prepare('DELETE FROM auth_tokens WHERE expires_at < ?'),
-    recordMeta: db.prepare('SELECT updated_at FROM records WHERE user_id = ? AND store = ? AND id = ?'),
-    maxSeq: db.prepare('SELECT COALESCE(MAX(seq), 0) AS seq FROM records'),
-    upsert: db.prepare(`
-      INSERT INTO records (user_id, store, id, data, updated_at, deleted_at, seq) VALUES (?, ?, ?, ?, ?, ?, ?)
-      ON CONFLICT (user_id, store, id) DO UPDATE SET
-        data = excluded.data, updated_at = excluded.updated_at, deleted_at = excluded.deleted_at, seq = excluded.seq
-    `),
     changes: db.prepare('SELECT store, data, seq FROM records WHERE user_id = ? AND seq > ? ORDER BY seq'),
   }
 
@@ -81,21 +92,21 @@ export function createApp({ db, jwtSecret, appUrl, sendMail, googleClientId, cor
   const session = u => ({ token: signToken(u, jwtSecret), user: publicUser(u) })
 
   // ─── Emails con enlace de un solo uso ─────────────────────
-  function issueToken(userId, kind, ttl) {
-    q.purgeTokens.run(Date.now())
-    q.clearTokens.run(userId, kind) // solo vale el último enlace enviado
+  async function issueToken(userId, kind, ttl) {
+    await q.purgeTokens.run(Date.now())
+    await q.clearTokens.run(userId, kind) // solo vale el último enlace enviado
     const { token, hash } = newEmailToken()
-    q.insertToken.run(hash, userId, kind, Date.now() + ttl)
+    await q.insertToken.run(hash, userId, kind, Date.now() + ttl)
     return token
   }
 
-  function consumeToken(token, kind) {
-    const row = q.takeToken.get(hashEmailToken(token), kind)
+  async function consumeToken(token, kind) {
+    const row = await q.takeToken.get(hashEmailToken(token), kind)
     return row && row.expires_at > Date.now() ? row.user_id : null
   }
 
   async function sendVerification(user) {
-    const url = `${appUrl}/auth/verify?token=${issueToken(user.id, 'verify', VERIFY_TTL)}`
+    const url = `${appUrl}/auth/verify?token=${await issueToken(user.id, 'verify', VERIFY_TTL)}`
     await sendMail({
       to: user.email,
       subject: 'Confirmá tu email en Flujo',
@@ -110,7 +121,7 @@ export function createApp({ db, jwtSecret, appUrl, sendMail, googleClientId, cor
   }
 
   async function sendReset(user) {
-    const url = `${appUrl}/auth/reset?token=${issueToken(user.id, 'reset', RESET_TTL)}`
+    const url = `${appUrl}/auth/reset?token=${await issueToken(user.id, 'reset', RESET_TTL)}`
     await sendMail({
       to: user.email,
       subject: 'Restablecer tu contraseña de Flujo',
@@ -133,7 +144,7 @@ export function createApp({ db, jwtSecret, appUrl, sendMail, googleClientId, cor
   const validPassword = p => typeof p === 'string' && p.length >= 8 && p.length <= 200
 
   // ─── Config pública (la PWA la consulta para mostrar el botón de Google) ──
-  app.get('/api/config', (_req, res) => {
+  app.get('/api/config', async (_req, res) => {
     res.json({ googleClientId: googleClientId || null, aiEnabled: !!ai })
   })
 
@@ -145,14 +156,14 @@ export function createApp({ db, jwtSecret, appUrl, sendMail, googleClientId, cor
     if (!EMAIL_RE.test(email)) return res.status(400).json({ error: 'Email inválido' })
     if (!validPassword(password)) return res.status(400).json({ error: 'La contraseña debe tener al menos 8 caracteres' })
 
-    const existing = q.userByEmail.get(email)
+    const existing = await q.userByEmail.get(email)
     if (existing) {
       const hint = existing.google_sub && !existing.password_hash ? ' Ingresá con Google.' : ''
       return res.status(409).json({ error: `Ya existe una cuenta con ese email.${hint}` })
     }
     const id = newUserId()
-    q.insertUser.run(id, email, name, await hashPassword(password), null, 0, Date.now())
-    const user = q.userById.get(id)
+    await q.insertUser.run(id, email, name, await hashPassword(password), null, 0, Date.now())
+    const user = await q.userById.get(id)
     // Si el email falla, la cuenta igual queda creada; se puede reenviar desde la app
     sendVerification(user).catch(e => console.error('No se pudo enviar el email de verificación:', e.message))
     res.status(201).json(session(user))
@@ -162,7 +173,7 @@ export function createApp({ db, jwtSecret, appUrl, sendMail, googleClientId, cor
   app.post('/api/auth/login', authLimiter, async (req, res) => {
     const email = String(req.body?.email || '').trim().toLowerCase()
     const password = String(req.body?.password || '')
-    const user = q.userByEmail.get(email)
+    const user = await q.userByEmail.get(email)
     if (!user || !(await verifyPassword(password, user.password_hash))) {
       const hint = user?.google_sub && !user.password_hash ? ' Esta cuenta usa Google.' : ''
       return res.status(401).json({ error: `Email o contraseña incorrectos.${hint}` })
@@ -181,39 +192,39 @@ export function createApp({ db, jwtSecret, appUrl, sendMail, googleClientId, cor
     }
     if (!payload?.sub || !payload.email) return res.status(401).json({ error: 'Token de Google inválido' })
 
-    let user = q.userByGoogle.get(payload.sub)
+    let user = await q.userByGoogle.get(payload.sub)
     if (!user) {
-      const byEmail = q.userByEmail.get(payload.email)
+      const byEmail = await q.userByEmail.get(payload.email)
       if (byEmail) {
         // Vincular a una cuenta existente solo si Google verificó el email
         if (!payload.email_verified) return res.status(409).json({ error: 'Ya existe una cuenta con ese email' })
-        if (!byEmail.email_verified) q.dropPassword.run(byEmail.id)
-        q.linkGoogle.run(payload.sub, payload.name ?? null, byEmail.id)
-        user = q.userById.get(byEmail.id)
+        if (!byEmail.email_verified) await q.dropPassword.run(byEmail.id)
+        await q.linkGoogle.run(payload.sub, payload.name ?? null, byEmail.id)
+        user = await q.userById.get(byEmail.id)
       } else {
         const id = newUserId()
-        q.insertUser.run(id, payload.email.toLowerCase(), payload.name ?? null, null, payload.sub, payload.email_verified ? 1 : 0, Date.now())
-        user = q.userById.get(id)
+        await q.insertUser.run(id, payload.email.toLowerCase(), payload.name ?? null, null, payload.sub, payload.email_verified ? 1 : 0, Date.now())
+        user = await q.userById.get(id)
       }
     }
     res.json(session(user))
   })
 
-  app.get('/api/auth/me', auth, (req, res) => {
+  app.get('/api/auth/me', auth, async (req, res) => {
     res.json({ user: publicUser(req.user) })
   })
 
   // Elimina la cuenta: sus registros y tokens se borran en cascada
-  app.post('/api/auth/delete-account', auth, (req, res) => {
-    q.deleteUser.run(req.userId)
+  app.post('/api/auth/delete-account', auth, async (req, res) => {
+    await db.batch(DELETE_ACCOUNT.map(sql => ({ sql, args: [req.userId] })))
     res.json({ ok: true })
   })
 
   // ─── Verificación de email ────────────────────────────────
-  app.post('/api/auth/verify-email', authLimiter, (req, res) => {
-    const userId = consumeToken(req.body?.token, 'verify')
+  app.post('/api/auth/verify-email', authLimiter, async (req, res) => {
+    const userId = await consumeToken(req.body?.token, 'verify')
     if (!userId) return res.status(400).json({ error: 'El enlace es inválido o ya venció' })
-    q.markVerified.run(userId)
+    await q.markVerified.run(userId)
     res.json({ ok: true })
   })
 
@@ -232,45 +243,45 @@ export function createApp({ db, jwtSecret, appUrl, sendMail, googleClientId, cor
   // Responde siempre lo mismo para no revelar qué emails tienen cuenta
   app.post('/api/auth/forgot-password', mailLimiter, async (req, res) => {
     const email = String(req.body?.email || '').trim().toLowerCase()
-    const user = EMAIL_RE.test(email) && q.userByEmail.get(email)
+    const user = EMAIL_RE.test(email) && await q.userByEmail.get(email)
     if (user) sendReset(user).catch(e => console.error('No se pudo enviar el email de recuperación:', e.message))
     res.json({ ok: true })
   })
 
   app.post('/api/auth/reset-password', authLimiter, async (req, res) => {
     if (!validPassword(req.body?.password)) return res.status(400).json({ error: 'La contraseña debe tener al menos 8 caracteres' })
-    const userId = consumeToken(req.body?.token, 'reset')
+    const userId = await consumeToken(req.body?.token, 'reset')
     if (!userId) return res.status(400).json({ error: 'El enlace es inválido o ya venció. Pedí uno nuevo.' })
     // El enlace llegó al email: eso prueba que es suyo
-    q.setPassword.run(await hashPassword(req.body.password), userId)
-    res.json(session(q.userById.get(userId)))
+    await q.setPassword.run(await hashPassword(req.body.password), userId)
+    res.json(session(await q.userById.get(userId)))
   })
 
   // ─── Notificaciones push ──────────────────────────────────
-  app.get('/api/push/key', (_req, res) => {
+  app.get('/api/push/key', async (_req, res) => {
     if (!push) return res.status(404).json({ error: 'Notificaciones no configuradas en el servidor' })
     res.json({ publicKey: push.publicKey })
   })
 
-  app.post('/api/push/subscribe', auth, (req, res) => {
+  app.post('/api/push/subscribe', auth, async (req, res) => {
     const sub = req.body?.subscription
     if (!push) return res.status(404).json({ error: 'Notificaciones no configuradas en el servidor' })
     if (typeof sub?.endpoint !== 'string' || !sub.endpoint.startsWith('https://') || !sub.keys?.p256dh || !sub.keys?.auth) {
       return res.status(400).json({ error: 'Suscripción inválida' })
     }
-    q.upsertSub.run(sub.endpoint, req.userId, JSON.stringify({ endpoint: sub.endpoint, keys: sub.keys }), Date.now())
+    await q.upsertSub.run(sub.endpoint, req.userId, JSON.stringify({ endpoint: sub.endpoint, keys: sub.keys }), Date.now())
     res.json({ ok: true })
   })
 
-  app.post('/api/push/unsubscribe', auth, (req, res) => {
-    q.deleteSub.run(String(req.body?.endpoint || ''), req.userId)
+  app.post('/api/push/unsubscribe', auth, async (req, res) => {
+    await q.deleteSub.run(String(req.body?.endpoint || ''), req.userId)
     res.json({ ok: true })
   })
 
   // Notificación de prueba a todos los dispositivos del usuario
   app.post('/api/push/test', auth, mailLimiter, async (req, res) => {
     if (!push) return res.status(404).json({ error: 'Notificaciones no configuradas en el servidor' })
-    const subs = q.subsOf.all(req.userId)
+    const subs = await q.subsOf.all(req.userId)
     if (!subs.length) return res.status(400).json({ error: 'Este usuario no tiene notificaciones activadas' })
     let sent = 0
     for (const s of subs) {
@@ -278,7 +289,7 @@ export function createApp({ db, jwtSecret, appUrl, sendMail, googleClientId, cor
         await push.send(JSON.parse(s.data), { title: 'Flujo', body: '¡Listo! Así te vamos a avisar de tus vencimientos.', url: '/settings', tag: 'test' })
         sent++
       } catch (e) {
-        if (e.statusCode === 404 || e.statusCode === 410) q.deleteSub.run(s.endpoint, req.userId)
+        if (e.statusCode === 404 || e.statusCode === 410) await q.deleteSub.run(s.endpoint, req.userId)
       }
     }
     res.json({ sent })
@@ -298,13 +309,13 @@ export function createApp({ db, jwtSecret, appUrl, sendMail, googleClientId, cor
     }
   }
 
-  app.post('/api/ai/categorize', auth, requireAi, aiLimiter, (req, res) => {
+  app.post('/api/ai/categorize', auth, requireAi, aiLimiter, async (req, res) => {
     const desc = typeof req.body?.desc === 'string' ? req.body.desc.trim() : ''
     if (!desc || desc.length > 200) return res.status(400).json({ error: 'Descripción inválida' })
     aiResponse(res, async () => ({ category: await ai.categorize(desc) }))
   })
 
-  app.post('/api/ai/month-summary', auth, requireAi, aiLimiter, (req, res) => {
+  app.post('/api/ai/month-summary', auth, requireAi, aiLimiter, async (req, res) => {
     const { month, income, expense, previousExpense = 0, categories } = req.body ?? {}
     const validCategories = Array.isArray(categories) && categories.length <= 20 &&
       categories.every(c => typeof c?.label === 'string' && c.label.length <= 40 && amount(c.amount))
@@ -323,7 +334,7 @@ export function createApp({ db, jwtSecret, appUrl, sendMail, googleClientId, cor
   // Body: { since: <cursor>, changes: [{ store, record }] }
   //   1. Aplica los cambios del cliente (gana el updatedAt más reciente).
   //   2. Devuelve todo lo modificado en el servidor desde `since`.
-  app.post('/api/sync', auth, (req, res) => {
+  app.post('/api/sync', auth, async (req, res) => {
     const since = Number(req.body?.since) || 0
     const changes = Array.isArray(req.body?.changes) ? req.body.changes : []
     if (changes.length > MAX_CHANGES) return res.status(413).json({ error: 'Demasiados cambios en un solo envío' })
@@ -335,21 +346,15 @@ export function createApp({ db, jwtSecret, appUrl, sendMail, googleClientId, cor
       }
     }
 
-    db.exec('BEGIN IMMEDIATE')
-    try {
-      let seq = q.maxSeq.get().seq
-      for (const { store, record } of changes) {
-        const current = q.recordMeta.get(req.userId, store, record.id)
-        if (current && current.updated_at >= record.updatedAt) continue
-        q.upsert.run(req.userId, store, record.id, JSON.stringify(record), record.updatedAt, record.deletedAt ?? null, ++seq)
-      }
-      db.exec('COMMIT')
-    } catch (e) {
-      db.exec('ROLLBACK')
-      throw e
+    // Si un lote falla, el cliente reintenta: reaplicar un cambio ya guardado no tiene efecto
+    for (let i = 0; i < changes.length; i += SYNC_BATCH) {
+      await db.batch(changes.slice(i, i + SYNC_BATCH).map(({ store, record }) => ({
+        sql: UPSERT_RECORD,
+        args: [req.userId, store, record.id, JSON.stringify(record), record.updatedAt, record.deletedAt ?? null],
+      })))
     }
 
-    const rows = q.changes.all(req.userId, since)
+    const rows = await q.changes.all(req.userId, since)
     res.json({
       cursor: rows.length ? rows[rows.length - 1].seq : since,
       changes: rows.map(r => ({ store: r.store, record: JSON.parse(r.data) })),

@@ -31,7 +31,7 @@ test('recordatorios: cuota que vence mañana y cierre de tarjeta en 2 días', ()
 })
 
 test('push: suscripción, envío diario sin duplicados y limpieza de suscripciones vencidas', async () => {
-  const db = openDatabase(':memory:')
+  const db = await openDatabase(':memory:')
   const sent = []
   const push = {
     publicKey: 'pub-key',
@@ -67,7 +67,7 @@ test('push: suscripción, envío diario sin duplicados y limpieza de suscripcion
   await runReminders({ db, sendPush: push.send, now: new Date('2026-10-06T12:30:00Z') })
   await runReminders({ db, sendPush: push.send, now: new Date('2026-10-06T13:30:00Z') })
   assert.deepEqual(sent.map(s => [s.endpoint, s.tag]), [['https://push.example/ok', 'loan:l1:1']])
-  assert.equal(db.prepare('SELECT COUNT(*) AS n FROM push_subscriptions').get().n, 1)
+  assert.equal((await db.prepare('SELECT COUNT(*) AS n FROM push_subscriptions').get()).n, 1)
 
   // Prueba manual y baja
   assert.deepEqual((await call('/push/test', {}, token)).body, { sent: 1 })

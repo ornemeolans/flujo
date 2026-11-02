@@ -1,14 +1,38 @@
-import { DatabaseSync } from 'node:sqlite'
+import { createClient } from '@libsql/client'
 import { mkdirSync } from 'node:fs'
 import { dirname } from 'node:path'
 
-export function openDatabase(path) {
-  if (path !== ':memory:') mkdirSync(dirname(path), { recursive: true })
-  const db = new DatabaseSync(path)
-  db.exec(`
-    PRAGMA journal_mode = WAL;
-    PRAGMA foreign_keys = ON;
+// Un mismo código para SQLite local (desarrollo, tests) y Turso (producción).
+// prepare() imita la API de node:sqlite, pero sus métodos devuelven promesas.
+function wrap(client) {
+  return {
+    prepare: sql => ({
+      run: (...args) => client.execute({ sql, args }),
+      get: async (...args) => (await client.execute({ sql, args })).rows[0],
+      all: async (...args) => (await client.execute({ sql, args })).rows,
+    }),
+    // Todo o nada: si una sentencia falla, no se aplica ninguna
+    batch: statements => client.batch(statements, 'write'),
+    close: () => client.close(),
+  }
+}
 
+/** @param {string} url ruta local, `:memory:`, `file:...` o `libsql://...` (Turso) */
+export async function openDatabase(url, authToken) {
+  const local = !/^(libsql|https?|wss?):/.test(url)
+  if (local && url !== ':memory:') {
+    const path = url.replace(/^file:/, '')
+    mkdirSync(dirname(path), { recursive: true })
+    url = `file:${path}`
+  }
+  const client = createClient({ url, authToken })
+  const db = wrap(client)
+  if (local) {
+    await client.execute('PRAGMA journal_mode = WAL')
+    await client.execute('PRAGMA foreign_keys = ON')
+  }
+
+  await client.executeMultiple(`
     CREATE TABLE IF NOT EXISTS users (
       id            TEXT PRIMARY KEY,
       email         TEXT NOT NULL UNIQUE COLLATE NOCASE,
@@ -59,10 +83,10 @@ export function openDatabase(path) {
   `)
 
   // Migraciones de columnas agregadas después de la v1.0
-  const cols = new Set(db.prepare('PRAGMA table_info(users)').all().map(c => c.name))
-  if (!cols.has('email_verified')) db.exec('ALTER TABLE users ADD COLUMN email_verified INTEGER NOT NULL DEFAULT 0')
+  const cols = new Set((await db.prepare('PRAGMA table_info(users)').all()).map(c => c.name))
+  if (!cols.has('email_verified')) await client.execute('ALTER TABLE users ADD COLUMN email_verified INTEGER NOT NULL DEFAULT 0')
   // Se incrementa al cambiar la contraseña: invalida los JWT emitidos antes
-  if (!cols.has('session_version')) db.exec('ALTER TABLE users ADD COLUMN session_version INTEGER NOT NULL DEFAULT 0')
+  if (!cols.has('session_version')) await client.execute('ALTER TABLE users ADD COLUMN session_version INTEGER NOT NULL DEFAULT 0')
 
   return db
 }

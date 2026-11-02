@@ -65,7 +65,7 @@ let server, base, failing = false
 const seen = []
 
 async function start(options) {
-  const app = createApp({ db: openDatabase(':memory:'), jwtSecret: 's', appUrl: 'http://app.test', sendMail: async () => {}, rateLimitMax: 1000, ...options })
+  const app = createApp({ db: await openDatabase(':memory:'), jwtSecret: 's', appUrl: 'http://app.test', sendMail: async () => {}, rateLimitMax: 1000, ...options })
   const srv = await new Promise(r => { const s = app.listen(0, () => r(s)) })
   return { srv, url: `http://localhost:${srv.address().port}/api` }
 }

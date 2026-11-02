@@ -19,7 +19,7 @@ if (!jwtSecret) {
   console.warn('⚠ JWT_SECRET no definido: se usa uno temporal (las sesiones se pierden al reiniciar)')
 }
 
-const db = openDatabase(process.env.DB_PATH || './data/flujo.db')
+const db = await openDatabase(process.env.DATABASE_URL || process.env.DB_PATH || './data/flujo.db', process.env.DATABASE_AUTH_TOKEN)
 const push = createPush({
   publicKey: process.env.VAPID_PUBLIC_KEY,
   privateKey: process.env.VAPID_PRIVATE_KEY,
