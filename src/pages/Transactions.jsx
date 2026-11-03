@@ -24,7 +24,7 @@ export default function Transactions() {
     else if (filter === 'transfer') list = list.filter(selectors.isTransfer)
     else if (filter.startsWith('w:')) list = list.filter(t => t.walletId === filter.slice(2))
     else if (filter.startsWith('c:')) list = list.filter(t => t.walletId === filter.slice(2))
-    return list.sort((a, b) => new Date(b.date) - new Date(a.date))
+    return selectors.sortByRecent(list)
   }, [monthTx, filter])
 
   const filters = [

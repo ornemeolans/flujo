@@ -11,6 +11,53 @@ beforeEach(async () => {
   await useStore.getState().refresh()
 })
 
+describe('orden de los movimientos', () => {
+  const tx = (id: string, date: string, extra: Partial<Transaction> = {}): Transaction =>
+    ({ id, type: 'expense', amount: 1, walletId: 'w', category: 'food', date, ...extra })
+
+  it('muestra primero el día más reciente', () => {
+    const list = [tx('viejo', '2026-10-01'), tx('nuevo', '2026-11-02'), tx('medio', '2026-10-15')]
+    expect(selectors.sortByRecent(list).map(t => t.id)).toEqual(['nuevo', 'medio', 'viejo'])
+    expect(list[0].id).toBe('viejo')
+  })
+
+  it('dentro del mismo día, el último cargado va primero', () => {
+    const list = [tx('primero', '2026-11-02', { createdTime: 100 }), tx('tercero', '2026-11-02', { createdTime: 300 }), tx('segundo', '2026-11-02', { createdTime: 200 })]
+    expect(selectors.sortByRecent(list).map(t => t.id)).toEqual(['tercero', 'segundo', 'primero'])
+  })
+
+  it('editar un movimiento nuevo no cambia su lugar, y los anteriores usan updatedAt', () => {
+    const list = [tx('editado', '2026-11-02', { createdTime: 100, updatedAt: 900 }), tx('nuevo', '2026-11-02', { createdTime: 200, updatedAt: 200 }), tx('antiguo', '2026-11-02', { updatedAt: 50 })]
+    expect(selectors.sortByRecent(list).map(t => t.id)).toEqual(['nuevo', 'editado', 'antiguo'])
+  })
+
+  it('al guardar un movimiento queda registrado el momento de carga', async () => {
+    const saved = await useStore.getState().saveTransaction(tx('', '2026-11-02', { id: undefined as unknown as string }))
+    expect(saved.createdTime).toBeTypeOf('number')
+  })
+})
+
+describe('orden de las billeteras', () => {
+  const wallet = (id: string, initialBalance: number): Wallet => ({ id, name: id, type: 'bank', initialBalance })
+  const income = (amount: number): Transaction => ({ id: 'i', type: 'income', amount, walletId: 'vacia', category: 'salary', date: '2026-10-01' })
+
+  it('va de mayor a menor saldo, con las deudas al final y sin cambiar la lista original', () => {
+    const wallets = [wallet('vacia', 0), wallet('negativa', -500), wallet('llena', 1000), wallet('media', 300)]
+    expect(selectors.sortByBalance(wallets, []).map(w => w.id)).toEqual(['llena', 'media', 'vacia', 'negativa'])
+    expect(wallets[0].id).toBe('vacia')
+  })
+
+  it('se reordena cuando cambia el saldo', () => {
+    const wallets = [wallet('llena', 1000), wallet('vacia', 0)]
+    expect(selectors.sortByBalance(wallets, [income(5000)]).map(w => w.id)).toEqual(['vacia', 'llena'])
+  })
+
+  it('a igual saldo mantiene el orden original', () => {
+    const wallets = [wallet('a', 0), wallet('b', 0), wallet('c', 0)]
+    expect(selectors.sortByBalance(wallets, []).map(w => w.id)).toEqual(['a', 'b', 'c'])
+  })
+})
+
 describe('selectores de tarjeta', () => {
   const card: CreditCard = { id: 'visa', name: 'Visa', closeDay: 20 }
   const tx = (date: string, amount: number, cuotas = 1, paidCuotas = 0): Transaction =>

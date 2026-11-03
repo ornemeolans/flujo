@@ -50,6 +50,8 @@ export interface Transaction extends SyncMeta {
   cuotas?: number
   cuotaActual?: number
   createdAt?: ISODate
+  /** Momento de carga (ms): ordena los movimientos de un mismo día */
+  createdTime?: number
   /** Tarjeta: cuotas ya pagadas en resúmenes */
   paidCuotas?: number
   isYield?: boolean

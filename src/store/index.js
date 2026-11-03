@@ -323,7 +323,7 @@ export const useStore = create((set, get) => ({
 
   // ─── Transactions ───────────────────────────
   async saveTransaction(data) {
-    const item = data.id ? data : { ...data, id: nanoid(), createdAt: today() }
+    const item = data.id ? data : { ...data, id: nanoid(), createdAt: today(), createdTime: Date.now() }
     await put(STORES.TRANSACTIONS, item)
     // Las dos patas de una transferencia mantienen monto y fecha
     const pair = get().transactions.find(t => t.id === item.transferPairId)
@@ -345,8 +345,8 @@ export const useStore = create((set, get) => ({
   async transfer({ fromId, toId, amount, date, desc }) {
     const d = date || today()
     const note = desc || 'Transferencia'
-    const egreso  = { id: nanoid(), type: 'expense', amount, walletId: fromId, category: 'transfer', date: d, desc: `${note} → salida`, cuotas: 1, cuotaActual: 1, createdAt: d, isTransfer: true, transferPairId: null }
-    const ingreso = { id: nanoid(), type: 'income',  amount, walletId: toId,   category: 'transfer', date: d, desc: `${note} → entrada`, cuotas: 1, cuotaActual: 1, createdAt: d, isTransfer: true, transferPairId: null }
+    const egreso  = { id: nanoid(), createdTime: Date.now(), type: 'expense', amount, walletId: fromId, category: 'transfer', date: d, desc: `${note} → salida`, cuotas: 1, cuotaActual: 1, createdAt: d, isTransfer: true, transferPairId: null }
+    const ingreso = { id: nanoid(), createdTime: Date.now(), type: 'income',  amount, walletId: toId,   category: 'transfer', date: d, desc: `${note} → entrada`, cuotas: 1, cuotaActual: 1, createdAt: d, isTransfer: true, transferPairId: null }
     // Link them so they can be identified as a pair
     egreso.transferPairId  = ingreso.id
     ingreso.transferPairId = egreso.id
@@ -395,6 +395,21 @@ export const selectors = {
         (sum, t) => sum + (t.type === 'income' ? t.amount : -t.amount),
         wallet.initialBalance ?? 0
       )
+  },
+
+  // El último primero. Dentro del mismo día manda el momento de carga
+  // (los movimientos anteriores a createdTime usan su última modificación)
+  sortByRecent(transactions) {
+    const loadedAt = t => t.createdTime ?? t.updatedAt ?? 0
+    return [...transactions].sort((a, b) => b.date.localeCompare(a.date) || loadedAt(b) - loadedAt(a))
+  },
+
+  // De mayor a menor saldo; a igual saldo se mantiene el orden original
+  sortByBalance(wallets, transactions) {
+    return wallets
+      .map(wallet => ({ wallet, balance: selectors.walletBalance(wallet, transactions) }))
+      .sort((a, b) => b.balance - a.balance)
+      .map(({ wallet }) => wallet)
   },
 
   isSavings(wallet) {

@@ -28,15 +28,14 @@ export default function Home() {
   const [editCard, setEditCard]     = useState(null)
   const [editTx, setEditTx]         = useState(null)
 
-  const accounts      = wallets.filter(w => !selectors.isSavings(w))
-  const savings       = wallets.filter(selectors.isSavings)
+  const accounts      = selectors.sortByBalance(wallets.filter(w => !selectors.isSavings(w)), transactions)
+  const savings       = selectors.sortByBalance(wallets.filter(selectors.isSavings), transactions)
   const totalBalance  = selectors.totalBalance(wallets, transactions)
   const totalSavings  = selectors.totalSavings(wallets, transactions)
   const totalYield   = selectors.totalMonthlyYield(wallets, transactions)
   const { income, expense } = selectors.monthTotals(transactions, currentMonth, currentYear)
 
-  const recentTx = [...transactions]
-    .sort((a, b) => new Date(b.date) - new Date(a.date))
+  const recentTx = selectors.sortByRecent(transactions)
     .slice(0, 6)
 
   return (

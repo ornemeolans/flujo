@@ -20,8 +20,8 @@ export default function Wallets() {
   const [payingCard,   setPayingCard]   = useState(null)  // card obj
   const [editLoan,     setEditLoan]     = useState(null)  // loan obj   | {}
 
-  const accounts = wallets.filter(w => !selectors.isSavings(w))
-  const savings  = wallets.filter(selectors.isSavings)
+  const accounts = selectors.sortByBalance(wallets.filter(w => !selectors.isSavings(w)), transactions)
+  const savings  = selectors.sortByBalance(wallets.filter(selectors.isSavings), transactions)
 
   function openCardDetail(card)  { setDetailCard(card) }
   function openCardEdit(card)    { setDetailCard(null); setEditCard(card) }

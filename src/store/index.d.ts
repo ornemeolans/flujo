@@ -50,6 +50,8 @@ export interface CardLineItem {
 
 export const selectors: {
   walletBalance(wallet: Wallet, transactions: Transaction[]): number
+  sortByRecent(transactions: Transaction[]): Transaction[]
+  sortByBalance(wallets: Wallet[], transactions: Transaction[]): Wallet[]
   isSavings(wallet: Wallet): boolean
   totalBalance(wallets: Wallet[], transactions: Transaction[]): number
   totalSavings(wallets: Wallet[], transactions: Transaction[]): number
