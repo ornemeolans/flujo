@@ -4,15 +4,17 @@ import { buildDemoData, isDemoId } from '@/demo'
 import { nanoid } from '@/utils/nanoid'
 import { pendingLoanPayments, loanCreditId } from '@shared/loans'
 import { periodKey, closeDayFor, addMonths } from '@shared/cards'
-import { localISO } from '@shared/dates'
+import { localISO, addDays } from '@shared/dates'
 
 const today = () => localISO()
 
-// ─── Daily yield accrual ─────────────────────────────────────
-// Called on app load. Generates one yield transaction per missing day.
-// Respects tnaHistory: [{tna, from}] so rate changes only apply from next day.
-// Never deletes past yields — only adds missing ones going forward.
-
+// ─── Rendimientos diarios ────────────────────────────────────
+// Cada día con TNA rinde saldo × TNA ÷ 365 y ese interés se suma al saldo.
+// Los rendimientos se recalculan siempre a partir de los datos actuales: si se carga,
+// edita o borra un movimiento de un día anterior, cambian los de ese día en adelante.
+// Ids determinísticos por billetera y día: dos dispositivos con los mismos datos
+// generan los mismos registros, y solo se escriben los días que cambiaron.
+// Respeta tnaHistory: [{tna, from}]; un cambio de tasa rige desde el día siguiente.
 export function tnaForDate(wallet, dateStr) {
   // La tasa actual rige desde tnaChangedAt; antes, la del historial
   if (wallet.tnaChangedAt && dateStr >= wallet.tnaChangedAt) return wallet.tna
@@ -26,92 +28,77 @@ export function tnaForDate(wallet, dateStr) {
   return rate
 }
 
-async function accrueYields(wallets, transactions) {
-  const todayStr = today()
+// Primer día con rendimiento: el de la tasa más antigua registrada
+function yieldStart(wallet) {
+  const history = wallet.tnaHistory || []
+  if (history.length) return history.reduce((min, h) => (h.from < min ? h.from : min), history[0].from)
+  // Si la TNA se activó después de crear la billetera, rinde desde ese día
+  return wallet.tnaChangedAt > wallet.createdAt ? wallet.tnaChangedAt : wallet.createdAt
+}
+
+const signed = t => (t.type === 'income' ? t.amount : -t.amount)
+
+/** Calcula los cambios que necesitan los rendimientos hasta ayer (hoy todavía no cerró) */
+export function planYields(wallets, transactions, todayStr = today()) {
+  const writes = []
+  const removals = []
 
   for (const wallet of wallets) {
     if (!wallet.tnaEnabled) continue
+    const start = yieldStart(wallet)
+    if (!start || start >= todayStr) continue
 
-    // Find the last yield date for this wallet
-    const yieldTxs = transactions
-      .filter(t => t.walletId === wallet.id && t.isYield)
-      .sort((a, b) => a.date > b.date ? 1 : -1)
+    const own = transactions.filter(t => t.walletId === wallet.id)
+    // Lo anterior al primer día rinde como saldo de partida, sin tocarlo
+    let balance = own.filter(t => t.date < start).reduce((sum, t) => sum + signed(t), wallet.initialBalance ?? 0)
 
-    // Start from: day after last yield, or wallet creation date
-    // (si la TNA se activó después de crearla, rinde desde ese día, no antes)
-    const firstDay = wallet.tnaChangedAt > wallet.createdAt ? wallet.tnaChangedAt : wallet.createdAt
-    let startDate = firstDay
-      ? new Date(firstDay + 'T12:00:00')
-      : new Date(todayStr + 'T12:00:00')
-
-    if (yieldTxs.length > 0) {
-      const last = new Date(yieldTxs[yieldTxs.length - 1].date + 'T12:00:00')
-      last.setDate(last.getDate() + 1)
-      startDate = last
+    const movesByDay = new Map()
+    const yieldByDay = new Map()
+    for (const t of own) {
+      if (t.date < start || t.date >= todayStr) continue
+      if (!t.isYield) movesByDay.set(t.date, (movesByDay.get(t.date) ?? 0) + signed(t))
+      else if (yieldByDay.has(t.date)) removals.push(t.id) // duplicado de un mismo día
+      else yieldByDay.set(t.date, t)
     }
 
-    const end = new Date(todayStr + 'T12:00:00')
-    if (startDate > end) continue
+    for (let day = start; day < todayStr; day = addDays(day, 1)) {
+      balance += movesByDay.get(day) ?? 0
+      const tna = tnaForDate(wallet, day)
+      const amount = tna > 0 && balance > 0 ? Math.round(balance * (tna / 100 / 365) * 100) / 100 : 0
+      const current = yieldByDay.get(day)
 
-    const allWalletTx = transactions
-      .filter(t => t.walletId === wallet.id && !t.isYield)
-      .sort((a, b) => a.date > b.date ? 1 : -1)
-
-    // Compute running balance just before startDate
-    const startStr = localISO(startDate)
-    let runningBal = wallet.initialBalance ?? 0
-    for (const t of allWalletTx) {
-      if (t.date >= startStr) break
-      runningBal += t.type === 'income' ? t.amount : -t.amount
-    }
-    for (const t of yieldTxs) {
-      if (t.date >= startStr) break
-      runningBal += t.amount
-    }
-
-    const cursor = new Date(startDate)
-    const newYields = []
-
-    while (cursor < end) {
-      const dateStr = localISO(cursor)
-
-      // Apply non-yield transactions on this day
-      for (const t of allWalletTx) {
-        if (t.date === dateStr) {
-          runningBal += t.type === 'income' ? t.amount : -t.amount
-        }
-      }
-
-      // Get the TNA that was active on this specific day
-      const tna = tnaForDate(wallet, dateStr)
-      if (tna > 0 && runningBal > 0) {
-        const dailyRate = tna / 100 / 365
-        const yieldAmount = runningBal * dailyRate
-        if (yieldAmount >= 0.001) {
-          const tx = {
-            // id determinístico: si dos dispositivos generan el mismo día, la sync los unifica
-            id: `yield-${wallet.id}-${dateStr}`,
+      if (amount > 0) {
+        const desc = `Rendimiento diario (TNA ${tna}%)`
+        if (!current || current.amount !== amount || current.desc !== desc) {
+          writes.push({
+            ...current,
+            id: current?.id ?? `yield-${wallet.id}-${day}`,
             type: 'income',
-            amount: Math.round(yieldAmount * 100) / 100,
+            amount,
             walletId: wallet.id,
             category: 'yield',
-            date: dateStr,
-            desc: `Rendimiento diario (TNA ${tna}%)`,
+            date: day,
+            desc,
             cuotas: 1,
             cuotaActual: 1,
-            createdAt: dateStr,
+            createdAt: current?.createdAt ?? day,
             isYield: true,
-          }
-          newYields.push(tx)
-          runningBal += tx.amount
+          })
         }
+        balance += amount
+      } else if (current) {
+        removals.push(current.id) // con saldo en cero o negativo no rinde
       }
-
-      cursor.setDate(cursor.getDate() + 1)
     }
-
-    await putMany(STORES.TRANSACTIONS, newYields)
   }
+  return { writes, removals }
+}
+
+async function syncYields(wallets) {
+  const { writes, removals } = planYields(wallets, await getAll(STORES.TRANSACTIONS))
+  await putMany(STORES.TRANSACTIONS, writes)
+  for (const id of removals) await remove(STORES.TRANSACTIONS, id)
+  return writes.length + removals.length
 }
 
 // ─── Débito de cuotas de préstamos ───────────────────────────
@@ -162,10 +149,8 @@ export const useStore = create((set, get) => ({
     // Debitar cuotas vencidas antes de calcular rendimientos (afectan el saldo)
     await accrueLoanPayments(loans.filter(l => wallets.some(w => w.id === l.walletId)))
 
-    // Accrue daily yields for wallets with TNA
-    await accrueYields(wallets, await getAll(STORES.TRANSACTIONS))
-    const updatedTx = await getAll(STORES.TRANSACTIONS)
-    set({ transactions: updatedTx })
+    await syncYields(wallets)
+    set({ transactions: await getAll(STORES.TRANSACTIONS) })
   },
 
   // Re-lee IndexedDB (p. ej. después de recibir cambios de otro dispositivo)
@@ -235,12 +220,6 @@ export const useStore = create((set, get) => ({
     await put(STORES.WALLETS, item)
     const [wallets, transactions] = await Promise.all([getAll(STORES.WALLETS), getAll(STORES.TRANSACTIONS)])
     set({ wallets, transactions })
-
-    // Accrue any missing yields with the correct rate per day
-    if (item.tnaEnabled && item.tna > 0) {
-      await accrueYields([item], await getAll(STORES.TRANSACTIONS))
-      set({ transactions: await getAll(STORES.TRANSACTIONS) })
-    }
 
     return item
   },
@@ -386,6 +365,15 @@ export const useStore = create((set, get) => ({
 }))
 
 // ─── Derived selectors (pure, no async) ─────────────────────
+// Recalcula los rendimientos después de cada acción que cambia saldos o tasas,
+// también al recibir cambios de otro dispositivo (refresh)
+const AFFECT_YIELDS = ['refresh', 'saveWallet', 'deleteWallet', 'saveLoan', 'deleteLoan', 'saveTransaction', 'deleteTransaction', 'transfer', 'payCard']
+useStore.setState(state => Object.fromEntries(AFFECT_YIELDS.map(name => [name, async (...args) => {
+  const result = await state[name](...args)
+  if (await syncYields(useStore.getState().wallets)) useStore.setState({ transactions: await getAll(STORES.TRANSACTIONS) })
+  return result
+}])))
+
 export const selectors = {
   // Effective balance of a wallet (initial + all its transactions)
   walletBalance(wallet, transactions) {

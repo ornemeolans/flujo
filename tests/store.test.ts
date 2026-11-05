@@ -1,7 +1,7 @@
 import 'fake-indexeddb/auto'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { getAll, getAllRaw, applyRemote, changesSince, put, remove, wipeLocal } from '@/db'
-import { useStore, selectors, tnaForDate, migrateSavings } from '@/store'
+import { useStore, selectors, tnaForDate, migrateSavings, planYields } from '@/store'
 import { buildDemoData, isDemoId } from '@/demo'
 import { localISO } from '@shared/dates'
 import type { CreditCard, Transaction, Wallet } from '@shared/types'
@@ -9,6 +9,69 @@ import type { CreditCard, Transaction, Wallet } from '@shared/types'
 beforeEach(async () => {
   await wipeLocal()
   await useStore.getState().refresh()
+})
+
+describe('rendimientos diarios', () => {
+  const wallet: Wallet = { id: 'mp', name: 'MP', type: 'virtual', initialBalance: 1229.05, tnaEnabled: true, tna: 18.9, tnaHistory: [], tnaChangedAt: '2026-11-02', createdAt: '2026-11-02' }
+  const move = (id: string, date: string, amount: number): Transaction =>
+    ({ id, type: amount > 0 ? 'income' : 'expense', amount: Math.abs(amount), walletId: 'mp', category: 'other', date })
+  // Aplica el plan como lo haría la app y devuelve los movimientos resultantes
+  const apply = (txs: Transaction[], w: Wallet[], today: string) => {
+    const { writes, removals } = planYields(w, txs, today)
+    const byId = new Map(txs.map(t => [t.id, t]))
+    writes.forEach(t => byId.set(t.id, t))
+    removals.forEach(id => byId.delete(id))
+    return [...byId.values()]
+  }
+  const yieldOn = (txs: Transaction[], date: string) => txs.find(t => t.isYield && t.date === date)?.amount
+
+  it('cada día rinde saldo × TNA ÷ 365 y el interés se capitaliza', () => {
+    const txs = apply([move('in', '2026-11-02', 100_000)], [wallet], '2026-11-04')
+    const day1 = Math.round(101_229.05 * 0.189 / 365 * 100) / 100
+    expect(yieldOn(txs, '2026-11-02')).toBe(day1)
+    expect(yieldOn(txs, '2026-11-03')).toBe(Math.round((101_229.05 + day1) * 0.189 / 365 * 100) / 100)
+    expect(yieldOn(txs, '2026-11-04')).toBeUndefined() // hoy todavía no cerró
+  })
+
+  it('si se carga después un retiro de un día anterior, se corrigen los rendimientos', () => {
+    // El 2/11 se calculó con todo el ingreso; los retiros del mismo día se cargaron más tarde
+    let txs = apply([move('in', '2026-11-02', 322_443.41)], [wallet], '2026-11-03')
+    expect(yieldOn(txs, '2026-11-02')).toBeCloseTo(167.6, 1)
+    txs = apply([...txs, move('out', '2026-11-02', -124_584.02)], [wallet], '2026-11-03')
+    expect(yieldOn(txs, '2026-11-02')).toBeCloseTo(103.09, 2)
+  })
+
+  it('no reescribe nada si los datos no cambiaron', () => {
+    const txs = apply([move('in', '2026-11-02', 50_000)], [wallet], '2026-11-06')
+    expect(planYields([wallet], txs, '2026-11-06')).toEqual({ writes: [], removals: [] })
+  })
+
+  it('sin saldo no rinde, y se borra el rendimiento que ya no corresponde', () => {
+    let txs = apply([move('in', '2026-11-02', 50_000)], [wallet], '2026-11-04')
+    txs = apply([...txs, move('out', '2026-11-02', -51_229.05)], [wallet], '2026-11-04')
+    expect(txs.filter(t => t.isYield)).toEqual([])
+  })
+
+  it('un cambio de tasa rige desde el día indicado y no antes', () => {
+    const changed: Wallet = { ...wallet, tna: 19, tnaChangedAt: '2026-11-04', tnaHistory: [{ tna: 18.9, from: '2026-11-02' }] }
+    const txs = apply([move('in', '2026-11-02', 100_000)], [changed], '2026-11-05')
+    expect(txs.find(t => t.date === '2026-11-03' && t.isYield)?.desc).toBe('Rendimiento diario (TNA 18.9%)')
+    expect(txs.find(t => t.date === '2026-11-04' && t.isYield)?.desc).toBe('Rendimiento diario (TNA 19%)')
+  })
+
+  it('en la app, borrar un movimiento recalcula los rendimientos', async () => {
+    const yesterday = localISO(new Date(Date.now() - 86_400_000))
+    const twoDaysAgo = localISO(new Date(Date.now() - 2 * 86_400_000))
+    const w = { ...wallet, id: 'w-app', initialBalance: 0, tnaChangedAt: twoDaysAgo, createdAt: twoDaysAgo }
+    const store = useStore.getState()
+    await store.saveWallet(w)
+    await useStore.getState().saveTransaction({ ...move('', twoDaysAgo, 100_000), id: undefined, walletId: 'w-app' })
+    const withMoney = useStore.getState().transactions.filter(t => t.isYield && t.walletId === 'w-app')
+    expect(withMoney.map(t => t.date).sort()).toEqual([twoDaysAgo, yesterday])
+    const income = useStore.getState().transactions.find(t => !t.isYield && t.walletId === 'w-app')!
+    await useStore.getState().deleteTransaction(income.id)
+    expect(useStore.getState().transactions.filter(t => t.isYield && t.walletId === 'w-app')).toEqual([])
+  })
 })
 
 describe('orden de los movimientos', () => {

@@ -33,6 +33,7 @@ export interface FlujoState {
 export const useStore: UseBoundStore<StoreApi<FlujoState>>
 
 export function tnaForDate(wallet: Wallet, dateStr: ISODate): number | undefined
+export function planYields(wallets: Wallet[], transactions: Transaction[], todayStr?: ISODate): { writes: Transaction[]; removals: string[] }
 export function migrateSavings(wallets: Wallet[]): Promise<Wallet[]>
 
 export interface CardPeriod extends MonthRef {
