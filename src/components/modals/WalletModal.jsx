@@ -12,14 +12,14 @@ const DEFAULT = {
 
 const SAVINGS_DEFAULT = { ...DEFAULT, type: 'savings', icon: '💰', color: '#4F9A7A' }
 
-export default function WalletModal({ onClose, initial = null, savings = false }) {
+export default function WalletModal({ onClose, initial = null, savings = false, preset = null }) {
   const { saveWallet, deleteWallet } = useStore()
   const isEdit = !!initial
   const [form, setForm] = useState(initial ? {
     ...initial,
     initialBalance: String(initial.initialBalance ?? 0),
     tna: String(initial.tna ?? ''),
-  } : savings ? SAVINGS_DEFAULT : DEFAULT)
+  } : preset ? { ...DEFAULT, ...preset } : savings ? SAVINGS_DEFAULT : DEFAULT)
   const [saving, setSaving] = useState(false)
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
@@ -49,7 +49,8 @@ export default function WalletModal({ onClose, initial = null, savings = false }
   }
 
   return (
-    <Modal title={`${isEdit ? 'Editar' : 'Nueva'} ${isSavings ? 'cuenta de ahorro' : 'Billetera'}`} onClose={onClose}>
+    <Modal title={`${isEdit ? 'Editar' : 'Nueva'} ${isSavings ? 'cuenta de ahorro' : 'billetera'}`} onClose={onClose}>
+      {form.entityName && <p className={styles.entity}>🏛️ {form.entityName} · según el BCRA</p>}
       <Input
         label="Nombre"
         placeholder={isSavings ? 'Ej: Fondo de emergencia' : 'Ej: Mercado Pago'}

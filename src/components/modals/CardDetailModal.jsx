@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useStore, selectors } from '@/store'
 import { Modal, Button } from '@/components/ui'
 import { fmt2, MONTHS_SHORT, getCat } from '@/utils'
+import { CardRate } from '@/components/bcra/CardRate'
 import styles from './CardDetailModal.module.css'
 
 export default function CardDetailModal({ card, onClose, onEdit, onPay }) {
@@ -61,6 +62,7 @@ export default function CardDetailModal({ card, onClose, onEdit, onPay }) {
                 </span>
                 <button className={styles.closeEdit} onClick={editClose}>Cambiar cierre</button>
             </div>
+            {card.product && card.entityCode && <CardRate entityCode={card.entityCode} product={card.product} />}
 
             {/* Total */}
             <div className={styles.totalRow}>

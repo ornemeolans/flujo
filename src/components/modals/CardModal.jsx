@@ -6,13 +6,15 @@ import styles from './CardModal.module.css'
 
 const DEFAULT = { name: '', closeDay: '', icon: '💳', color: '#A3296B' }
 
-export default function CardModal({ onClose, initial = null }) {
+export default function CardModal({ onClose, initial = null, preset = null }) {
   const { saveCard, deleteCard } = useStore()
   const isEdit = !!initial
   const [form, setForm] = useState(initial
     ? { ...initial, closeDay: String(initial.closeDay) }
-    : DEFAULT
+    : { ...DEFAULT, ...preset }
   )
+  // Elegida de la lista del BCRA: el nombre sale de ahí y solo se edita el cierre
+  const fromCatalog = !!form.product
   const [saving, setSaving] = useState(false)
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
@@ -43,14 +45,20 @@ export default function CardModal({ onClose, initial = null }) {
   }
 
   return (
-    <Modal title={isEdit ? 'Editar Tarjeta' : 'Nueva Tarjeta'} onClose={onClose}>
-      <Input
-        label="Nombre"
-        placeholder="Ej: Visa Galicia"
-        value={form.name}
-        onChange={e => set('name', e.target.value)}
-        
-      />
+    <Modal title={isEdit ? 'Editar tarjeta' : 'Nueva tarjeta'} onClose={onClose}>
+      {fromCatalog ? (
+        <div className={styles.catalog}>
+          <span className={styles.catalogName}>💳 {form.name}</span>
+          <span className={styles.catalogSub}>{form.entityName} · según el BCRA</span>
+        </div>
+      ) : (
+        <Input
+          label="Nombre"
+          placeholder="Ej: Visa Galicia"
+          value={form.name}
+          onChange={e => set('name', e.target.value)}
+        />
+      )}
 
       <Input
         label="Día de Cierre"
@@ -63,15 +71,21 @@ export default function CardModal({ onClose, initial = null }) {
         hint={closingHint}
       />
 
-      <div className={styles.formGroup}>
-        <label className={styles.label}>Ícono</label>
-        <IconGrid icons={CARD_ICONS} selected={form.icon} onSelect={v => set('icon', v)} />
-      </div>
+      {fromCatalog
+        ? <p className={styles.note}>El BCRA no publica las fechas de cierre. Si un mes cierra otro día, ajustalo desde el detalle de la tarjeta.</p>
+        : (
+          <>
+            <div className={styles.formGroup}>
+              <label className={styles.label}>Ícono</label>
+              <IconGrid icons={CARD_ICONS} selected={form.icon} onSelect={v => set('icon', v)} />
+            </div>
 
-      <div className={styles.formGroup}>
-        <label className={styles.label}>Color</label>
-        <ColorGrid colors={PALETTE} selected={form.color} onSelect={v => set('color', v)} />
-      </div>
+            <div className={styles.formGroup}>
+              <label className={styles.label}>Color</label>
+              <ColorGrid colors={PALETTE} selected={form.color} onSelect={v => set('color', v)} />
+            </div>
+          </>
+        )}
 
       <div className={styles.actions}>
         {isEdit && (

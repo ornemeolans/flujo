@@ -1,0 +1,486 @@
+{
+ "accounts": [
+  {
+   "codigoEntidad": 7,
+   "descripcionEntidad": "BANCO DE GALICIA Y BUENOS AIRES S.A."
+  },
+  {
+   "codigoEntidad": 11,
+   "descripcionEntidad": "BANCO DE LA NACION ARGENTINA"
+  },
+  {
+   "codigoEntidad": 14,
+   "descripcionEntidad": "BANCO DE LA PROVINCIA DE BUENOS AIRES"
+  },
+  {
+   "codigoEntidad": 17,
+   "descripcionEntidad": "BANCO BBVA ARGENTINA S.A."
+  },
+  {
+   "codigoEntidad": 341,
+   "descripcionEntidad": "BANCO MASVENTAS S.A."
+  },
+  {
+   "codigoEntidad": 384,
+   "descripcionEntidad": "UALA BANK S.A.U."
+  }
+ ],
+ "cards": [
+  {
+   "codigoEntidad": 7,
+   "descripcionEntidad": "BANCO DE GALICIA Y BUENOS AIRES S.A.",
+   "nombreCompleto": "AMERICAN EXPRESS SIGNATURE",
+   "nombreCorto": "AMEX SIGNATURE",
+   "segmento": "Premium signature, black o similar",
+   "tasaEfectivaAnualMaximaFinanciacion": 105.81
+  },
+  {
+   "codigoEntidad": 7,
+   "descripcionEntidad": "BANCO DE GALICIA Y BUENOS AIRES S.A.",
+   "nombreCompleto": "VISA PLATINUM",
+   "nombreCorto": "VISA PLATINUM",
+   "segmento": "Premium gold",
+   "tasaEfectivaAnualMaximaFinanciacion": 105.81
+  },
+  {
+   "codigoEntidad": 7,
+   "descripcionEntidad": "BANCO DE GALICIA Y BUENOS AIRES S.A.",
+   "nombreCompleto": "MASTERCARD INTERNACIONAL",
+   "nombreCorto": "MASTER INTER",
+   "segmento": "Internacional",
+   "tasaEfectivaAnualMaximaFinanciacion": 105.81
+  },
+  {
+   "codigoEntidad": 7,
+   "descripcionEntidad": "BANCO DE GALICIA Y BUENOS AIRES S.A.",
+   "nombreCompleto": "VISA GOLD",
+   "nombreCorto": "VISA GOLD",
+   "segmento": "Premium gold",
+   "tasaEfectivaAnualMaximaFinanciacion": 105.81
+  },
+  {
+   "codigoEntidad": 7,
+   "descripcionEntidad": "BANCO DE GALICIA Y BUENOS AIRES S.A.",
+   "nombreCompleto": "MASTERCARD GOLD",
+   "nombreCorto": "MASTER GOLD",
+   "segmento": "Premium gold",
+   "tasaEfectivaAnualMaximaFinanciacion": 105.81
+  },
+  {
+   "codigoEntidad": 7,
+   "descripcionEntidad": "BANCO DE GALICIA Y BUENOS AIRES S.A.",
+   "nombreCompleto": "VISA INTERNACIONAL",
+   "nombreCorto": "VISA INTER",
+   "segmento": "Internacional",
+   "tasaEfectivaAnualMaximaFinanciacion": 105.81
+  },
+  {
+   "codigoEntidad": 7,
+   "descripcionEntidad": "BANCO DE GALICIA Y BUENOS AIRES S.A.",
+   "nombreCompleto": "MASTERCARD BLACK",
+   "nombreCorto": "MASTER BLACK",
+   "segmento": "Premium signature, black o similar",
+   "tasaEfectivaAnualMaximaFinanciacion": 105.81
+  },
+  {
+   "codigoEntidad": 7,
+   "descripcionEntidad": "BANCO DE GALICIA Y BUENOS AIRES S.A.",
+   "nombreCompleto": "AMERICAN EXPRESS INTERNACIONAL",
+   "nombreCorto": "AMEX INTER",
+   "segmento": "Internacional",
+   "tasaEfectivaAnualMaximaFinanciacion": 105.81
+  },
+  {
+   "codigoEntidad": 7,
+   "descripcionEntidad": "BANCO DE GALICIA Y BUENOS AIRES S.A.",
+   "nombreCompleto": "AMERICAN EXPRESS GOLD",
+   "nombreCorto": "AMEX GOLD",
+   "segmento": "Premium gold",
+   "tasaEfectivaAnualMaximaFinanciacion": 105.81
+  },
+  {
+   "codigoEntidad": 7,
+   "descripcionEntidad": "BANCO DE GALICIA Y BUENOS AIRES S.A.",
+   "nombreCompleto": "AMERICAN EXPRESS PLATINUM",
+   "nombreCorto": "AMEX PLATINUM",
+   "segmento": "Premium gold",
+   "tasaEfectivaAnualMaximaFinanciacion": 105.81
+  },
+  {
+   "codigoEntidad": 7,
+   "descripcionEntidad": "BANCO DE GALICIA Y BUENOS AIRES S.A.",
+   "nombreCompleto": "MASTERCARD PLATINUM",
+   "nombreCorto": "MASTER PLATINUM",
+   "segmento": "Premium gold",
+   "tasaEfectivaAnualMaximaFinanciacion": 105.81
+  },
+  {
+   "codigoEntidad": 7,
+   "descripcionEntidad": "BANCO DE GALICIA Y BUENOS AIRES S.A.",
+   "nombreCompleto": "VISA SIGNATURE",
+   "nombreCorto": "VISA SIGNATURE",
+   "segmento": "Premium signature, black o similar",
+   "tasaEfectivaAnualMaximaFinanciacion": 105.81
+  },
+  {
+   "codigoEntidad": 11,
+   "descripcionEntidad": "BANCO DE LA NACION ARGENTINA",
+   "nombreCompleto": "VISA INTERNACIONAL",
+   "nombreCorto": "VISA INTERNACIONAL",
+   "segmento": "Internacional",
+   "tasaEfectivaAnualMaximaFinanciacion": 101.33
+  },
+  {
+   "codigoEntidad": 14,
+   "descripcionEntidad": "BANCO DE LA PROVINCIA DE BUENOS AIRES",
+   "nombreCompleto": "TARJETA VISA PLATINUM",
+   "nombreCorto": "VISA PLATINUM",
+   "segmento": "Premium platinum",
+   "tasaEfectivaAnualMaximaFinanciacion": 114.99
+  },
+  {
+   "codigoEntidad": 14,
+   "descripcionEntidad": "BANCO DE LA PROVINCIA DE BUENOS AIRES",
+   "nombreCompleto": "TARJETA VISA CLASSIC",
+   "nombreCorto": "VISA CLASSIC",
+   "segmento": "Internacional",
+   "tasaEfectivaAnualMaximaFinanciacion": 114.99
+  },
+  {
+   "codigoEntidad": 14,
+   "descripcionEntidad": "BANCO DE LA PROVINCIA DE BUENOS AIRES",
+   "nombreCompleto": "TARJETA MASTERCARD INTERNACIONAL",
+   "nombreCorto": "MASTERCARD INTERNACIONAL",
+   "segmento": "Internacional",
+   "tasaEfectivaAnualMaximaFinanciacion": 114.99
+  },
+  {
+   "codigoEntidad": 14,
+   "descripcionEntidad": "BANCO DE LA PROVINCIA DE BUENOS AIRES",
+   "nombreCompleto": "TARJETA MASTERCARD REGIONAL",
+   "nombreCorto": "MASTERCARD REGIONAL",
+   "segmento": "Nacional",
+   "tasaEfectivaAnualMaximaFinanciacion": 114.99
+  },
+  {
+   "codigoEntidad": 14,
+   "descripcionEntidad": "BANCO DE LA PROVINCIA DE BUENOS AIRES",
+   "nombreCompleto": "TARJETA VISA GOLD",
+   "nombreCorto": "VISA GOLD",
+   "segmento": "Premium gold",
+   "tasaEfectivaAnualMaximaFinanciacion": 114.99
+  },
+  {
+   "codigoEntidad": 14,
+   "descripcionEntidad": "BANCO DE LA PROVINCIA DE BUENOS AIRES",
+   "nombreCompleto": "TARJETA VISA SIGNATURE",
+   "nombreCorto": "VISA SIGNATURE",
+   "segmento": "Premium signature, black o similar",
+   "tasaEfectivaAnualMaximaFinanciacion": 114.99
+  },
+  {
+   "codigoEntidad": 14,
+   "descripcionEntidad": "BANCO DE LA PROVINCIA DE BUENOS AIRES",
+   "nombreCompleto": "TARJETA MASTERCARD PLATINUM",
+   "nombreCorto": "MASTERCARD PLATINUM",
+   "segmento": "Premium platinum",
+   "tasaEfectivaAnualMaximaFinanciacion": 114.99
+  },
+  {
+   "codigoEntidad": 14,
+   "descripcionEntidad": "BANCO DE LA PROVINCIA DE BUENOS AIRES",
+   "nombreCompleto": "TARJETA PROCAMPO",
+   "nombreCorto": "TARJETA PROCAMPO",
+   "segmento": "Nacional",
+   "tasaEfectivaAnualMaximaFinanciacion": 47.62
+  },
+  {
+   "codigoEntidad": 14,
+   "descripcionEntidad": "BANCO DE LA PROVINCIA DE BUENOS AIRES",
+   "nombreCompleto": "TARJETA PACTAR",
+   "nombreCorto": "TARJETA PACTAR",
+   "segmento": "Nacional",
+   "tasaEfectivaAnualMaximaFinanciacion": 34.56
+  },
+  {
+   "codigoEntidad": 14,
+   "descripcionEntidad": "BANCO DE LA PROVINCIA DE BUENOS AIRES",
+   "nombreCompleto": "TARJETA  MASTERCARD BLACK",
+   "nombreCorto": "MASTERCARD BLACK",
+   "segmento": "Premium signature, black o similar",
+   "tasaEfectivaAnualMaximaFinanciacion": 114.99
+  },
+  {
+   "codigoEntidad": 14,
+   "descripcionEntidad": "BANCO DE LA PROVINCIA DE BUENOS AIRES",
+   "nombreCompleto": "TARJETA MASTERCARD GOLD",
+   "nombreCorto": "MASTERCARD GOLD",
+   "segmento": "Premium gold",
+   "tasaEfectivaAnualMaximaFinanciacion": 114.99
+  },
+  {
+   "codigoEntidad": 17,
+   "descripcionEntidad": "BANCO BBVA ARGENTINA S.A.",
+   "nombreCompleto": "VISA SIGNATURE SAVE                                                                                                   ",
+   "nombreCorto": "VI SIG SAVE             ",
+   "segmento": "Premium signature, black o similar",
+   "tasaEfectivaAnualMaximaFinanciacion": 115.14
+  },
+  {
+   "codigoEntidad": 17,
+   "descripcionEntidad": "BANCO BBVA ARGENTINA S.A.",
+   "nombreCompleto": "VISA SIGNATURE TRAVEL                                                                                                 ",
+   "nombreCorto": "VI SIG TRAVEL           ",
+   "segmento": "Premium signature, black o similar",
+   "tasaEfectivaAnualMaximaFinanciacion": 115.14
+  },
+  {
+   "codigoEntidad": 17,
+   "descripcionEntidad": "BANCO BBVA ARGENTINA S.A.",
+   "nombreCompleto": "VISA SIGNATURE ALL                                                                                                    ",
+   "nombreCorto": "VI SIG ALL              ",
+   "segmento": "Premium signature, black o similar",
+   "tasaEfectivaAnualMaximaFinanciacion": 115.14
+  },
+  {
+   "codigoEntidad": 17,
+   "descripcionEntidad": "BANCO BBVA ARGENTINA S.A.",
+   "nombreCompleto": "VISA SIGNATURE                                                                                                            ",
+   "nombreCorto": "VI SIGNAT               ",
+   "segmento": "Premium signature, black o similar",
+   "tasaEfectivaAnualMaximaFinanciacion": 115.14
+  },
+  {
+   "codigoEntidad": 17,
+   "descripcionEntidad": "BANCO BBVA ARGENTINA S.A.",
+   "nombreCompleto": "MASTERCARD GOLD                                                                                                           ",
+   "nombreCorto": "MC GOLD                 ",
+   "segmento": "Premium gold",
+   "tasaEfectivaAnualMaximaFinanciacion": 115.14
+  },
+  {
+   "codigoEntidad": 17,
+   "descripcionEntidad": "BANCO BBVA ARGENTINA S.A.",
+   "nombreCompleto": "MASTERCARD BLACK                                                                                                          ",
+   "nombreCorto": "MC BLACK                ",
+   "segmento": "Premium signature, black o similar",
+   "tasaEfectivaAnualMaximaFinanciacion": 115.14
+  },
+  {
+   "codigoEntidad": 17,
+   "descripcionEntidad": "BANCO BBVA ARGENTINA S.A.",
+   "nombreCompleto": "MASTERCARD INTERNACIONAL                                                                                                  ",
+   "nombreCorto": "MC INT                  ",
+   "segmento": "Internacional",
+   "tasaEfectivaAnualMaximaFinanciacion": 115.14
+  },
+  {
+   "codigoEntidad": 17,
+   "descripcionEntidad": "BANCO BBVA ARGENTINA S.A.",
+   "nombreCompleto": "VISA GOLD                                                                                                                 ",
+   "nombreCorto": "VI GOLD                 ",
+   "segmento": "Premium gold",
+   "tasaEfectivaAnualMaximaFinanciacion": 115.14
+  },
+  {
+   "codigoEntidad": 17,
+   "descripcionEntidad": "BANCO BBVA ARGENTINA S.A.",
+   "nombreCompleto": "MASTERCARD PLATINUM                                                                                                       ",
+   "nombreCorto": "MC PLATINU              ",
+   "segmento": "Premium platinum",
+   "tasaEfectivaAnualMaximaFinanciacion": 115.14
+  },
+  {
+   "codigoEntidad": 17,
+   "descripcionEntidad": "BANCO BBVA ARGENTINA S.A.",
+   "nombreCompleto": "VISA PLATINUM                                                                                                             ",
+   "nombreCorto": "VI PLATIN               ",
+   "segmento": "Premium platinum",
+   "tasaEfectivaAnualMaximaFinanciacion": 115.14
+  },
+  {
+   "codigoEntidad": 17,
+   "descripcionEntidad": "BANCO BBVA ARGENTINA S.A.",
+   "nombreCompleto": "VISA INTERNACIONAL                                                                                                        ",
+   "nombreCorto": "VI INTER                ",
+   "segmento": "Internacional",
+   "tasaEfectivaAnualMaximaFinanciacion": 115.14
+  },
+  {
+   "codigoEntidad": 341,
+   "descripcionEntidad": "BANCO MASVENTAS S.A.",
+   "nombreCompleto": "000DVISA SIGNATURE",
+   "nombreCorto": "VISA SIG",
+   "segmento": "Premium signature, black o similar",
+   "tasaEfectivaAnualMaximaFinanciacion": 123.89
+  },
+  {
+   "codigoEntidad": 341,
+   "descripcionEntidad": "BANCO MASVENTAS S.A.",
+   "nombreCompleto": "000DMASTERCARD GOLD",
+   "nombreCorto": "MC GOL",
+   "segmento": "Premium gold",
+   "tasaEfectivaAnualMaximaFinanciacion": 123.89
+  },
+  {
+   "codigoEntidad": 341,
+   "descripcionEntidad": "BANCO MASVENTAS S.A.",
+   "nombreCompleto": "000DVISA NACIONAL",
+   "nombreCorto": "VISA NAC",
+   "segmento": "Nacional",
+   "tasaEfectivaAnualMaximaFinanciacion": 123.89
+  },
+  {
+   "codigoEntidad": 341,
+   "descripcionEntidad": "BANCO MASVENTAS S.A.",
+   "nombreCompleto": "000DVISA PLATINUM",
+   "nombreCorto": "VISA PLA",
+   "segmento": "Premium platinum",
+   "tasaEfectivaAnualMaximaFinanciacion": 123.89
+  },
+  {
+   "codigoEntidad": 341,
+   "descripcionEntidad": "BANCO MASVENTAS S.A.",
+   "nombreCompleto": "000DMASTERCARD BLACK",
+   "nombreCorto": "MC BLA",
+   "segmento": "Premium signature, black o similar",
+   "tasaEfectivaAnualMaximaFinanciacion": 123.89
+  },
+  {
+   "codigoEntidad": 341,
+   "descripcionEntidad": "BANCO MASVENTAS S.A.",
+   "nombreCompleto": "000DMASTERCARD INTERNACIONAL",
+   "nombreCorto": "MC INT",
+   "segmento": "Internacional",
+   "tasaEfectivaAnualMaximaFinanciacion": 123.89
+  },
+  {
+   "codigoEntidad": 341,
+   "descripcionEntidad": "BANCO MASVENTAS S.A.",
+   "nombreCompleto": "000DMASTERCARD NACIONAL",
+   "nombreCorto": "MC NAC",
+   "segmento": "Nacional",
+   "tasaEfectivaAnualMaximaFinanciacion": 123.89
+  },
+  {
+   "codigoEntidad": 341,
+   "descripcionEntidad": "BANCO MASVENTAS S.A.",
+   "nombreCompleto": "000DVISA GOLD",
+   "nombreCorto": "VISA GOLD",
+   "segmento": "Premium gold",
+   "tasaEfectivaAnualMaximaFinanciacion": 123.89
+  },
+  {
+   "codigoEntidad": 341,
+   "descripcionEntidad": "BANCO MASVENTAS S.A.",
+   "nombreCompleto": "000DVISA INTERNACIONAL",
+   "nombreCorto": "VISA INT",
+   "segmento": "Internacional",
+   "tasaEfectivaAnualMaximaFinanciacion": 123.89
+  },
+  {
+   "codigoEntidad": 341,
+   "descripcionEntidad": "BANCO MASVENTAS S.A.",
+   "nombreCompleto": "000DMASTERCARD INTERNACIONAL",
+   "nombreCorto": "MC INT",
+   "segmento": "Internacional",
+   "tasaEfectivaAnualMaximaFinanciacion": 123.89
+  },
+  {
+   "codigoEntidad": 341,
+   "descripcionEntidad": "BANCO MASVENTAS S.A.",
+   "nombreCompleto": "000DMASTERCARD GOLD",
+   "nombreCorto": "MC GOL",
+   "segmento": "Premium gold",
+   "tasaEfectivaAnualMaximaFinanciacion": 123.89
+  },
+  {
+   "codigoEntidad": 341,
+   "descripcionEntidad": "BANCO MASVENTAS S.A.",
+   "nombreCompleto": "000DVISA PLATINUM",
+   "nombreCorto": "VISA PLA",
+   "segmento": "Premium platinum",
+   "tasaEfectivaAnualMaximaFinanciacion": 123.89
+  },
+  {
+   "codigoEntidad": 341,
+   "descripcionEntidad": "BANCO MASVENTAS S.A.",
+   "nombreCompleto": "000DMASTERCARD PLATINUM",
+   "nombreCorto": "MC PLA",
+   "segmento": "Premium platinum",
+   "tasaEfectivaAnualMaximaFinanciacion": 123.89
+  },
+  {
+   "codigoEntidad": 341,
+   "descripcionEntidad": "BANCO MASVENTAS S.A.",
+   "nombreCompleto": "000DVISA INTERNACIONAL",
+   "nombreCorto": "VISA INT",
+   "segmento": "Internacional",
+   "tasaEfectivaAnualMaximaFinanciacion": 123.89
+  },
+  {
+   "codigoEntidad": 341,
+   "descripcionEntidad": "BANCO MASVENTAS S.A.",
+   "nombreCompleto": "000DVISA NACIONAL",
+   "nombreCorto": "VISA NAC",
+   "segmento": "Nacional",
+   "tasaEfectivaAnualMaximaFinanciacion": 123.89
+  },
+  {
+   "codigoEntidad": 341,
+   "descripcionEntidad": "BANCO MASVENTAS S.A.",
+   "nombreCompleto": "000DMASTERCARD NACIONAL",
+   "nombreCorto": "MC NAC",
+   "segmento": "Nacional",
+   "tasaEfectivaAnualMaximaFinanciacion": 123.89
+  },
+  {
+   "codigoEntidad": 341,
+   "descripcionEntidad": "BANCO MASVENTAS S.A.",
+   "nombreCompleto": "000DMASTERCARD BLACK",
+   "nombreCorto": "MC BLA",
+   "segmento": "Premium signature, black o similar",
+   "tasaEfectivaAnualMaximaFinanciacion": 123.89
+  },
+  {
+   "codigoEntidad": 341,
+   "descripcionEntidad": "BANCO MASVENTAS S.A.",
+   "nombreCompleto": "000DVISA GOLD",
+   "nombreCorto": "VISA GOLD",
+   "segmento": "Premium gold",
+   "tasaEfectivaAnualMaximaFinanciacion": 123.89
+  },
+  {
+   "codigoEntidad": 341,
+   "descripcionEntidad": "BANCO MASVENTAS S.A.",
+   "nombreCompleto": "000DVISA SIGNATURE",
+   "nombreCorto": "VISA SIG",
+   "segmento": "Premium signature, black o similar",
+   "tasaEfectivaAnualMaximaFinanciacion": 123.89
+  },
+  {
+   "codigoEntidad": 341,
+   "descripcionEntidad": "BANCO MASVENTAS S.A.",
+   "nombreCompleto": "000DMASTERCARD PLATINUM",
+   "nombreCorto": "MC PLA",
+   "segmento": "Premium platinum",
+   "tasaEfectivaAnualMaximaFinanciacion": 123.89
+  },
+  {
+   "codigoEntidad": 384,
+   "descripcionEntidad": "UALA BANK S.A.U.",
+   "nombreCompleto": "TARJETA DE CREDITO MASTERCARD INTERNACIONAL",
+   "nombreCorto": "MASTERCARD INTERNACIONAL",
+   "segmento": "Internacional",
+   "tasaEfectivaAnualMaximaFinanciacion": 176.31
+  },
+  {
+   "codigoEntidad": 72634,
+   "descripcionEntidad": "MERCADOLIBRE S.R.L.",
+   "nombreCompleto": "TARJETA DE CREDITO MERCADO PAGO MASTERCARD",
+   "nombreCorto": "MERCADO PAGO MASTERCARD",
+   "segmento": "Nacional",
+   "tasaEfectivaAnualMaximaFinanciacion": 114.86
+  }
+ ]
+}

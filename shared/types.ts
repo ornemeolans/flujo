@@ -23,6 +23,11 @@ export interface Wallet extends SyncMeta {
   tnaChangedAt?: ISODate
   /** Ya pasó por la migración a Ahorros: no se vuelve a clasificar por nombre */
   savingsReviewed?: boolean
+  /** Entidad del BCRA (Régimen de Transparencia) */
+  entityCode?: number
+  entityName?: string
+  /** Ya se revisó su vínculo con una entidad: no se vuelve a preguntar */
+  entityReviewed?: boolean
   createdAt?: ISODate
 }
 
@@ -36,6 +41,11 @@ export interface CreditCard extends SyncMeta {
   icon?: string
   color?: string
   createdAt?: ISODate
+  /** Entidad y producto del BCRA (ej: "Visa Gold") */
+  entityCode?: number
+  entityName?: string
+  product?: string
+  entityReviewed?: boolean
 }
 
 export interface Transaction extends SyncMeta {

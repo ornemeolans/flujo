@@ -7,6 +7,9 @@ import CardDetailModal from '@/components/modals/CardDetailModal'
 import TransferModal  from '@/components/modals/TransferModal'
 import PayCardModal   from '@/components/modals/PayCardModal'
 import LoanModal      from '@/components/modals/LoanModal'
+import { AddWalletFlow, AddCardFlow } from '@/components/bcra/AddFlows'
+import LinkModal, { pendingLinks } from '@/components/bcra/LinkModal'
+import bcraStyles from '@/components/bcra/Bcra.module.css'
 import styles from './Wallets.module.css'
 import { fmt2, formatDate } from '@/utils'
 import { loanStatus, localISO } from '@shared/loans'
@@ -19,6 +22,10 @@ export default function Wallets() {
   const [transferOpen, setTransferOpen] = useState(false)
   const [payingCard,   setPayingCard]   = useState(null)  // card obj
   const [editLoan,     setEditLoan]     = useState(null)  // loan obj   | {}
+  const [addingWallet, setAddingWallet] = useState(false)
+  const [addingCard,   setAddingCard]   = useState(false)
+  const [linking,      setLinking]      = useState(false)
+  const toLink = pendingLinks(wallets, cards)
 
   const accounts = selectors.sortByBalance(wallets.filter(w => !selectors.isSavings(w)), transactions)
   const savings  = selectors.sortByBalance(wallets.filter(selectors.isSavings), transactions)
@@ -29,9 +36,16 @@ export default function Wallets() {
 
   return (
     <div className="animate-fadeUp">
-      <Section title="Mis billeteras" action="+ Nueva" onAction={() => setEditWallet({})}>
+      {toLink.length > 0 && (
+        <div className={bcraStyles.banner} role="status">
+          <span>Vinculá {toLink.length === 1 ? 'tu cuenta' : `tus ${toLink.length} cuentas y tarjetas`} con su banco</span>
+          <button type="button" className={bcraStyles.bannerBtn} onClick={() => setLinking(true)}>Revisar</button>
+        </div>
+      )}
+
+      <Section title="Mis billeteras" action="+ Nueva" onAction={() => setAddingWallet(true)}>
         {accounts.length === 0
-          ? <Empty icon="🏦" text="Agregá tu primera billetera" action="+ Agregar" onAction={() => setEditWallet({})} />
+          ? <Empty icon="🏦" text="Agregá tu primera billetera" action="+ Agregar" onAction={() => setAddingWallet(true)} />
           : (
             <div className={styles.list}>
               {accounts.map(w => (
@@ -61,9 +75,9 @@ export default function Wallets() {
         }
       </Section>
 
-      <Section title="Tarjetas de crédito" action="+ Nueva" onAction={() => setEditCard({})}>
+      <Section title="Tarjetas de crédito" action="+ Nueva" onAction={() => setAddingCard(true)}>
         {cards.length === 0
-          ? <Empty icon="💳" text="Agregá una tarjeta de crédito" action="+ Agregar" onAction={() => setEditCard({})} />
+          ? <Empty icon="💳" text="Agregá una tarjeta de crédito" action="+ Agregar" onAction={() => setAddingCard(true)} />
           : cards.map(c => (
               <CCCard
                 key={c.id} card={c} transactions={transactions}
@@ -93,6 +107,9 @@ export default function Wallets() {
           onPay={() => openCardPay(detailCard)}
         />
       )}
+      {addingWallet         && <AddWalletFlow onClose={() => setAddingWallet(false)} />}
+      {addingCard           && <AddCardFlow onClose={() => setAddingCard(false)} />}
+      {linking              && <LinkModal onClose={() => setLinking(false)} />}
       {transferOpen         && <TransferModal onClose={() => setTransferOpen(false)} />}
       {payingCard           && <PayCardModal card={payingCard} onClose={() => setPayingCard(null)} />}
       {editLoan    !== null && <LoanModal    initial={editLoan.id   ? editLoan   : null} onClose={() => setEditLoan(null)} />}
@@ -110,7 +127,7 @@ function WalletCard({ wallet, transactions, onClick }) {
       </div>
       <div className={styles.info}>
         <div className={styles.name}>{wallet.name}</div>
-        <div className={styles.sub}>{walletTypeLabel(wallet.type)}</div>
+        <div className={styles.sub}>{wallet.entityName && wallet.entityName !== wallet.name ? wallet.entityName : walletTypeLabel(wallet.type)}</div>
         {wallet.tnaEnabled && <div className={styles.tna}>TNA {wallet.tna}%</div>}
       </div>
       <div className={styles.right}>

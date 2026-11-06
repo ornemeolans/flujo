@@ -9,6 +9,7 @@ import TxItem from '@/components/TxItem'
 import WalletModal from '@/components/modals/WalletModal'
 import CardModal from '@/components/modals/CardModal'
 import TxModal from '@/components/modals/TxModal'
+import SetupModal from '@/components/bcra/SetupModal'
 import styles from './Home.module.css'
 
 export default function Home() {
@@ -18,6 +19,7 @@ export default function Home() {
   const isEmpty = !wallets.length && !cards.length && !transactions.length && !loans.length
   const demoActive = wallets.some(w => isDemoId(w.id))
   const [loadingDemo, setLoadingDemo] = useState(false)
+  const [setupOpen, setSetupOpen] = useState(false)
 
   async function handleDemo() {
     setLoadingDemo(true)
@@ -47,19 +49,23 @@ export default function Home() {
         </div>
       )}
 
-      {isEmpty && !signedIn && (
+      {isEmpty && (
         <Card className={styles.welcome}>
           <h1 className={styles.welcomeTitle}>Tus finanzas, <span>claras</span></h1>
           <p className={styles.welcomeText}>
             Billeteras con rendimiento, tarjetas en cuotas y préstamos con débito automático.
             Todo queda en tu dispositivo y funciona sin conexión.
           </p>
-          <Button variant="primary" size="lg" onClick={handleDemo} disabled={loadingDemo}>
-            {loadingDemo ? 'Cargando…' : 'Probar con datos de ejemplo'}
-          </Button>
-          <p className={styles.welcomeHint}>O empezá de cero agregando una billetera.</p>
+          <Button variant="primary" size="lg" onClick={() => setSetupOpen(true)}>Elegir mis bancos y tarjetas</Button>
+          {!signedIn && (
+            <Button variant="ghost" size="lg" onClick={handleDemo} disabled={loadingDemo} className={styles.welcomeSecondary}>
+              {loadingDemo ? 'Cargando…' : 'Probar con datos de ejemplo'}
+            </Button>
+          )}
+          <p className={styles.welcomeHint}>La lista de bancos y tarjetas sale del BCRA.</p>
         </Card>
       )}
+      {setupOpen && <SetupModal onClose={() => setSetupOpen(false)} />}
 
       {/* Summary hero: doble bisel (bandeja + placa) */}
       <div className={styles.heroShell}>

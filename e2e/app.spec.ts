@@ -1,7 +1,16 @@
 import { test, expect, type Page } from '@playwright/test'
 import AxeBuilder from '@axe-core/playwright'
+import bcra from '../tests/fixtures/bcra.json' with { type: 'json' }
 
 const nav = (page: Page, name: string) => page.getByRole('navigation', { name: 'Principal' }).getByRole('button', { name })
+
+// La API del BCRA se responde con un extracto real: los tests no dependen de que esté en línea
+test.beforeEach(async ({ page }) => {
+  await page.route('https://api.bcra.gob.ar/transparencia/v1.0/**', route => {
+    const results = route.request().url().includes('TarjetasCredito') ? bcra.cards : bcra.accounts
+    return route.fulfill({ json: { status: 200, results } })
+  })
+})
 
 test('demo: carga datos de ejemplo y el préstamo debita sus cuotas solo', async ({ page }) => {
   await page.goto('/')
@@ -29,7 +38,8 @@ test('demo: carga datos de ejemplo y el préstamo debita sus cuotas solo', async
 test('crear una billetera y un préstamo desde cero', async ({ page }) => {
   await page.goto('/wallets')
   await page.getByRole('button', { name: 'Nueva: Mis billeteras' }).click()
-  const wallet = page.getByRole('dialog', { name: 'Nueva Billetera' })
+  await page.getByRole('button', { name: 'No está en la lista: cargarla a mano' }).click()
+  const wallet = page.getByRole('dialog', { name: 'Nueva billetera' })
   await wallet.getByLabel('Nombre').fill('Banco')
   await wallet.getByLabel('Saldo Inicial').fill('500000')
   await wallet.getByRole('button', { name: 'Crear billetera' }).click()
@@ -52,6 +62,58 @@ test('crear una billetera y un préstamo desde cero', async ({ page }) => {
   await expect(page.getByText('Cuota 1 de 6 · Débito desde Banco')).toBeVisible()
   // Saldo: 500.000 + 600.000 acreditados
   await expect(page.getByText('$1.100.000,00')).toBeVisible()
+})
+
+test('BCRA: elegir bancos y tarjetas al empezar', async ({ page }) => {
+  await page.goto('/')
+  await page.getByRole('button', { name: 'Elegir mis bancos y tarjetas' }).click()
+  const dialog = page.getByRole('dialog')
+  await dialog.getByLabel('Buscar banco o billetera').fill('galicia')
+  await dialog.getByRole('button', { name: /^Banco Galicia/ }).click()
+  await dialog.getByLabel('Buscar banco o billetera').fill('')
+  await dialog.getByRole('button', { name: /^Mercado Pago/ }).click()
+  await dialog.getByRole('button', { name: 'Continuar con 2' }).click()
+
+  const galicia = dialog.getByRole('region', { name: 'Banco Galicia' })
+  await galicia.getByLabel('Saldo actual').fill('150000')
+  await galicia.getByLabel('Agregar tarjeta de Banco Galicia').selectOption('Visa Gold')
+  await dialog.getByRole('button', { name: 'Guardar todo' }).click()
+  await expect(dialog.getByRole('alert')).toContainText('Falta el día de cierre')
+  await galicia.getByLabel('Día de cierre de Visa Gold').fill('20')
+  await dialog.getByRole('button', { name: 'Guardar todo' }).click()
+  await expect(dialog).toBeHidden()
+
+  await nav(page, 'Cuentas').click()
+  await expect(page.getByText('$150.000,00').first()).toBeVisible()
+  await expect(page.getByText('Mercado Pago', { exact: true })).toBeVisible()
+  await expect(page.getByText('Visa Gold Galicia')).toBeVisible()
+})
+
+test('BCRA: una tarjeta de la lista solo pide el día de cierre', async ({ page }) => {
+  await page.goto('/wallets')
+  await page.getByRole('button', { name: 'Nueva: Tarjetas de crédito' }).click()
+  await page.getByRole('button', { name: /^Banco Nación/ }).click()
+  await page.getByRole('dialog').getByRole('button').filter({ hasText: /^💳/ }).first().click()
+  const card = page.getByRole('dialog', { name: 'Nueva tarjeta' })
+  await expect(card.getByLabel('Nombre')).toHaveCount(0)
+  await card.getByLabel('Día de Cierre').fill('15')
+  await card.getByRole('button', { name: 'Crear tarjeta' }).click()
+  await expect(card).toBeHidden()
+  await expect(page.getByText(/Nación$/).first()).toBeVisible()
+})
+
+test('BCRA: vincular billeteras y tarjetas ya cargadas', async ({ page }) => {
+  await page.goto('/wallets?demo=1')
+  await page.getByRole('button', { name: 'Revisar' }).click()
+  const dialog = page.getByRole('dialog', { name: 'Vincular con tu banco' })
+  await expect(dialog.getByLabel('Entidad de Banco Galicia')).toHaveValue('7')
+  await expect(dialog.getByLabel('Entidad de Visa Galicia')).toHaveValue('7')
+  // Galicia tiene varias Visa y el nombre no dice cuál: se elige a mano
+  await expect(dialog.getByLabel('Tarjeta de Visa Galicia')).toHaveValue('')
+  await dialog.getByLabel('Tarjeta de Visa Galicia').selectOption('Visa Gold')
+  await dialog.getByRole('button', { name: 'Guardar' }).click()
+  await expect(dialog).toBeHidden()
+  await expect(page.getByRole('button', { name: 'Revisar' })).toHaveCount(0)
 })
 
 test('sin conexión: avisa y la app sigue funcionando', async ({ page, context }) => {
