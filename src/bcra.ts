@@ -5,7 +5,7 @@
 // esos datos los sigue cargando cada usuario.
 
 const API = 'https://api.bcra.gob.ar/transparencia/v1.0'
-const CACHE_KEY = 'flujo.bcra.v2'
+const CACHE_KEY = 'flujo.bcra.v4' // subir al cambiar nombres o datos: fuerza a descargar la lista otra vez
 const CACHE_TTL = 7 * 24 * 60 * 60 * 1000
 const TIMEOUT = 15_000
 
@@ -61,8 +61,25 @@ const KNOWN: { match: RegExp; name: string; kind?: Entity['kind']; aliases: stri
   { match: /CREDICOOP/, name: 'Banco Credicoop', aliases: ['credicoop'] },
   { match: /COMAFI/, name: 'Banco Comafi', aliases: ['comafi'] },
   { match: /REBA/, name: 'Reba', kind: 'virtual', aliases: ['reba'] },
-  // Otorga los préstamos de GOcuotas
-  { match: /FINANZAS DIGITALES/, name: 'Finanzas Digitales (GOcuotas)', kind: 'other', aliases: ['gocuotas', 'go cuotas', 'finanzas digitales'], featured: false },
+  // Marcas conocidas de entidades que el BCRA informa con su razón social.
+  // Cada una verificada (fuente en el comentario); ante la duda, no se agrega.
+  // Contrato de GOcuotas: "Préstamo otorgado por Finanzas Digitales S.A.S."
+  { match: /FINANZAS DIGITALES/, name: 'GOcuotas (Finanzas Digitales)', kind: 'other', aliases: ['gocuotas', 'go cuotas', 'finanzas digitales'], featured: false },
+  // Compañía Financiera Argentina opera Efectivo Sí (Ámbito, Infonegocios)
+  { match: /^COMPANIA FINANCIERA ARGENTINA/, name: 'Efectivo Sí (Compañía Financiera Argentina)', kind: 'other', aliases: ['efectivo si', 'cfa'], featured: false },
+  { match: /^BANCO DE SERVICIOS FINANCIEROS/, name: 'Carrefour Banco (Banco de Servicios Financieros)', aliases: ['carrefour'], featured: false },
+  { match: /^COTO CENTRO INTEGRAL/, name: 'Coto TCI', kind: 'other', aliases: ['coto', 'tci'], featured: false },
+  { match: /^ROMBO COMPANIA FINANCIERA/, name: 'Renault (Rombo Compañía Financiera)', kind: 'other', aliases: ['renault', 'rombo'], featured: false },
+  { match: /^GPAT COMPANIA FINANCIERA/, name: 'Chevrolet (GPAT Compañía Financiera)', kind: 'other', aliases: ['chevrolet', 'gpat', 'general motors'], featured: false },
+  // YOY es la app de ICBC para jóvenes (iProUP, iProfesional)
+  { match: /INDUSTRIAL AND COMMERCIAL BANK OF CHINA/, name: 'ICBC (YOY)', aliases: ['icbc', 'yoy'], featured: false },
+  // Bezza es la billetera virtual de Bancor (Infonegocios, La Voz de San Justo)
+  { match: /^BANCO DE LA PROVINCIA DE CORDOBA/, name: 'Bancor (Bezza)', aliases: ['bancor', 'bezza', 'banco de cordoba'], featured: false },
+  { match: /^BANCO INDUSTRIAL S/, name: 'BIND (Banco Industrial)', aliases: ['bind'], featured: false },
+  { match: /^BANCO DE SERVICIOS Y TRANSACCIONES/, name: 'BST (Banco de Servicios y Transacciones)', aliases: ['bst'], featured: false },
+  { match: /^NUEVO BANCO DE ENTRE RIOS/, name: 'BERSA (Nuevo Banco de Entre Ríos)', aliases: ['bersa', 'banco entre rios'], featured: false },
+  { match: /^NUEVO BANCO DEL CHACO/, name: 'NBCH (Nuevo Banco del Chaco)', aliases: ['nbch', 'banco del chaco'], featured: false },
+  { match: /^BANCO PROVINCIA DEL NEUQUEN/, name: 'BPN (Banco Provincia del Neuquén)', aliases: ['bpn', 'banco del neuquen'], featured: false },
 ]
 
 const LEGAL_SUFFIX = /[\s,]*(S\.?\s?A\.?\s?U\.?|S\.?\s?A\.?|S\.?\s?R\.?\s?L\.?|SOCIEDAD AN[OÓ]NIMA( UNIPERSONAL)?|COOPERATIVO LIMITADO|LIMITADA|LTDA\.?)\s*$/i

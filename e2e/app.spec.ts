@@ -128,6 +128,15 @@ test('BCRA: vincular billeteras y tarjetas ya cargadas', async ({ page }) => {
   await dialog.getByRole('button', { name: 'Guardar' }).click()
   await expect(dialog).toBeHidden()
   await expect(page.getByRole('button', { name: 'Revisar' })).toHaveCount(0)
+
+  // Ya revisadas, se pueden volver a vincular: el vínculo actual viene marcado
+  await page.getByRole('button', { name: 'Vincular cuentas y tarjetas con su banco' }).click()
+  const again = page.getByRole('dialog', { name: 'Vincular con tu banco' })
+  await expect(again.getByLabel('Entidad de Mercado Pago')).not.toHaveValue('')
+  await again.getByLabel('Entidad de Mercado Pago').selectOption({ label: 'Ualá' })
+  await again.getByRole('button', { name: 'Guardar' }).click()
+  await expect(again).toBeHidden()
+  await expect(page.getByText('Ualá', { exact: true })).toBeVisible()
 })
 
 test('préstamo de GOcuotas: cuota fija con IVA y sin correr el domingo', async ({ page }) => {
@@ -136,8 +145,8 @@ test('préstamo de GOcuotas: cuota fija con IVA y sin correr el domingo', async 
   const loan = page.getByRole('dialog', { name: 'Nuevo Préstamo' })
   await loan.getByRole('button', { name: 'Elegir la entidad' }).click()
   await loan.getByLabel('Buscar banco o billetera').fill('gocuotas')
-  await loan.getByRole('button', { name: /^Finanzas Digitales \(GOcuotas\)/ }).click()
-  await expect(loan.getByLabel('Nombre', { exact: true })).toHaveValue('Préstamo Finanzas Digitales (GOcuotas)')
+  await loan.getByRole('button', { name: /^GOcuotas \(Finanzas Digitales\)/ }).click()
+  await expect(loan.getByLabel('Nombre', { exact: true })).toHaveValue('Préstamo GOcuotas (Finanzas Digitales)')
   await expect(loan.getByRole('switch', { name: 'Si vence sábado o domingo, se debita el lunes' })).toHaveAttribute('aria-checked', 'false')
 
   await loan.getByLabel('Monto pedido').fill('61000')

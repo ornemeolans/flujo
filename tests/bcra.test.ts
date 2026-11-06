@@ -42,10 +42,54 @@ describe('lista de entidades del BCRA', () => {
 describe('préstamos personales', () => {
   it('marca quién da préstamos y separa bancos de financieras', () => {
     const go = searchEntities(entities, 'gocuotas')
-    expect(go.map(e => e.name)).toEqual(['Finanzas Digitales (GOcuotas)'])
+    expect(go.map(e => e.name)).toEqual(['GOcuotas (Finanzas Digitales)'])
     expect(go[0]).toMatchObject({ kind: 'other', hasLoans: true, featured: false })
     expect(byName('Banco Galicia')).toMatchObject({ kind: 'bank', hasLoans: true })
     expect(byName('Mercado Pago')).toMatchObject({ kind: 'virtual', hasLoans: true })
+  })
+})
+
+describe('marcas conocidas', () => {
+  // Razones sociales tal como las informa el BCRA → nombre con el que se busca
+  const legal = {
+    'FINANZAS DIGITALES SAS': 'GOcuotas (Finanzas Digitales)',
+    'COMPAÑIA FINANCIERA ARGENTINA S.A.': 'Efectivo Sí (Compañía Financiera Argentina)',
+    'BANCO DE SERVICIOS FINANCIEROS CARREFOUR SAU': 'Carrefour Banco (Banco de Servicios Financieros)',
+    'COTO CENTRO INTEGRAL DE COMERCIALIZAC SA': 'Coto TCI',
+    'ROMBO COMPAÑÍA FINANCIERA S.A.': 'Renault (Rombo Compañía Financiera)',
+    'GPAT COMPAÑIA FINANCIERA S.A.U.': 'Chevrolet (GPAT Compañía Financiera)',
+    'INDUSTRIAL AND COMMERCIAL BANK OF CHINA (ARGENTINA) S.A.U.': 'ICBC (YOY)',
+    'BANCO DE LA PROVINCIA DE CORDOBA S.A.': 'Bancor (Bezza)',
+    'BANCO INDUSTRIAL S.A.': 'BIND (Banco Industrial)',
+    'BANCO DE SERVICIOS Y TRANSACCIONES SAU': 'BST (Banco de Servicios y Transacciones)',
+    'NUEVO BANCO DE ENTRE RÍOS S.A.': 'BERSA (Nuevo Banco de Entre Ríos)',
+    'NUEVO BANCO DEL CHACO S. A.': 'NBCH (Nuevo Banco del Chaco)',
+    'BANCO PROVINCIA DEL NEUQUÉN SOCIEDAD ANÓNIMA': 'BPN (Banco Provincia del Neuquén)',
+  }
+  const list = buildEntities([], [], Object.keys(legal).map((descripcionEntidad, i) => ({ codigoEntidad: 900 + i, descripcionEntidad })))
+
+  it('muestra la marca y conserva la razón social', () => {
+    for (const [legalName, name] of Object.entries(legal)) {
+      expect(list.find(e => e.legalName === legalName)?.name).toBe(name)
+    }
+  })
+
+  it('se encuentran buscando por la marca o por el nombre legal', () => {
+    for (const [query, name] of [['gocuotas', 'GOcuotas (Finanzas Digitales)'], ['efectivo si', 'Efectivo Sí (Compañía Financiera Argentina)'], ['carrefour', 'Carrefour Banco (Banco de Servicios Financieros)'], ['renault', 'Renault (Rombo Compañía Financiera)'], ['bancor', 'Bancor (Bezza)'], ['bezza', 'Bancor (Bezza)'], ['banco de cordoba', 'Bancor (Bezza)'], ['icbc', 'ICBC (YOY)'], ['yoy', 'ICBC (YOY)'], ['servicios y transacciones', 'BST (Banco de Servicios y Transacciones)']]) {
+      expect(searchEntities(list, query).map(e => e.name)).toContain(name)
+    }
+  })
+
+  it('una billetera llamada como el producto sugiere su banco', () => {
+    expect(matchEntity('Bezza', list)?.name).toBe('Bancor (Bezza)')
+    expect(matchEntity('Cuenta YOY', list)?.name).toBe('ICBC (YOY)')
+    expect(matchEntity('GOcuotas', list)?.name).toBe('GOcuotas (Finanzas Digitales)')
+  })
+
+  it('no las muestra entre las más usadas y no confunde bancos parecidos', () => {
+    expect(list.every(e => !e.featured)).toBe(true)
+    expect(list.find(e => e.name.startsWith('BIND'))?.kind).toBe('bank')
+    expect(list.find(e => e.name.startsWith('Renault'))?.kind).toBe('other')
   })
 })
 

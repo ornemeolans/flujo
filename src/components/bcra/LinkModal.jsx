@@ -11,11 +11,20 @@ export const pendingLinks = (wallets, cards) => [
   ...cards.filter(c => !c.entityReviewed).map(item => ({ kind: 'card', item })),
 ]
 
-/** Vincula billeteras y tarjetas ya cargadas con su entidad, con una sugerencia por nombre */
-export default function LinkModal({ onClose }) {
+/** Todas las que se pueden vincular, también las ya revisadas: para cambiar o corregir un vínculo */
+export const allLinks = (wallets, cards) => [
+  ...wallets.filter(w => w.type !== 'cash').map(item => ({ kind: 'wallet', item })),
+  ...cards.map(item => ({ kind: 'card', item })),
+]
+
+/**
+ * Vincula billeteras y tarjetas ya cargadas con su entidad, con una sugerencia por nombre.
+ * all=false: solo las pendientes. all=true: todas, mostrando el vínculo actual de cada una.
+ */
+export default function LinkModal({ onClose, all = false }) {
   const catalog = useCatalog()
   const { wallets, cards, saveWallet, saveCard } = useStore()
-  const [rows] = useState(() => pendingLinks(wallets, cards))
+  const [rows] = useState(() => (all ? allLinks : pendingLinks)(wallets, cards))
   const [choice, setChoice] = useState({}) // id → { code, product }
   const [saving, setSaving] = useState(false)
   const entities = catalog.entities
@@ -26,6 +35,8 @@ export default function LinkModal({ onClose }) {
     if (catalog.status !== 'ready') return
     setChoice(prev => Object.fromEntries(rows.map(({ kind, item }) => {
       if (prev[item.id]) return [item.id, prev[item.id]]
+      // Si ya está vinculada se muestra su vínculo; si no, una sugerencia por nombre
+      if (item.entityCode) return [item.id, { code: item.entityCode, product: item.product ?? '' }]
       const entity = matchEntity(item.name, entities)
       const product = kind === 'card' ? matchCard(item.name, entity) : null
       return [item.id, { code: entity?.code ?? '', product: product?.name ?? '' }]
@@ -39,10 +50,13 @@ export default function LinkModal({ onClose }) {
     for (const { kind, item } of rows) {
       const { code, product } = choice[item.id] ?? {}
       const entity = byCode.get(Number(code))
-      // Sin elegir también cuenta como revisado: no se vuelve a preguntar
-      const link = entity ? { entityCode: entity.code, entityName: entity.name } : {}
-      if (kind === 'wallet') await saveWallet({ ...item, ...link, entityReviewed: true })
-      else await saveCard({ ...item, ...link, ...(entity && product ? { product } : {}), entityReviewed: true })
+      const newProduct = kind === 'card' && entity && product ? product : undefined
+      // Sin cambios no se guarda (no genera sincronización de más)
+      if (item.entityReviewed && (entity?.code ?? undefined) === item.entityCode && (kind === 'wallet' || newProduct === item.product)) continue
+      // "Sin vincular" también cuenta como revisado: no se vuelve a preguntar; y quita un vínculo anterior
+      const link = { entityCode: entity?.code, entityName: entity?.name, entityReviewed: true }
+      if (kind === 'wallet') await saveWallet({ ...item, ...link })
+      else await saveCard({ ...item, ...link, product: newProduct })
     }
     setSaving(false)
     onClose()

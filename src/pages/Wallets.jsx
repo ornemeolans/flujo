@@ -24,7 +24,7 @@ export default function Wallets() {
   const [editLoan,     setEditLoan]     = useState(null)  // loan obj   | {}
   const [addingWallet, setAddingWallet] = useState(false)
   const [addingCard,   setAddingCard]   = useState(false)
-  const [linking,      setLinking]      = useState(false)
+  const [linking,      setLinking]      = useState(null) // null | 'pending' | 'all'
   const toLink = pendingLinks(wallets, cards)
 
   const accounts = selectors.sortByBalance(wallets.filter(w => !selectors.isSavings(w)), transactions)
@@ -39,7 +39,7 @@ export default function Wallets() {
       {toLink.length > 0 && (
         <div className={bcraStyles.banner} role="status">
           <span>Vinculá {toLink.length === 1 ? 'tu cuenta' : `tus ${toLink.length} cuentas y tarjetas`} con su banco</span>
-          <button type="button" className={bcraStyles.bannerBtn} onClick={() => setLinking(true)}>Revisar</button>
+          <button type="button" className={bcraStyles.bannerBtn} onClick={() => setLinking('pending')}>Revisar</button>
         </div>
       )}
 
@@ -88,6 +88,10 @@ export default function Wallets() {
         }
       </Section>
 
+      {toLink.length === 0 && (wallets.some(w => w.type !== 'cash') || cards.length > 0) && (
+        <button type="button" className={bcraStyles.manual} onClick={() => setLinking('all')}>Vincular cuentas y tarjetas con su banco</button>
+      )}
+
       <Section title="Préstamos" action="+ Nuevo" onAction={() => setEditLoan({})}>
         {loans.length === 0
           ? <Empty icon="🏛️" text="Cargá un préstamo y sus cuotas se debitan solas al vencer" action="+ Agregar" onAction={() => setEditLoan({})} />
@@ -109,7 +113,7 @@ export default function Wallets() {
       )}
       {addingWallet         && <AddWalletFlow onClose={() => setAddingWallet(false)} />}
       {addingCard           && <AddCardFlow onClose={() => setAddingCard(false)} />}
-      {linking              && <LinkModal onClose={() => setLinking(false)} />}
+      {linking              && <LinkModal all={linking === 'all'} onClose={() => setLinking(null)} />}
       {transferOpen         && <TransferModal onClose={() => setTransferOpen(false)} />}
       {payingCard           && <PayCardModal card={payingCard} onClose={() => setPayingCard(null)} />}
       {editLoan    !== null && <LoanModal    initial={editLoan.id   ? editLoan   : null} onClose={() => setEditLoan(null)} />}
