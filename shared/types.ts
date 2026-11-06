@@ -97,6 +97,14 @@ export interface Loan extends SyncMeta {
   tna: number
   /** Sumar 21% de IVA sobre los intereses */
   iva: boolean
+  /** aparte: cuota pura fija + IVA sobre el interés (bancos) · incluido: cuota total fija con el IVA dentro de la tasa (financieras como GOcuotas). Sin valor = aparte */
+  ivaMode?: 'aparte' | 'incluido'
+  /** Si vence sábado o domingo se debita el lunes. Sin valor = sí */
+  weekendShift?: boolean
+  /** Entidad que otorga el préstamo (BCRA o escrita a mano) */
+  entityCode?: number
+  entityName?: string
+  lenderKind?: 'bank' | 'fintech'
   rateChanges?: RateChange[]
   credited: boolean
   creditDate?: ISODate

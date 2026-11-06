@@ -10,6 +10,7 @@ import WalletModal from '@/components/modals/WalletModal'
 import CardModal from '@/components/modals/CardModal'
 import TxModal from '@/components/modals/TxModal'
 import SetupModal from '@/components/bcra/SetupModal'
+import { AddWalletFlow, AddCardFlow } from '@/components/bcra/AddFlows'
 import styles from './Home.module.css'
 
 export default function Home() {
@@ -20,6 +21,8 @@ export default function Home() {
   const demoActive = wallets.some(w => isDemoId(w.id))
   const [loadingDemo, setLoadingDemo] = useState(false)
   const [setupOpen, setSetupOpen] = useState(false)
+  const [addingWallet, setAddingWallet] = useState(false)
+  const [addingCard, setAddingCard] = useState(false)
 
   async function handleDemo() {
     setLoadingDemo(true)
@@ -66,6 +69,8 @@ export default function Home() {
         </Card>
       )}
       {setupOpen && <SetupModal onClose={() => setSetupOpen(false)} />}
+      {addingWallet && <AddWalletFlow onClose={() => setAddingWallet(false)} />}
+      {addingCard && <AddCardFlow onClose={() => setAddingCard(false)} />}
 
       {/* Summary hero: doble bisel (bandeja + placa) */}
       <div className={styles.heroShell}>
@@ -108,7 +113,7 @@ export default function Home() {
         onAction={() => navigate('/wallets')}
       >
         {accounts.length === 0
-          ? <Empty icon="🏦" text="Sin billeteras" action="+ Agregar" onAction={() => setEditWallet({})} />
+          ? <Empty icon="🏦" text="Sin billeteras" action="+ Agregar" onAction={() => setAddingWallet(true)} />
           : (
             <div className={styles.list}>
               {accounts.slice(0, 3).map(w => (
@@ -151,7 +156,7 @@ export default function Home() {
         onAction={() => navigate('/wallets')}
       >
         {cards.length === 0
-          ? <Empty icon="💳" text="Sin tarjetas" action="+ Agregar" onAction={() => setEditCard({})} />
+          ? <Empty icon="💳" text="Sin tarjetas" action="+ Agregar" onAction={() => setAddingCard(true)} />
           : (
             <div className={styles.list}>
               {cards.slice(0, 2).map(card => (

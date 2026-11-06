@@ -3,7 +3,7 @@ import { buildEntities, cleanCardName, cleanEntityName, matchCard, matchEntity, 
 // Extracto real de las respuestas del Régimen de Transparencia (CajasAhorros y TarjetasCredito)
 import fixture from './fixtures/bcra.json'
 
-const entities = buildEntities(fixture.accounts, fixture.cards)
+const entities = buildEntities(fixture.accounts, fixture.cards, fixture.loans)
 const byName = (name: string) => entities.find(e => e.name === name)!
 
 describe('lista de entidades del BCRA', () => {
@@ -36,6 +36,16 @@ describe('lista de entidades del BCRA', () => {
     expect(searchEntities(entities, 'MP').map(e => e.name)).toContain('Mercado Pago')
     expect(searchEntities(entities, 'uala').map(e => e.name)).toEqual(['Ualá'])
     expect(searchEntities(entities, '')).toHaveLength(entities.length)
+  })
+})
+
+describe('préstamos personales', () => {
+  it('marca quién da préstamos y separa bancos de financieras', () => {
+    const go = searchEntities(entities, 'gocuotas')
+    expect(go.map(e => e.name)).toEqual(['Finanzas Digitales (GOcuotas)'])
+    expect(go[0]).toMatchObject({ kind: 'other', hasLoans: true, featured: false })
+    expect(byName('Banco Galicia')).toMatchObject({ kind: 'bank', hasLoans: true })
+    expect(byName('Mercado Pago')).toMatchObject({ kind: 'virtual', hasLoans: true })
   })
 })
 

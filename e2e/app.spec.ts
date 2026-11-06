@@ -7,7 +7,8 @@ const nav = (page: Page, name: string) => page.getByRole('navigation', { name: '
 // La API del BCRA se responde con un extracto real: los tests no dependen de que esté en línea
 test.beforeEach(async ({ page }) => {
   await page.route('https://api.bcra.gob.ar/transparencia/v1.0/**', route => {
-    const results = route.request().url().includes('TarjetasCredito') ? bcra.cards : bcra.accounts
+    const url = route.request().url()
+    const results = url.includes('TarjetasCredito') ? bcra.cards : url.includes('Prestamos') ? bcra.loans : bcra.accounts
     return route.fulfill({ json: { status: 200, results } })
   })
 })
@@ -76,6 +77,8 @@ test('BCRA: elegir bancos y tarjetas al empezar', async ({ page }) => {
 
   const galicia = dialog.getByRole('region', { name: 'Banco Galicia' })
   await galicia.getByLabel('Saldo actual').fill('150000')
+  await galicia.getByRole('radiogroup', { name: 'Ícono' }).getByRole('radio', { name: '🐷' }).click()
+  await galicia.getByRole('radiogroup', { name: 'Color' }).getByRole('radio').nth(3).click()
   await galicia.getByLabel('Agregar tarjeta de Banco Galicia').selectOption('Visa Gold')
   await dialog.getByRole('button', { name: 'Guardar todo' }).click()
   await expect(dialog.getByRole('alert')).toContainText('Falta el día de cierre')
@@ -87,6 +90,17 @@ test('BCRA: elegir bancos y tarjetas al empezar', async ({ page }) => {
   await expect(page.getByText('$150.000,00').first()).toBeVisible()
   await expect(page.getByText('Mercado Pago', { exact: true })).toBeVisible()
   await expect(page.getByText('Visa Gold Galicia')).toBeVisible()
+  await expect(page.getByText('🐷')).toBeVisible()
+})
+
+test('BCRA: desde Inicio, agregar billetera o tarjeta también usa la lista', async ({ page }) => {
+  await page.goto('/')
+  const section = (name: string) => page.locator('section').filter({ has: page.getByRole('heading', { name, exact: true }) })
+  await section('Tarjetas de crédito').getByRole('button', { name: '+ Agregar' }).click()
+  await expect(page.getByRole('dialog', { name: 'Nueva tarjeta' }).getByLabel('Buscar banco o billetera')).toBeVisible()
+  await page.keyboard.press('Escape')
+  await section('Billeteras').getByRole('button', { name: '+ Agregar' }).click()
+  await expect(page.getByRole('dialog', { name: 'Nueva billetera' }).getByLabel('Buscar banco o billetera')).toBeVisible()
 })
 
 test('BCRA: una tarjeta de la lista solo pide el día de cierre', async ({ page }) => {
@@ -114,6 +128,30 @@ test('BCRA: vincular billeteras y tarjetas ya cargadas', async ({ page }) => {
   await dialog.getByRole('button', { name: 'Guardar' }).click()
   await expect(dialog).toBeHidden()
   await expect(page.getByRole('button', { name: 'Revisar' })).toHaveCount(0)
+})
+
+test('préstamo de GOcuotas: cuota fija con IVA y sin correr el domingo', async ({ page }) => {
+  await page.goto('/wallets?demo=1')
+  await page.getByRole('button', { name: 'Nuevo: Préstamos' }).click()
+  const loan = page.getByRole('dialog', { name: 'Nuevo Préstamo' })
+  await loan.getByRole('button', { name: 'Elegir la entidad' }).click()
+  await loan.getByLabel('Buscar banco o billetera').fill('gocuotas')
+  await loan.getByRole('button', { name: /^Finanzas Digitales \(GOcuotas\)/ }).click()
+  await expect(loan.getByLabel('Nombre', { exact: true })).toHaveValue('Préstamo Finanzas Digitales (GOcuotas)')
+  await expect(loan.getByRole('switch', { name: 'Si vence sábado o domingo, se debita el lunes' })).toHaveAttribute('aria-checked', 'false')
+
+  await loan.getByLabel('Monto pedido').fill('61000')
+  await loan.getByLabel('Cuotas', { exact: true }).fill('3')
+  await loan.getByRole('button', { name: 'Calcular con la TNA' }).click()
+  await loan.getByLabel('TNA (%)').fill('179')
+  await expect(loan.getByRole('button', { name: 'Cuota fija con IVA' })).toHaveAttribute('aria-pressed', 'true')
+  await loan.getByLabel('1er vencimiento').fill('2026-12-06')
+  await expect(loan.getByText('Próxima cuota: $28.077,45 el 6 Dic', { exact: false })).toBeVisible()
+
+  // Con el criterio de los bancos cambia el valor y la fecha pasa al lunes
+  await loan.getByRole('button', { name: 'IVA aparte' }).click()
+  await loan.getByRole('switch', { name: 'Si vence sábado o domingo, se debita el lunes' }).click()
+  await expect(loan.getByText('Próxima cuota: $28.590,51 el 7 Dic', { exact: false })).toBeVisible()
 })
 
 test('sin conexión: avisa y la app sigue funcionando', async ({ page, context }) => {

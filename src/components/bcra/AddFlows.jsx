@@ -3,14 +3,16 @@ import { Modal } from '@/components/ui'
 import { cardDisplayName } from '@/bcra'
 import WalletModal from '@/components/modals/WalletModal'
 import CardModal from '@/components/modals/CardModal'
-import { EntityPicker } from './EntityPicker'
+import { EntityPicker, KIND_ICON } from './EntityPicker'
 import { useCatalog } from './useCatalog'
 import styles from './Bcra.module.css'
 
+const WALLET_TYPE = { bank: 'bank', virtual: 'virtual', other: 'other' }
+
 export const walletFromEntity = entity => ({
   name: entity.name,
-  type: entity.kind === 'virtual' ? 'virtual' : 'bank',
-  icon: entity.kind === 'virtual' ? '📱' : '🏦',
+  type: WALLET_TYPE[entity.kind],
+  icon: KIND_ICON[entity.kind],
   entityCode: entity.code,
   entityName: entity.name,
   entityReviewed: true,

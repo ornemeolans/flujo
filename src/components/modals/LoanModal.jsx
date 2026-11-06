@@ -2,14 +2,25 @@ import { useState, useMemo, Fragment } from 'react'
 import { useStore } from '@/store'
 import { Modal, Input, Select, Switch, Button } from '@/components/ui'
 import { fmt2, formatDate } from '@/utils'
-import { localISO, loanDueDate, loanCuotaAmount, sortedRateChanges, tnaForCuota } from '@shared/loans'
+import { localISO, loanDueDate, loanCuotaAmount, sortedRateChanges, tnaForCuota, lenderDefaults } from '@shared/loans'
+import { EntityPicker, KIND_ICON } from '@/components/bcra/EntityPicker'
+import { useCatalog } from '@/components/bcra/useCatalog'
 import styles from './LoanModal.module.css'
 
 const DEFAULT = {
   name: '', principal: '', cuotas: '', paidBefore: '0',
   mode: 'fixed', cuotaAmount: '', tna: '', iva: true,
+  ivaMode: 'aparte', weekendShift: true,
   firstDue: '', walletId: '',
   credited: true, creditDate: localISO(),
+}
+
+const KIND_LABEL = { bank: 'Banco', fintech: 'Financiera o billetera' }
+
+// Lista del BCRA de quienes informan préstamos personales; se carga solo al abrirla
+function LenderPicker({ onSelect, onManual }) {
+  const catalog = useCatalog()
+  return <EntityPicker catalog={catalog} filter={e => e.hasLoans} onSelect={onSelect} onManual={onManual} manualLabel="No está en la lista: escribirla" />
 }
 
 export default function LoanModal({ onClose, initial = null }) {
@@ -26,8 +37,23 @@ export default function LoanModal({ onClose, initial = null }) {
   } : { ...DEFAULT, walletId: wallets[0]?.id || '' })
   const [saving, setSaving] = useState(false)
   const [showSchedule, setShowSchedule] = useState(false)
+  const [lenderStep, setLenderStep] = useState(null) // null | 'list' | 'manual'
+  const [manualLender, setManualLender] = useState({ name: '', kind: 'fintech' })
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
+
+  // Elegir la entidad completa cómo se aplica el IVA y si corre los vencimientos de fin de semana
+  function chooseLender({ code, name, kind }) {
+    setForm(f => ({
+      ...f,
+      entityCode: code,
+      entityName: name,
+      lenderKind: kind,
+      ...lenderDefaults(kind),
+      name: f.name.trim() ? f.name : `Préstamo ${name}`,
+    }))
+    setLenderStep(null)
+  }
 
   // Préstamo con los valores numéricos, para calcular el cronograma en vivo
   const loan = useMemo(() => ({
@@ -123,6 +149,38 @@ export default function LoanModal({ onClose, initial = null }) {
 
   return (
     <Modal title={isEdit ? 'Editar Préstamo' : 'Nuevo Préstamo'} onClose={onClose}>
+      <div className={styles.formGroup}>
+        <span className={styles.label}>Entidad que da el préstamo</span>
+        {lenderStep === 'list' && (
+          <div className={styles.lenderBox}>
+            <LenderPicker
+              onSelect={e => chooseLender({ code: e.code, name: e.name, kind: e.kind === 'bank' ? 'bank' : 'fintech' })}
+              onManual={() => setLenderStep('manual')}
+            />
+            <button type="button" className={styles.linkBtn} onClick={() => setLenderStep(null)}>Cancelar</button>
+          </div>
+        )}
+        {lenderStep === 'manual' && (
+          <div className={styles.lenderBox}>
+            <Input label="Nombre de la entidad" placeholder="Ej: GOcuotas" value={manualLender.name} onChange={e => setManualLender(m => ({ ...m, name: e.target.value }))} />
+            <div className={styles.segmented} role="group" aria-label="Tipo de entidad">
+              {Object.entries(KIND_LABEL).map(([kind, label]) => (
+                <button key={kind} type="button" aria-pressed={manualLender.kind === kind} className={manualLender.kind === kind ? styles.segOn : ''} onClick={() => setManualLender(m => ({ ...m, kind }))}>{label}</button>
+              ))}
+            </div>
+            <Button variant="ghost" size="md" type="button" disabled={!manualLender.name.trim()} onClick={() => chooseLender({ code: undefined, name: manualLender.name.trim(), kind: manualLender.kind })}>Usar esta entidad</Button>
+          </div>
+        )}
+        {!lenderStep && (form.entityName ? (
+          <div className={styles.lender}>
+            <span>{KIND_ICON[form.lenderKind === 'bank' ? 'bank' : 'other']} <strong>{form.entityName}</strong> · {KIND_LABEL[form.lenderKind] ?? 'Entidad'}</span>
+            <button type="button" className={styles.linkBtn} onClick={() => setLenderStep('list')}>Cambiar</button>
+          </div>
+        ) : (
+          <button type="button" className={styles.lenderPick} onClick={() => setLenderStep('list')}>Elegir la entidad</button>
+        ))}
+      </div>
+
       <Input
         label="Nombre"
         placeholder="Ej: Préstamo personal Banco Nación"
@@ -175,6 +233,25 @@ export default function LoanModal({ onClose, initial = null }) {
             hint="Sistema francés: la cuota pura es fija y al principio paga más interés."
           />
           <Switch label="Sumar IVA (21%) sobre los intereses" checked={form.iva} onChange={v => set('iva', v)} />
+          {form.iva && (
+            <div className={styles.formGroup}>
+              <span className={styles.label}>Cómo se cobra el IVA</span>
+              <div className={styles.segmented} role="group" aria-label="Cómo se cobra el IVA">
+                <button type="button" aria-pressed={form.ivaMode === 'incluido'} className={form.ivaMode === 'incluido' ? styles.segOn : ''} onClick={() => set('ivaMode', 'incluido')}>
+                  Cuota fija con IVA
+                </button>
+                <button type="button" aria-pressed={form.ivaMode !== 'incluido'} className={form.ivaMode !== 'incluido' ? styles.segOn : ''} onClick={() => set('ivaMode', 'aparte')}>
+                  IVA aparte
+                </button>
+              </div>
+              <span className={styles.summarySub}>
+                {form.ivaMode === 'incluido'
+                  ? 'Todas las cuotas iguales, con el IVA dentro (financieras y billeteras, como GOcuotas).'
+                  : 'Cuota pura fija más el IVA del interés de cada mes: la cuota baja un poco cada vez (bancos).'}
+                {form.entityName && ` Sugerido para ${form.entityName}; confirmalo con su simulador o tu contrato.`}
+              </span>
+            </div>
+          )}
 
           {valid && (
             <div className={styles.formGroup}>
@@ -230,6 +307,12 @@ export default function LoanModal({ onClose, initial = null }) {
         />
       </div>
 
+      <Switch
+        label="Si vence sábado o domingo, se debita el lunes"
+        checked={form.weekendShift !== false}
+        onChange={v => set('weekendShift', v)}
+      />
+
       <Select
         label="Se debita de"
         value={form.walletId}
@@ -268,7 +351,9 @@ export default function LoanModal({ onClose, initial = null }) {
             {loan.paidBefore === 0 && loan.principal > 0 && totalCost > loan.principal &&
               ` · Costo total del préstamo (intereses${form.mode === 'tna' && form.iva ? ' + IVA' : ''}): ${fmt2(totalCost - loan.principal)}`}
           </div>
-          <div className={styles.summarySub}>Si vence sábado o domingo, se debita el lunes siguiente.</div>
+          <div className={styles.summarySub}>
+            {form.weekendShift !== false ? 'Si vence sábado o domingo, se debita el lunes siguiente.' : 'Se debita el día del vencimiento, aunque sea fin de semana.'}
+          </div>
           <button type="button" className={styles.linkBtn} onClick={() => setShowSchedule(s => !s)}>
             {showSchedule ? 'Ocultar cronograma' : 'Ver cronograma'}
           </button>

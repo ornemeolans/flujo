@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { useStore } from '@/store'
-import { Modal, Button, Input, Switch } from '@/components/ui'
-import { PALETTE } from '@/utils'
-import { EntityPicker } from './EntityPicker'
+import { Modal, Button, Input, Switch, IconGrid, ColorGrid } from '@/components/ui'
+import { PALETTE, WALLET_ICONS } from '@/utils'
+import { EntityPicker, KIND_ICON } from './EntityPicker'
 import { useCatalog } from './useCatalog'
 import { walletFromEntity, cardFromProduct } from './AddFlows'
 import styles from './Bcra.module.css'
@@ -22,7 +22,14 @@ export default function SetupModal({ onClose }) {
   const selected = new Set(chosen.map(e => e.code))
   function toggle(entity) {
     setChosen(list => (selected.has(entity.code) ? list.filter(e => e.code !== entity.code) : [...list, entity]))
-    setDetails(d => d[entity.code] ? d : { ...d, [entity.code]: { account: entity.hasAccounts || entity.kind === 'virtual', balance: '', tnaOn: false, tna: '', cards: {} } })
+    setDetails(d => d[entity.code] ? d : {
+      ...d,
+      [entity.code]: {
+        account: entity.hasAccounts || entity.kind === 'virtual', balance: '', tnaOn: false, tna: '', cards: {},
+        icon: walletFromEntity(entity).icon,
+        color: PALETTE[Object.keys(d).length % PALETTE.length],
+      },
+    })
   }
   const update = (code, patch) => setDetails(d => ({ ...d, [code]: { ...d[code], ...patch } }))
   const toggleCard = (code, name) => setDetails(d => {
@@ -41,12 +48,11 @@ export default function SetupModal({ onClose }) {
     }
     setError(null)
     setSaving(true)
-    let i = 0
     for (const entity of chosen) {
       const d = details[entity.code]
-      const color = PALETTE[i++ % PALETTE.length]
+      const { color } = d
       if (d.account) {
-        await saveWallet({ ...walletFromEntity(entity), color, initialBalance: Number(d.balance) || 0, tnaEnabled: d.tnaOn, tna: d.tnaOn ? Number(d.tna) : 0 })
+        await saveWallet({ ...walletFromEntity(entity), icon: d.icon, color, initialBalance: Number(d.balance) || 0, tnaEnabled: d.tnaOn, tna: d.tnaOn ? Number(d.tna) : 0 })
       }
       for (const [name, day] of Object.entries(d.cards)) {
         const product = entity.cards.find(c => c.name === name)
@@ -78,13 +84,19 @@ export default function SetupModal({ onClose }) {
         const d = details[entity.code]
         return (
           <section key={entity.code} className={styles.entityBlock} aria-label={entity.name}>
-            <h3 className={styles.entityTitle}>{entity.kind === 'virtual' ? '📱' : '🏦'} {entity.name}</h3>
+            <h3 className={styles.entityTitle}>{d.account ? d.icon : KIND_ICON[entity.kind]} {entity.name}</h3>
             <Switch label="Tengo cuenta acá" checked={d.account} onChange={v => update(entity.code, { account: v })} />
             {d.account && (
               <>
                 <Input label="Saldo actual" type="number" inputMode="decimal" placeholder="0" prefix="$" value={d.balance} onChange={e => update(entity.code, { balance: e.target.value })} />
                 <Switch label="Rinde intereses (TNA)" checked={d.tnaOn} onChange={v => update(entity.code, { tnaOn: v })} />
                 {d.tnaOn && <Input label="TNA (%)" type="number" inputMode="decimal" step="0.1" placeholder="Ej: 19" value={d.tna} onChange={e => update(entity.code, { tna: e.target.value })} />}
+                <div className={styles.look}>
+                  <span className={styles.lookLabel}>Ícono</span>
+                  <IconGrid icons={WALLET_ICONS} selected={d.icon} onSelect={icon => update(entity.code, { icon })} />
+                  <span className={styles.lookLabel}>Color</span>
+                  <ColorGrid colors={PALETTE} selected={d.color} onSelect={color => update(entity.code, { color })} />
+                </div>
               </>
             )}
             {entity.cards.length > 0 && (

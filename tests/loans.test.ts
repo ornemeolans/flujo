@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { Loan } from '@shared/types'
-import { frenchCuota, loanDueDate, loanStatus, pendingLoanPayments, loanCuotaAmount, tnaForCuota } from '@shared/loans'
+import { frenchCuota, loanDueDate, loanStatus, pendingLoanPayments, loanCuotaAmount, tnaForCuota, lenderDefaults } from '@shared/loans'
 
 const base: Loan = {
   id: 'x', name: 'Banco', walletId: 'w', principal: 1_000_000, cuotas: 12, paidBefore: 0,
@@ -83,5 +83,51 @@ describe('débitos automáticos', () => {
     expect(status.next).toEqual({ n: 3, date: '2026-10-12', amount: 50_000 })
     expect(status.remaining).toBe(10 * 50_000)
     expect(loanCuotaAmount(fixed, 7)).toBe(50_000)
+  })
+})
+
+// Valores tomados del simulador de GOcuotas (préstamo de Finanzas Digitales S.A.S.):
+// $61.000, TNA 179%, tasa fija en pesos, IVA dentro de la cuota, 1.er vencimiento domingo 6/12/2026
+describe('préstamos con el IVA dentro de la cuota', () => {
+  const go = { principal: 61_000, tna: 179, iva: true, ivaMode: 'incluido' as const, rateChanges: [] }
+
+  it('reproduce al centavo las cuotas del simulador para 1 a 4 cuotas', () => {
+    expect(frenchCuota({ ...go, cuotas: 1 }, 1).total).toBe(72_009.99)
+    expect(frenchCuota({ ...go, cuotas: 2 }, 1).total).toBe(38_985.33)
+    expect(frenchCuota({ ...go, cuotas: 4 }, 1).total).toBe(22_697.74)
+    const tres = [1, 2, 3].map(n => frenchCuota({ ...go, cuotas: 3 }, n))
+    expect(tres.map(c => c.total)).toEqual([28_077.45, 28_077.45, 28_077.45])
+    // El capital devuelto suma el monto pedido, y el IVA es el 21% del interés
+    expect(tres.reduce((s, c) => s + c.capital, 0)).toBeCloseTo(61_000, 2)
+    expect(tres[0].iva).toBeCloseTo(tres[0].interes * 0.21, 6)
+  })
+
+  it('con el IVA aparte la cuota pura es fija y la total baja (criterio de los bancos)', () => {
+    const banco = [1, 2, 3].map(n => frenchCuota({ ...go, ivaMode: 'aparte', cuotas: 3 }, n).total)
+    expect(banco).toEqual([28_590.51, 28_039.8, 27_406.94])
+    // Sin modo guardado (préstamos cargados antes) se calcula como siempre
+    expect(frenchCuota({ ...go, ivaMode: undefined, cuotas: 3 }, 1).total).toBe(28_590.51)
+  })
+
+  it('un cambio de tasa recalcula las cuotas que faltan también con el IVA incluido', () => {
+    const changed = { ...go, cuotas: 4, rateChanges: [{ fromCuota: 3, tna: 120 }] }
+    const cuotas = [1, 2, 3, 4].map(n => frenchCuota(changed, n))
+    expect(cuotas[0].total).toBe(cuotas[1].total)
+    expect(cuotas[2].total).toBe(cuotas[3].total)
+    expect(cuotas[2].total).toBeLessThan(cuotas[1].total)
+    expect(cuotas.reduce((s, c) => s + c.capital, 0)).toBeCloseTo(61_000, 2)
+  })
+
+  it('respeta si la entidad corre o no los vencimientos de fin de semana', () => {
+    const loan = { firstDue: '2026-12-06', paidBefore: 0 } // domingo
+    expect(loanDueDate(loan, 1)).toBe('2026-12-07')
+    expect(loanDueDate({ ...loan, weekendShift: true }, 1)).toBe('2026-12-07')
+    expect(loanDueDate({ ...loan, weekendShift: false }, 1)).toBe('2026-12-06')
+    expect(loanDueDate({ ...loan, weekendShift: false }, 2)).toBe('2027-01-06')
+  })
+
+  it('sugiere el criterio según quién da el préstamo', () => {
+    expect(lenderDefaults('bank')).toEqual({ ivaMode: 'aparte', weekendShift: true })
+    expect(lenderDefaults('fintech')).toEqual({ ivaMode: 'incluido', weekendShift: false })
   })
 })

@@ -5,7 +5,7 @@
 // esos datos los sigue cargando cada usuario.
 
 const API = 'https://api.bcra.gob.ar/transparencia/v1.0'
-const CACHE_KEY = 'flujo.bcra.v1'
+const CACHE_KEY = 'flujo.bcra.v2'
 const CACHE_TTL = 7 * 24 * 60 * 60 * 1000
 const TIMEOUT = 15_000
 
@@ -22,11 +22,15 @@ export interface Entity {
   name: string
   /** Razón social informada por el BCRA */
   legalName: string
-  kind: 'bank' | 'virtual'
+  /** bank: banco · virtual: billetera o banco digital · other: financiera, mutual, etc. */
+  kind: 'bank' | 'virtual' | 'other'
   /** Orden de las más usadas; las demás van alfabéticamente después */
   rank: number
+  /** Se muestra en "Más usadas" */
+  featured: boolean
   aliases: string[]
   hasAccounts: boolean
+  hasLoans: boolean
   cards: CardProduct[]
 }
 
@@ -38,7 +42,7 @@ export interface Catalog {
 }
 
 // Las entidades más usadas: nombre corto, tipo y otras formas de escribirlas
-const KNOWN: { match: RegExp; name: string; kind?: 'virtual'; aliases: string[] }[] = [
+const KNOWN: { match: RegExp; name: string; kind?: Entity['kind']; aliases: string[]; featured?: false }[] = [
   { match: /MERCADOLIBRE|MERCADO PAGO/, name: 'Mercado Pago', kind: 'virtual', aliases: ['mercado pago', 'mercadopago', 'mercado libre', 'mp'] },
   { match: /GALICIA/, name: 'Banco Galicia', aliases: ['galicia'] },
   { match: /NACION ARGENTINA/, name: 'Banco Nación', aliases: ['banco nacion', 'nacion', 'bna'] },
@@ -57,6 +61,8 @@ const KNOWN: { match: RegExp; name: string; kind?: 'virtual'; aliases: string[] 
   { match: /CREDICOOP/, name: 'Banco Credicoop', aliases: ['credicoop'] },
   { match: /COMAFI/, name: 'Banco Comafi', aliases: ['comafi'] },
   { match: /REBA/, name: 'Reba', kind: 'virtual', aliases: ['reba'] },
+  // Otorga los préstamos de GOcuotas
+  { match: /FINANZAS DIGITALES/, name: 'Finanzas Digitales (GOcuotas)', kind: 'other', aliases: ['gocuotas', 'go cuotas', 'finanzas digitales'], featured: false },
 ]
 
 const LEGAL_SUFFIX = /[\s,]*(S\.?\s?A\.?\s?U\.?|S\.?\s?A\.?|S\.?\s?R\.?\s?L\.?|SOCIEDAD AN[OÓ]NIMA( UNIPERSONAL)?|COOPERATIVO LIMITADO|LIMITADA|LTDA\.?)\s*$/i
@@ -97,8 +103,10 @@ interface RawItem {
   tasaEfectivaAnualMaximaFinanciacion?: number
 }
 
+const kindOf = (upperName: string): Entity['kind'] => (/\bBANCO\b|\bBANK\b/.test(upperName) ? 'bank' : 'other')
+
 /** Arma la lista de entidades a partir de las respuestas de la API */
-export function buildEntities(accounts: RawItem[], cards: RawItem[]): Entity[] {
+export function buildEntities(accounts: RawItem[], cards: RawItem[], loans: RawItem[] = []): Entity[] {
   const byCode = new Map<number, Entity>()
   const entityFor = (item: RawItem) => {
     let entity = byCode.get(item.codigoEntidad)
@@ -111,10 +119,12 @@ export function buildEntities(accounts: RawItem[], cards: RawItem[]): Entity[] {
         code: item.codigoEntidad,
         name: known?.name ?? cleanEntityName(legal),
         legalName: legal,
-        kind: known?.kind ?? 'bank',
-        rank: knownIndex >= 0 ? knownIndex : KNOWN.length,
+        kind: known?.kind ?? kindOf(upper),
+        rank: knownIndex >= 0 && known.featured !== false ? knownIndex : KNOWN.length,
+        featured: knownIndex >= 0 && known.featured !== false,
         aliases: known?.aliases ?? [],
         hasAccounts: false,
+        hasLoans: false,
         cards: [],
       }
       byCode.set(item.codigoEntidad, entity)
@@ -123,6 +133,7 @@ export function buildEntities(accounts: RawItem[], cards: RawItem[]): Entity[] {
   }
 
   for (const item of accounts) entityFor(item).hasAccounts = true
+  for (const item of loans) entityFor(item).hasLoans = true
   for (const item of cards) {
     const entity = entityFor(item)
     const name = cleanCardName(item.nombreCompleto ?? '', item.nombreCorto)
@@ -157,8 +168,11 @@ export function loadCatalog({ force = false } = {}): Promise<Catalog> {
   if (!force && cached && Date.now() - cached.savedAt < CACHE_TTL) return Promise.resolve(cached)
   pending ??= (async () => {
     try {
-      const [accounts, cards] = await Promise.all([getResults('CajasAhorros'), getResults('TarjetasCredito')])
-      const catalog: Catalog = { entities: buildEntities(accounts, cards), savedAt: Date.now() }
+      // Si falla una de las listas se sigue con las otras; solo es error si fallan todas
+      const results = await Promise.allSettled([getResults('CajasAhorros'), getResults('TarjetasCredito'), getResults('Prestamos/Personales')])
+      if (results.every(r => r.status === 'rejected')) throw (results[0] as PromiseRejectedResult).reason
+      const [accounts, cards, loans] = results.map(r => (r.status === 'fulfilled' ? r.value : []))
+      const catalog: Catalog = { entities: buildEntities(accounts, cards, loans), savedAt: Date.now() }
       if (!catalog.entities.length) throw new Error('El BCRA no devolvió entidades')
       try { localStorage.setItem(CACHE_KEY, JSON.stringify(catalog)) } catch { /* sin espacio: se usa igual */ }
       return catalog

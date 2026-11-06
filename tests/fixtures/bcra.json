@@ -482,5 +482,55 @@
    "segmento": "Nacional",
    "tasaEfectivaAnualMaximaFinanciacion": 114.86
   }
+ ],
+ "loans": [
+  {
+   "codigoEntidad": 7,
+   "descripcionEntidad": "BANCO DE GALICIA Y BUENOS AIRES S.A."
+  },
+  {
+   "codigoEntidad": 7,
+   "descripcionEntidad": "BANCO DE GALICIA Y BUENOS AIRES S.A."
+  },
+  {
+   "codigoEntidad": 7,
+   "descripcionEntidad": "BANCO DE GALICIA Y BUENOS AIRES S.A."
+  },
+  {
+   "codigoEntidad": 7,
+   "descripcionEntidad": "BANCO DE GALICIA Y BUENOS AIRES S.A."
+  },
+  {
+   "codigoEntidad": 7,
+   "descripcionEntidad": "BANCO DE GALICIA Y BUENOS AIRES S.A."
+  },
+  {
+   "codigoEntidad": 7,
+   "descripcionEntidad": "BANCO DE GALICIA Y BUENOS AIRES S.A."
+  },
+  {
+   "codigoEntidad": 7,
+   "descripcionEntidad": "BANCO DE GALICIA Y BUENOS AIRES S.A."
+  },
+  {
+   "codigoEntidad": 55507,
+   "descripcionEntidad": "FINANZAS DIGITALES SAS"
+  },
+  {
+   "codigoEntidad": 55507,
+   "descripcionEntidad": "FINANZAS DIGITALES SAS"
+  },
+  {
+   "codigoEntidad": 55507,
+   "descripcionEntidad": "FINANZAS DIGITALES SAS"
+  },
+  {
+   "codigoEntidad": 72634,
+   "descripcionEntidad": "MERCADOLIBRE S.R.L."
+  },
+  {
+   "codigoEntidad": 72634,
+   "descripcionEntidad": "MERCADOLIBRE S.R.L."
+  }
  ]
 }

@@ -3,7 +3,7 @@ import { searchEntities } from '@/bcra'
 import { Spinner } from '@/components/ui'
 import styles from './Bcra.module.css'
 
-const KIND_ICON = { bank: '🏦', virtual: '📱' }
+export const KIND_ICON = { bank: '🏦', virtual: '📱', other: '🏢' }
 
 /**
  * Lista buscable de entidades del BCRA.
@@ -18,8 +18,8 @@ export function EntityPicker({ catalog, mode = 'single', selected, onSelect, onT
     return searchEntities(list, query)
   }, [entities, filter, query])
 
-  const known = visible.filter(e => e.aliases.length)
-  const others = visible.filter(e => !e.aliases.length)
+  const known = visible.filter(e => e.featured)
+  const others = visible.filter(e => !e.featured)
 
   const row = entity => {
     const isOn = mode === 'multi' && selected?.has(entity.code)
