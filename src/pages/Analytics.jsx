@@ -12,7 +12,7 @@ const COLORS = ['#178C9E','#A3296B','#C2A878','#2BB0C4','#D2559A','#3A6E8F','#7D
 
 function MonthSummary({ month, year, income, expense, previousExpense, byCategory }) {
   const aiAvailable = useAiAvailable()
-  const [result, setResult] = useState(null) // { key, summary }
+  const [result, setResult] = useState(null) // { key, summary, tips }
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
 
@@ -25,14 +25,16 @@ function MonthSummary({ month, year, income, expense, previousExpense, byCategor
     categories: byCategory.map(({ category, amount }) => ({ label: getCat(category).label, amount })),
   }
   const key = JSON.stringify(payload)
-  const summary = result?.key === key ? result.summary : null
+  const current = result?.key === key ? result : null
+  const summary = current?.summary ?? null
+  const tips = current?.tips ?? []
 
   async function generate() {
     setLoading(true)
     setError(null)
     try {
-      const { summary } = await aiRequest('/ai/month-summary', payload)
-      setResult({ key, summary })
+      const { summary, tips = [] } = await aiRequest('/ai/month-summary', payload)
+      setResult({ key, summary, tips })
     } catch (e) {
       setError(e.message)
     }
@@ -44,11 +46,20 @@ function MonthSummary({ month, year, income, expense, previousExpense, byCategor
       <Card>
         {summary
           ? <p className={styles.aiSummary}>{summary}</p>
-          : <p className={styles.aiHint}>Genera un resumen escrito con IA. Envía a Gemini, de Google, los totales y las categorías del mes, sin las descripciones de tus movimientos.</p>}
+          : <p className={styles.aiHint}>Genera con IA un resumen del mes y consejos para mejorar tus finanzas. Envía a Gemini, de Google, los totales y las categorías del mes, sin las descripciones de tus movimientos.</p>}
+        {tips.length > 0 && (
+          <>
+            <h3 className={styles.tipsTitle}>Consejos para el mes que viene</h3>
+            <ul className={styles.tips}>
+              {tips.map((tip, i) => <li key={i}>{tip}</li>)}
+            </ul>
+            <p className={styles.tipsNote}>Sugerencias generales escritas por IA a partir de tus totales. No son asesoramiento financiero profesional.</p>
+          </>
+        )}
         {error && <p className={styles.aiError} role="alert">{error}</p>}
         {!summary && (
           <Button variant="ghost" size="md" onClick={generate} disabled={loading}>
-            {loading ? 'Escribiendo…' : 'Generar resumen'}
+            {loading ? 'Escribiendo…' : 'Generar resumen y consejos'}
           </Button>
         )}
       </Card>

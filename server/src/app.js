@@ -322,11 +322,10 @@ export function createApp({ db, jwtSecret, appUrl, sendMail, googleClientId, cor
     if (typeof month !== 'string' || month.length > 30 || !amount(income) || !amount(expense) || !amount(previousExpense) || !validCategories) {
       return res.status(400).json({ error: 'Datos del mes inválidos' })
     }
-    aiResponse(res, async () => ({
-      summary: await ai.summarizeMonth({
-        month, income, expense, previousExpense,
-        categories: categories.map(({ label, amount }) => ({ label, amount })),
-      }),
+    // Devuelve { summary, tips }
+    aiResponse(res, () => ai.summarizeMonth({
+      month, income, expense, previousExpense,
+      categories: categories.map(({ label, amount }) => ({ label, amount })),
     }))
   })
 

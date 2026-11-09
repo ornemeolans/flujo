@@ -28,12 +28,32 @@ test('categorize: la clave va en un header y la respuesta se limita a las catego
 
 test('summarizeMonth: envía totales formateados, y ninguna descripción', async () => {
   let body
-  const ai = createAi({ apiKey: 'clave', fetch: async (_url, init) => { body = JSON.parse(init.body); return geminiReply({ summary: ' Buen mes. ' }) } })
-  assert.equal(await ai.summarizeMonth(MONTH), 'Buen mes.')
+  const ai = createAi({ apiKey: 'clave', fetch: async (_url, init) => { body = JSON.parse(init.body); return geminiReply({ summary: ' Buen mes. ', tips: [' Poné un tope a Hogar. '] }) } })
+  assert.deepEqual(await ai.summarizeMonth(MONTH), { summary: 'Buen mes.', tips: ['Poné un tope a Hogar.'] })
   const prompt = body.contents[0].parts[0].text
   assert.match(prompt, /Balance: \$600\.000/)
   assert.match(prompt, /Hogar: \$450\.000 \(50% de los egresos\)/)
   assert.ok(prompt.includes('los egresos totales subieron $100.000 (13%)'))
+})
+
+test('summarizeMonth: informa el ahorro del mes y prohíbe recomendar productos financieros', async () => {
+  let body
+  const ai = createAi({ apiKey: 'clave', fetch: async (_url, init) => { body = JSON.parse(init.body); return geminiReply({ summary: 'ok', tips: [] }) } })
+  await ai.summarizeMonth(MONTH)
+  assert.match(body.contents[0].parts[0].text, /Ahorro del mes: 40% de los ingresos/)
+  assert.match(body.systemInstruction.parts[0].text, /Nunca recomiendes productos financieros/)
+  assert.deepEqual(body.generationConfig.responseSchema.required, ['summary', 'tips'])
+
+  await ai.summarizeMonth({ ...MONTH, expense: 2_000_000 })
+  assert.match(body.contents[0].parts[0].text, /Ahorro del mes: no hubo/)
+})
+
+test('summarizeMonth: deja como mucho 3 consejos válidos', async () => {
+  const tips = ['uno', '  ', 42, 'dos', 'tres', 'cuatro', 'x'.repeat(500)]
+  const ai = createAi({ apiKey: 'clave', fetch: async () => geminiReply({ summary: 'ok', tips }) })
+  assert.deepEqual((await ai.summarizeMonth(MONTH)).tips, ['uno', 'dos', 'tres'])
+  const sinLista = createAi({ apiKey: 'clave', fetch: async () => geminiReply({ summary: 'ok', tips: 'no es lista' }) })
+  assert.deepEqual((await sinLista.summarizeMonth(MONTH)).tips, [])
 })
 
 test('una respuesta incompleta o un error de Gemini no se aceptan', async () => {
@@ -84,7 +104,7 @@ const signUp = async (url, email) => (await call(url, '/auth/register', { body: 
 before(async () => {
   const fake = {
     async categorize(desc) { if (failing) throw new Error('caído'); seen.push(desc); return 'food' },
-    async summarizeMonth(data) { if (failing) throw new Error('caído'); seen.push(data); return 'Resumen' },
+    async summarizeMonth(data) { if (failing) throw new Error('caído'); seen.push(data); return { summary: 'Resumen', tips: ['Un consejo'] } },
   }
   ;({ srv: server, url: base } = await start({ ai: fake, aiRateLimitMax: 5 }))
 })

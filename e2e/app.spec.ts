@@ -184,7 +184,7 @@ test('IA: sugiere la categoría y resume el mes con la sesión iniciada', async 
     const path = new URL(route.request().url()).pathname
     if (path === '/api/config') return route.fulfill({ json: { aiEnabled: true, googleClientId: null } })
     if (path === '/api/ai/categorize') return route.fulfill({ json: { category: 'transport' } })
-    if (path === '/api/ai/month-summary') return route.fulfill({ json: { summary: 'Gastaste menos que el mes pasado.' } })
+    if (path === '/api/ai/month-summary') return route.fulfill({ json: { summary: 'Gastaste menos que el mes pasado.', tips: ['Poné un tope de $100.000 a Comida.', 'Separá el 10% apenas cobres.'] } })
     return route.fulfill({ json: { cursor: 0, changes: [] } })
   })
   // La demo solo carga sin sesión: primero los datos, después la sesión
@@ -203,8 +203,10 @@ test('IA: sugiere la categoría y resume el mes con la sesión iniciada', async 
   await page.keyboard.press('Escape')
 
   await nav(page, 'Análisis').click()
-  await page.getByRole('button', { name: 'Generar resumen' }).click()
+  await page.getByRole('button', { name: 'Generar resumen y consejos' }).click()
   await expect(page.getByText('Gastaste menos que el mes pasado.')).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Consejos para el mes que viene' })).toBeVisible()
+  await expect(page.getByRole('listitem').filter({ hasText: 'Separá el 10% apenas cobres.' })).toBeVisible()
 })
 
 test('teclado: se puede navegar y abrir una tarjeta sin mouse', async ({ page }) => {
