@@ -163,6 +163,19 @@ test('préstamo de GOcuotas: cuota fija con IVA y sin correr el domingo', async 
   await expect(loan.getByText('Próxima cuota: $28.590,51 el 7 Dic', { exact: false })).toBeVisible()
 })
 
+test('saldo negativo: se muestra con signo menos y la transferencia avisa', async ({ page }) => {
+  await page.goto('/wallets?demo=1')
+  await page.getByRole('button', { name: 'Transferir entre cuentas' }).click()
+  const dialog = page.getByRole('dialog', { name: 'Transferir entre cuentas' })
+  await dialog.getByLabel('Desde').selectOption({ label: '💵 Efectivo' })
+  await dialog.getByLabel('Monto').fill('10000000')
+  await expect(dialog.getByText(/Supera el saldo: Efectivo va a quedar en -\$/)).toBeVisible()
+  await dialog.getByRole('button', { name: 'Confirmar transferencia' }).click()
+  await expect(dialog).toBeHidden()
+  const efectivo = page.getByRole('button', { name: /^Efectivo/ }).first()
+  await expect(efectivo).toContainText(/-\$9\.\d{3}\.\d{3},\d{2}/)
+})
+
 test('sin conexión: avisa y la app sigue funcionando', async ({ page, context }) => {
   await page.goto('/?demo=1')
   await expect(page.getByText('Estás viendo datos de ejemplo')).toBeVisible()

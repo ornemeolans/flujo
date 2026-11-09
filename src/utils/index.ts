@@ -5,8 +5,12 @@ export { nanoid } from './nanoid'
 export { localISO }
 
 // ─── Currency ────────────────────────────────────────────────
+/** $1.234,56 · -$1.234,56 en saldos negativos (sin "-$0" por un resto de redondeo) */
 export function fmt(n: number | null | undefined, decimals = 0): string {
-  return '$' + Math.abs(n ?? 0).toLocaleString('es-AR', {
+  const value = n ?? 0
+  const abs = Math.abs(value)
+  const negative = value < 0 && Number(abs.toFixed(decimals)) !== 0
+  return (negative ? '-' : '') + '$' + abs.toLocaleString('es-AR', {
     minimumFractionDigits: decimals,
     maximumFractionDigits: decimals,
   })

@@ -73,6 +73,9 @@ export default function TransferModal({ onClose }) {
         prefix="$"
         value={form.amount}
         onChange={e => set('amount', e.target.value)}
+        hint={fromWallet && Number(form.amount) > fromBal
+          ? `Supera el saldo: ${fromWallet.name} va a quedar en ${fmt2(fromBal - Number(form.amount))}`
+          : undefined}
       />
 
       <Input
